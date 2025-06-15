@@ -44,7 +44,7 @@ export default function AvaliacoesPage() {
 
       const avaliacoesFormatadas = data?.map(avaliacao => ({
         ...avaliacao,
-        nome_acompanhante: avaliacao.acompanhantes?.nome
+        nome_acompanhante: avaliacao.acompanhantes?.[0]?.nome
       })) || [];
 
       setAvaliacoes(avaliacoesFormatadas);
