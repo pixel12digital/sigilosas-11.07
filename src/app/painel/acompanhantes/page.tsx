@@ -32,7 +32,15 @@ export default function AcompanhantesPage() {
         .order('data_cadastro', { ascending: false });
 
       if (error) throw error;
-      setAcompanhantes(data || []);
+      setAcompanhantes((data || []).map((item: any) => ({
+        id: item.id,
+        nome: item.nome,
+        telefone: item.telefone,
+        email: item.email || "",
+        cidade: (item.cidades && item.cidades[0]?.nome) || "",
+        status: item.status,
+        criado_em: item.data_cadastro || "",
+      })));
     } catch (error) {
       console.error('Erro ao buscar acompanhantes:', error);
     } finally {
@@ -151,13 +159,13 @@ export default function AcompanhantesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{acompanhante.nome}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.telefone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.cidades?.nome || ''}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.cidade}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(acompanhante.status)}`}>
                       {acompanhante.status === 'aprovado' ? 'Aprovado' : acompanhante.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.data_cadastro ? new Date(acompanhante.data_cadastro).toLocaleDateString('pt-BR') : ''}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.criado_em}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => window.open(`/painel/acompanhantes/${acompanhante.id}`, '_blank')}
