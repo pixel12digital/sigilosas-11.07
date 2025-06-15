@@ -77,7 +77,12 @@ export default function Home() {
       const { data, error } = await query.limit(12);
 
       if (error) throw error;
-      setAcompanhantes(data || []);
+      setAcompanhantes(
+        (data || []).map((item: any) => ({
+          ...item,
+          cidades: Array.isArray(item.cidades) ? item.cidades[0] : item.cidades
+        }))
+      );
     } catch (error) {
       console.error('Erro ao carregar acompanhantes:', error);
     } finally {

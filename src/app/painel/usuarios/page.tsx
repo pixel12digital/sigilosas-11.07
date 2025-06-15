@@ -53,7 +53,7 @@ export default function UsuariosPage() {
 
       const usuariosFormatados = data?.map(usuario => ({
         ...usuario,
-        nome_acompanhante: usuario.acompanhantes?.nome
+        nome_acompanhante: usuario.acompanhantes?.[0]?.nome
       })) || [];
 
       setUsuarios(usuariosFormatados);

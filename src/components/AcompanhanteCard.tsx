@@ -92,13 +92,13 @@ export default function AcompanhanteCard({ acompanhante }: AcompanhanteCardProps
           </h3>
           
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            {acompanhante.cidades?.nome && (
+            {(Array.isArray(acompanhante.cidades) ? acompanhante.cidades[0]?.nome : acompanhante.cidades?.nome) && (
               <>
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
-                <span>{acompanhante.cidades.nome}</span>
+                <span>{Array.isArray(acompanhante.cidades) ? acompanhante.cidades[0]?.nome : acompanhante.cidades?.nome}</span>
               </>
             )}
             {acompanhante.bairro && (
