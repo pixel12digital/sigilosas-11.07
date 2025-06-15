@@ -7,3 +7,4 @@ dist
 .env.*
 .vercel
 bfg-1.14.0.jar
+public/uploads
