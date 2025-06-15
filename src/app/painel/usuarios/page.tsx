@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import bcrypt from 'bcryptjs';
 
 interface Usuario {
   id: number;
@@ -83,11 +84,12 @@ export default function UsuariosPage() {
     setLoading(true);
 
     try {
+      const senhaHash = await bcrypt.hash(formData.senha, 10);
       const { error } = await supabase
         .from('usuarios')
         .insert({
           email: formData.email.trim(),
-          senha: formData.senha, // Em produção, deve ser hasheada
+          senha: senhaHash,
           tipo: formData.tipo,
           acompanhante_id: formData.tipo === 'editora' && formData.acompanhante_id 
             ? parseInt(formData.acompanhante_id) 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import bcrypt from 'bcryptjs';
 
 export default function LoginPage() {
   const [usuario, setUsuario] = useState('');
@@ -31,7 +32,7 @@ export default function LoginPage() {
 
       // Verificar senha (assumindo que está hasheada com bcrypt)
       // Nota: Em produção, você deve usar uma função de verificação adequada
-      if (admin.senha === senha) { // Temporário - deve usar bcrypt.compare
+      if (await bcrypt.compare(senha, admin.senha)) {
         // Redirecionar para o painel
         router.push('/painel');
       } else {
