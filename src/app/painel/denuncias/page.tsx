@@ -46,7 +46,7 @@ export default function DenunciasPage() {
 
       const denunciasFormatadas = data?.map(denuncia => ({
         ...denuncia,
-        nome_acompanhante: denuncia.acompanhantes?.nome
+        nome_acompanhante: denuncia.acompanhantes?.[0]?.nome
       })) || [];
 
       setDenuncias(denunciasFormatadas);
