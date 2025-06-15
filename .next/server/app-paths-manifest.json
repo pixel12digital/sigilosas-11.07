@@ -1,0 +1,7 @@
+{
+  "/obrigado/page": "app/obrigado/page.js",
+  "/page": "app/page.js",
+  "/painel/acompanhantes/page": "app/painel/acompanhantes/page.js",
+  "/painel/cidades/page": "app/painel/cidades/page.js",
+  "/painel/blog/page": "app/painel/blog/page.js"
+}
