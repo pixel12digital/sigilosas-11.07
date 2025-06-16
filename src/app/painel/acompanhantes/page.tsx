@@ -30,7 +30,7 @@ export default function AcompanhantesPage() {
     try {
       const { data, error } = await supabase
         .from('acompanhantes')
-        .select('id, nome, telefone, cidade_id, status, criado_em')
+        .select('id, nome, telefone, cidade_id, status, criado_em, email')
         .order('criado_em', { ascending: false });
 
       console.log('Acompanhantes do banco:', data, error);
@@ -43,6 +43,7 @@ export default function AcompanhantesPage() {
         cidade: item.cidade_id,
         status: item.status,
         criado_em: item.criado_em || "",
+        email: item.email || "",
       })));
     } catch (error) {
       console.error('Erro ao buscar acompanhantes:', error);
