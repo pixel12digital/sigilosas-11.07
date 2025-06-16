@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Acompanhante {
   id: number;
@@ -19,6 +20,7 @@ export default function AcompanhantesPage() {
   const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'todos' | 'aprovado' | 'pendente' | 'rejeitado'>('todos');
+  const router = useRouter();
 
   useEffect(() => {
     fetchAcompanhantes();
@@ -28,18 +30,19 @@ export default function AcompanhantesPage() {
     try {
       const { data, error } = await supabase
         .from('acompanhantes')
-        .select('id, nome, telefone, cidades(nome), status, data_cadastro')
-        .order('data_cadastro', { ascending: false });
+        .select('id, nome, telefone, cidade_id, status, criado_em')
+        .order('criado_em', { ascending: false });
+
+      console.log('Acompanhantes do banco:', data, error);
 
       if (error) throw error;
       setAcompanhantes((data || []).map((item: any) => ({
         id: item.id,
         nome: item.nome,
         telefone: item.telefone,
-        email: item.email || "",
-        cidade: (item.cidades && item.cidades[0]?.nome) || "",
+        cidade: item.cidade_id,
         status: item.status,
-        criado_em: item.data_cadastro || "",
+        criado_em: item.criado_em || "",
       })));
     } catch (error) {
       console.error('Erro ao buscar acompanhantes:', error);
@@ -165,10 +168,20 @@ export default function AcompanhantesPage() {
                       {acompanhante.status === 'aprovado' ? 'Aprovado' : acompanhante.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.criado_em}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {acompanhante.criado_em
+                      ? new Date(acompanhante.criado_em).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : ''}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
-                      onClick={() => window.open(`/painel/acompanhantes/${acompanhante.id}`, '_blank')}
+                      onClick={() => router.push(`/painel/acompanhantes/${acompanhante.id}`)}
                       className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                     >
                       Revisar
