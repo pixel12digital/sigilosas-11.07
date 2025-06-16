@@ -17,10 +17,19 @@ export default function Home() {
     cidade: '',
     genero: '',
   });
+  const [showPopup, setShowPopup] = useState(true);
 
   useEffect(() => {
     carregarDados();
   }, []);
+
+  useEffect(() => {
+    if (showPopup && typeof window !== 'undefined') {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(() => {}, () => {});
+      }
+    }
+  }, [showPopup]);
 
   const carregarDados = async () => {
     try {
@@ -111,6 +120,41 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8F6F9]">
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-[370px] w-full p-6 border border-[#CFB78B] text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-4xl font-extrabold text-[#4E3950]">18+</span>
+              <div className="text-left">
+                <div className="text-xs font-bold text-[#4E3950] leading-tight">CONTEÚDO</div>
+                <div className="text-base font-bold text-[#4E3950] leading-tight -mt-1">ADULTO</div>
+              </div>
+            </div>
+            <hr className="my-2 border-[#CFB78B]" />
+            <p className="text-[#4E3950] text-base mb-2">
+              Entendo que o site <span className="font-bold">Sigilosas VIP</span> apresenta <span className="font-bold">conteúdo explícito</span> destinado a adultos.<br />
+              <a href="/termos" className="underline text-[#CFB78B]">Termos de uso</a>
+            </p>
+            <hr className="my-2 border-[#CFB78B]" />
+            <div className="mb-2">
+              <div className="text-xs font-bold text-[#4E3950] mb-1">AVISO DE COOKIES E LOCALIZAÇÃO</div>
+              <p className="text-[#4E3950] text-sm">
+                Usamos cookies, tecnologias semelhantes e localização para melhorar sua experiência em nosso site.
+              </p>
+            </div>
+            <hr className="my-2 border-[#CFB78B]" />
+            <div className="text-xs text-[#4E3950] mb-4">
+              A profissão de acompanhante é legalizada no Brasil e deve ser respeitada. <a href="/saiba-mais" className="underline text-[#CFB78B]">Saiba mais</a>
+            </div>
+            <button
+              className="w-full py-3 bg-[#4E3950] text-white rounded-lg font-semibold text-lg tracking-wide transition-colors hover:bg-[#CFB78B] hover:text-[#4E3950]"
+              onClick={() => setShowPopup(false)}
+            >
+              Concordo
+            </button>
+          </div>
+        </div>
+      )}
       <Header config={config} />
       
       {/* Banner principal */}
