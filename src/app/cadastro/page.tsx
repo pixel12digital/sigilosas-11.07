@@ -227,16 +227,16 @@ export default function CadastroAcompanhante() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f6f3f9]">
       {/* Header */}
-      <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-[#e2c98f] shadow-sm">
+      <header className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-[#CFB78B] shadow-sm">
         <div className="flex items-center gap-3">
           <img src="/assets/img/logo.png" alt="SigilosasVip - Logo" className="h-10 w-auto" />
         </div>
-        <Link href="/" className="text-[#CA5272] font-semibold px-4 py-2 rounded-lg border border-[#CA5272] hover:bg-[#CA5272] hover:text-white transition">Voltar para o site</Link>
+        <Link href="/" className="text-[#4E3950] font-semibold px-4 py-2 rounded-lg border border-[#CFB78B] hover:bg-[#CFB78B] hover:text-[#4E3950] transition">Voltar para o site</Link>
       </header>
       <main className="flex-1 flex items-center justify-center">
-        <form className="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-xl space-y-7 border border-[#e2c98f]" onSubmit={handleSubmit} autoComplete="off">
-          <h2 className="text-3xl font-bold mb-2 text-center text-[#2E1530]">Cadastro de Acompanhante</h2>
-          <p className="text-center text-[#CA5272] text-lg mb-6">
+        <form className="w-full max-w-3xl bg-white p-8 rounded-2xl shadow-xl space-y-7 border border-[#CFB78B]" onSubmit={handleSubmit} autoComplete="off">
+          <h2 className="text-3xl font-bold mb-2 text-center text-[#4E3950]">Cadastro de Acompanhante</h2>
+          <p className="text-center text-[#4E3950] text-lg mb-6">
             Preencha seu cadastro completo abaixo. Após o envio, seus dados serão analisados pela equipe. Você receberá as credenciais de acesso por e-mail e, após aprovação, seu perfil será incluído na plataforma Sigilosas VIP.
           </p>
           {/* Dados pessoais */}
@@ -420,7 +420,7 @@ export default function CadastroAcompanhante() {
             </div>
           </div>
           {/* Documentos do perfil */}
-          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#e2c98f]">
+          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#CFB78B]">
             <label className={labelClass}>Documentos do perfil</label>
             <input
               type="file"
@@ -456,7 +456,7 @@ export default function CadastroAcompanhante() {
             </div>
           </div>
           {/* Vídeo de verificação */}
-          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#e2c98f]">
+          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#CFB78B]">
             <label className={labelClass}>Vídeo de verificação</label>
             <input
               type="file"
@@ -481,7 +481,7 @@ export default function CadastroAcompanhante() {
             <div className="text-sm text-[#b89a76] mt-2">Instrução: Grave um vídeo segurando o documento RG ou CNH (com foto) ao lado do seu rosto, mostrando ambos claramente para a câmera.</div>
           </div>
           {/* Galeria de Fotos */}
-          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#e2c98f]">
+          <div className="border rounded-lg p-4 mt-4 bg-[#fdf8ed] border-[#CFB78B]">
             <label className={labelClass}>Galeria de Fotos</label>
             <input
               type="file"
@@ -509,14 +509,11 @@ export default function CadastroAcompanhante() {
           </div>
           {/* Dados de acesso */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-            <div className="col-span-2 mb-2">
-              <p className="text-[#CA5272] text-base font-medium mb-2">O e-mail e a senha informados abaixo serão utilizados para acessar o painel após a aprovação do seu cadastro.</p>
-            </div>
-            <div>
+            <div className="col-span-1 md:col-span-1">
               <label className={labelClass}>E-mail *</label>
               <input type="email" name="email" className={inputClass} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
             </div>
-            <div>
+            <div className="col-span-1 md:col-span-1">
               <label className={labelClass}>Telefone *</label>
               <input type="tel" name="telefone" className={inputClass} value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))} required />
             </div>
@@ -534,7 +531,7 @@ export default function CadastroAcompanhante() {
         </form>
       </main>
       {/* Footer */}
-      <footer className="w-full bg-white border-t border-[#e2c98f] py-4 px-6 text-center text-[#2E1530] text-sm mt-8">
+      <footer className="w-full bg-white border-t border-[#CFB78B] py-4 px-6 text-center text-[#4E3950] text-sm mt-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-2 max-w-3xl mx-auto">
           <span>Sigilosas VIP &copy; {new Date().getFullYear()}</span>
           <span>Contato: <a href="mailto:contato@sigilosasvip.com" className="text-[#CA5272] underline">contato@sigilosasvip.com</a> | WhatsApp: <a href="https://wa.me/5599999999999" className="text-[#CA5272] underline" target="_blank">(99) 99999-9999</a></span>

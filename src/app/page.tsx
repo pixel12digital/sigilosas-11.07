@@ -132,7 +132,7 @@ export default function Home() {
             Um espaço seguro, respeitoso e exclusivo
           </p>
           <div className="flex gap-6 flex-wrap mb-2">
-            <a href="/anunciar" className="btn-secondary text-base md:text-lg px-6 py-3">
+            <a href="/cadastro" className="btn-secondary text-base md:text-lg px-6 py-3">
               Anunciar como acompanhante
             </a>
           </div>
