@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import bcrypt from 'bcryptjs';
 
 export default function LoginPage() {
   const [usuario, setUsuario] = useState('');
@@ -18,26 +16,21 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Buscar admin no Supabase
-      const { data: admin, error: adminError } = await supabase
-        .from('admin')
-        .select('*')
-        .eq('usuario', usuario)
-        .single();
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, senha }),
+      });
 
-      if (adminError || !admin) {
-        setError('Usuário ou senha inválidos!');
+      const result = await res.json();
+
+      if (!res.ok) {
+        setError(result.error || 'Usuário ou senha inválidos!');
         return;
       }
 
-      // Verificar senha (assumindo que está hasheada com bcrypt)
-      // Nota: Em produção, você deve usar uma função de verificação adequada
-      if (await bcrypt.compare(senha, admin.senha)) {
-        // Redirecionar para o painel
-        router.push('/painel');
-      } else {
-        setError('Usuário ou senha inválidos!');
-      }
+      // Redirecionar para o painel
+      router.push('/painel');
     } catch (error) {
       setError('Erro ao fazer login. Tente novamente.');
     } finally {
