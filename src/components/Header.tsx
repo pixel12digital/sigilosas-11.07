@@ -26,10 +26,14 @@ export default function Header({ config }: HeaderProps) {
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleMenu}
-              className="bg-none border-none outline-none cursor-pointer flex items-center"
+              className="bg-none border-none outline-none cursor-pointer flex items-center md:hidden"
               aria-label="Abrir menu"
             >
-              <span className="w-7 h-0.5 bg-[#CFB78B] block rounded-sm relative"></span>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect y="5" width="24" height="2.5" rx="1" fill="#CFB78B"/>
+                <rect y="11" width="24" height="2.5" rx="1" fill="#CFB78B"/>
+                <rect y="17" width="24" height="2.5" rx="1" fill="#CFB78B"/>
+              </svg>
             </button>
             <Link href="/" className="flex items-center gap-2 ml-8">
               <Image 
@@ -44,7 +48,7 @@ export default function Header({ config }: HeaderProps) {
           
           <Link 
             href="/painel" 
-            className="ml-4 flex items-center justify-center text-[#4E3950] hover:text-[#CFB78B]" 
+            className="ml-4 flex items-center justify-center text-[#4E3950] hover:text-[#CFB78B] md:hidden" 
             title="Painel"
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -114,44 +114,60 @@ export default function Home() {
       <Header config={config} />
       
       {/* Banner principal */}
-      <section className="flex items-center justify-between gap-8 py-12 px-4 max-w-7xl mx-auto flex-wrap bg-white border-b border-[#CFB78B]">
-        <div className="flex-1 min-w-[320px] max-w-[600px]">
-          <h1 className="text-4xl text-[#4E3950] font-bold mb-4">
-            A acompanhante trabalha e você contrata!
+      <section
+        className="w-full flex items-center justify-between gap-6 md:gap-10 px-4 md:px-8 lg:px-20 mx-auto flex-wrap"
+        style={{
+          background: "linear-gradient(90deg, #F8F6F9 0%, #CFB78B 50%, #4E3950 100%)",
+          borderBottom: '1px solid #CFB78B',
+          minHeight: 'unset',
+          paddingTop: 16,
+          paddingBottom: 4,
+        }}
+      >
+        <div className="flex-1 min-w-[320px] max-w-[900px] flex flex-col justify-center h-full px-6 pt-8 md:pl-[60px] md:pt-0 md:px-0">
+          <h1 className="w-full max-w-[900px] text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight md:leading-[1.1] break-words text-[#4E3950] relative animate-fade-in">
+            <span className="reluzente-title">CONECTANDO DESEJOS COM ELEGÂNCIA<br />E PRIVACIDADE!</span>
           </h1>
-          <p className="text-xl text-[#4E3950] mb-7">
-            O acordo começa com respeito
+          <p className="text-xl md:text-2xl text-[#4E3950] mb-8 max-w-[600px]">
+            Um espaço seguro, respeitoso e exclusivo
           </p>
-          <div className="flex gap-4 flex-wrap mb-4">
-            <a href="/cadastro" className="btn-primary">
-              Criar perfil de cliente
-            </a>
-            <a href="/anunciar" className="btn-secondary">
+          <div className="flex gap-6 flex-wrap mb-2">
+            <a href="/anunciar" className="btn-secondary text-base md:text-lg px-6 py-3">
               Anunciar como acompanhante
             </a>
           </div>
         </div>
-        <div className="flex-1 min-w-[320px] max-w-[520px] text-right">
+        <div className="flex-1 min-w-[320px] max-w-[700px] flex items-end justify-center mt-[-32px] md:mt-0">
           <img 
-            src={config.banner || '/assets/img/banner.jpg'} 
+            src="/assets/img/imagem_banner.png" 
             alt="Banner principal" 
-            className="w-full max-w-[520px] rounded-2xl shadow-lg object-cover border border-[#CFB78B]"
+            className="w-auto h-[336px] md:h-[416px] lg:h-[480px] object-contain drop-shadow-xl"
+            style={{ background: 'none', maxHeight: '80%', paddingTop: 16, paddingBottom: 4 }}
           />
         </div>
       </section>
 
       {/* Bloco de destaque */}
-      <section className="max-w-4xl mx-auto mb-8 p-8 bg-white rounded-2xl shadow-lg text-center border border-[#CFB78B]">
-        <h2 className="text-3xl text-[#4E3950] font-bold mb-3">
+      <section className="max-w-4xl mx-auto mb-8 p-10 md:p-12 bg-white rounded-2xl shadow-lg text-center border border-[#CFB78B] mt-12">
+        <h2 className="text-3xl text-[#4E3950] font-bold mb-6">
           Sua nova referência em acompanhantes no Brasil!
         </h2>
-        <form onSubmit={handleBuscaCidade} className="flex gap-3 justify-center items-center my-6">
+        <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8">
           <input 
             type="text" 
             id="inputBuscaCidade"
-            placeholder="Buscar acompanhantes por cidade" 
-            className="flex-1 max-w-[320px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
+            placeholder="Buscar por cidade" 
+            className="w-full md:flex-1 md:max-w-[340px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
           />
+          <select 
+            id="inputBuscaGenero"
+            className="w-full md:flex-1 md:max-w-[220px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
+          >
+            <option value="">Todos os gêneros</option>
+            <option value="F">Feminino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Outro</option>
+          </select>
           <button 
             type="submit" 
             className="bg-[#CFB78B] text-[#4E3950] px-7 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors"
@@ -162,10 +178,11 @@ export default function Home() {
             </svg>
           </button>
         </form>
-        <p className="text-[#4E3950] text-lg">Sigiloso, seguro e exclusivo.</p>
+        <p className="text-[#4E3950] text-lg mt-4">Sigiloso, seguro e exclusivo.</p>
       </section>
 
       {/* Filtro compacto */}
+      {/*
       <section className="max-w-2xl mx-auto mb-8 p-6 bg-white rounded-2xl shadow-lg border border-[#CFB78B]">
         <form className="flex gap-4 flex-wrap items-end justify-center">
           <div className="flex-1 min-w-[160px]">
@@ -199,20 +216,19 @@ export default function Home() {
               <option value="">Todos</option>
               <option value="F">Feminino</option>
               <option value="M">Masculino</option>
-              <option value="Outro">Outro</option>
+              <option value="O">Outro</option>
             </select>
           </div>
-          <div className="min-w-[120px]">
-            <button 
-              type="button" 
-              onClick={() => carregarAcompanhantes()}
-              className="bg-[#CFB78B] text-[#4E3950] px-7 py-2 rounded-lg font-semibold text-base w-full hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors"
-            >
-              Buscar
-            </button>
-          </div>
+          <button
+            type="button"
+            className="bg-[#CFB78B] text-[#4E3950] px-8 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors mt-4"
+            onClick={() => carregarAcompanhantes()}
+          >
+            Buscar
+          </button>
         </form>
       </section>
+      */}
 
       {/* Cards de acompanhantes */}
       <section className="max-w-7xl mx-auto mb-10">
@@ -238,7 +254,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Diferenciais */}
+      {/* Bloco de verificação, documentos e fotos reais */}
+      {/*
       <section className="flex gap-8 justify-center mb-10 flex-wrap">
         <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
           <img src="/assets/img/icons/icon-search.svg" alt="Verificação facial" className="h-11 mb-3 mx-auto" />
@@ -253,6 +270,7 @@ export default function Home() {
           <div className="font-medium text-[#4E3950]">Fotos reais</div>
         </div>
       </section>
+      */}
 
       <Footer />
     </div>
