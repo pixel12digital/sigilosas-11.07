@@ -70,10 +70,7 @@ export default function Home() {
       
       let query = supabase
         .from('acompanhantes')
-        .select(`
-          *,
-          cidade: cidade_id(nome)
-        `)
+        .select('id, nome, idade, genero, valor, descricao, destaque, data_cadastro, status, verificado, bairro, aceita_pix, silicone, tatuagens, piercings, atende_casal, local_proprio, seguidores, favoritos, cidade_id, foto, fotos(url, capa)')
         .eq('status', 'aprovado')
         .order('destaque', { ascending: false })
         .order('data_cadastro', { ascending: false });
@@ -89,12 +86,8 @@ export default function Home() {
       const { data, error } = await query.limit(12);
 
       if (error) throw error;
-      setAcompanhantes(
-        (data || []).map((item: any) => ({
-          ...item,
-          cidade: item.cidade
-        }))
-      );
+      const acompanhantesVisiveis = data?.filter(a => a.status === 'aprovado') || [];
+      setAcompanhantes(acompanhantesVisiveis);
     } catch (error) {
       console.error('Erro ao carregar acompanhantes:', error);
     } finally {
@@ -346,12 +339,15 @@ export default function Home() {
           {loading ? (
             <LoadingSpinner />
           ) : acompanhantes.length > 0 ? (
-            acompanhantes.map(acompanhante => (
-              <AcompanhanteCard 
-                key={acompanhante.id} 
-                acompanhante={acompanhante} 
-              />
-            ))
+            acompanhantes.map(acompanhante => {
+              const cidadeNome = cidades.find(c => c.id === acompanhante.cidade_id)?.nome || '';
+              return (
+                <AcompanhanteCard 
+                  key={acompanhante.id} 
+                  acompanhante={{ ...acompanhante, cidade: cidadeNome }} 
+                />
+              );
+            })
           ) : (
             <div className="col-span-full text-center py-8">
               <p className="text-lg text-[#4E3950]">Nenhum acompanhante encontrado</p>

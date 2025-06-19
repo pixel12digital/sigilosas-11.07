@@ -2,37 +2,48 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function LoginPage() {
-  const [usuario, setUsuario] = useState('');
-  const [senha, setSenha] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, senha }),
+      console.log('🔄 Iniciando login com Supabase Auth...');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
 
-      const result = await res.json();
-
-      if (!res.ok) {
-        setError(result.error || 'Usuário ou senha inválidos!');
+      if (error) {
+        console.error('❌ Erro no login:', error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Email ou senha inválidos!');
+        } else {
+          setError('Erro ao fazer login. Tente novamente.');
+        }
         return;
       }
 
-      // Redirecionar para o painel
-      router.push('/painel');
+      if (data?.session) {
+        console.log('✅ Login bem-sucedido!');
+        router.push('/painel');
+        router.refresh();
+      }
     } catch (error) {
-      setError('Erro ao fazer login. Tente novamente.');
+      console.error('❌ Erro inesperado:', error);
+      setError('Erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -46,17 +57,27 @@ export default function LoginPage() {
         </h2>
         
         {error && (
-          <p className="text-red-600 text-center mb-4 text-lg">
-            {error}
-          </p>
+          <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-center text-lg">
+              {error}
+            </p>
+          </div>
+        )}
+
+        {success && (
+          <div className="w-full mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-600 text-center text-lg">
+              {success}
+            </p>
+          </div>
         )}
         
         <input
-          type="text"
-          name="usuario"
-          placeholder="Usuário"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
+          type="email"
+          name="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           autoFocus
           className="w-full mb-4 px-4 py-3 rounded-lg border-[1.5px] border-[#B89A76] text-lg bg-[#f9f9f9] text-[#301732] outline-none transition-colors focus:border-[#301732]"
@@ -64,10 +85,10 @@ export default function LoginPage() {
         
         <input
           type="password"
-          name="senha"
+          name="password"
           placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
           className="w-full mb-4 px-4 py-3 rounded-lg border-[1.5px] border-[#B89A76] text-lg bg-[#f9f9f9] text-[#301732] outline-none transition-colors focus:border-[#301732]"
         />

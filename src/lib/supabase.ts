@@ -25,7 +25,7 @@ export interface Acompanhante {
   descricao?: string;
   destaque: boolean;
   data_cadastro: string;
-  status: 'pendente' | 'aprovado' | 'rejeitado';
+  status: 'pendente' | 'aprovado' | 'rejeitado' | 'bloqueado';
   disponibilidade?: string;
   verificado: boolean;
   bairro?: string;

@@ -1,58 +1,96 @@
 -- Configuração do Supabase Storage para Sigilosas VIP
 
--- 1. Criar bucket para imagens
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('images', 'images', true)
+-- 1. Criar buckets
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+('images', 'images', true),
+('documents', 'documents', false),
+('videos', 'videos', false)
 ON CONFLICT (id) DO NOTHING;
 
--- 2. Criar bucket para documentos
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('documents', 'documents', false)
-ON CONFLICT (id) DO NOTHING;
+-- 2. Políticas para bucket de imagens (público)
+CREATE POLICY "Imagens são publicamente visíveis"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'images' );
 
--- 3. Criar bucket para vídeos
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('videos', 'videos', false)
-ON CONFLICT (id) DO NOTHING;
+CREATE POLICY "Usuários autenticados podem fazer upload de imagens"
+ON storage.objects FOR INSERT
+WITH CHECK ( 
+    bucket_id = 'images' 
+    AND auth.role() IN ('authenticated', 'admin')
+);
 
--- 4. Políticas para bucket de imagens (público)
-CREATE POLICY "Public Access Images" ON storage.objects 
-FOR SELECT USING (bucket_id = 'images');
+CREATE POLICY "Usuários podem gerenciar suas próprias imagens"
+ON storage.objects FOR UPDATE
+USING ( 
+    bucket_id = 'images'
+    AND owner = auth.uid()
+);
 
-CREATE POLICY "Authenticated users can upload images" ON storage.objects 
-FOR INSERT WITH CHECK (bucket_id = 'images' AND auth.role() = 'authenticated');
+CREATE POLICY "Usuários podem deletar suas próprias imagens"
+ON storage.objects FOR DELETE
+USING ( 
+    bucket_id = 'images'
+    AND owner = auth.uid()
+);
 
-CREATE POLICY "Users can update own images" ON storage.objects 
-FOR UPDATE USING (bucket_id = 'images' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- 3. Políticas para bucket de documentos (privado)
+CREATE POLICY "Apenas admin pode ver documentos"
+ON storage.objects FOR SELECT
+USING ( 
+    bucket_id = 'documents' 
+    AND auth.role() = 'admin'
+);
 
-CREATE POLICY "Users can delete own images" ON storage.objects 
-FOR DELETE USING (bucket_id = 'images' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Usuários autenticados podem fazer upload de documentos"
+ON storage.objects FOR INSERT
+WITH CHECK ( 
+    bucket_id = 'documents' 
+    AND auth.role() IN ('authenticated', 'admin')
+);
 
--- 5. Políticas para bucket de documentos (privado)
-CREATE POLICY "Authenticated users can upload documents" ON storage.objects 
-FOR INSERT WITH CHECK (bucket_id = 'documents' AND auth.role() = 'authenticated');
+CREATE POLICY "Apenas admin pode gerenciar documentos"
+ON storage.objects FOR UPDATE
+USING ( 
+    bucket_id = 'documents'
+    AND auth.role() = 'admin'
+);
 
-CREATE POLICY "Users can view own documents" ON storage.objects 
-FOR SELECT USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Apenas admin pode deletar documentos"
+ON storage.objects FOR DELETE
+USING ( 
+    bucket_id = 'documents'
+    AND auth.role() = 'admin'
+);
 
-CREATE POLICY "Users can update own documents" ON storage.objects 
-FOR UPDATE USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- 4. Políticas para bucket de vídeos (privado)
+CREATE POLICY "Apenas admin pode ver vídeos"
+ON storage.objects FOR SELECT
+USING ( 
+    bucket_id = 'videos' 
+    AND auth.role() = 'admin'
+);
 
-CREATE POLICY "Users can delete own documents" ON storage.objects 
-FOR DELETE USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Usuários autenticados podem fazer upload de vídeos"
+ON storage.objects FOR INSERT
+WITH CHECK ( 
+    bucket_id = 'videos' 
+    AND auth.role() IN ('authenticated', 'admin')
+);
 
--- 6. Políticas para bucket de vídeos (privado)
-CREATE POLICY "Authenticated users can upload videos" ON storage.objects 
-FOR INSERT WITH CHECK (bucket_id = 'videos' AND auth.role() = 'authenticated');
+CREATE POLICY "Apenas admin pode gerenciar vídeos"
+ON storage.objects FOR UPDATE
+USING ( 
+    bucket_id = 'videos'
+    AND auth.role() = 'admin'
+);
 
-CREATE POLICY "Users can view own videos" ON storage.objects 
-FOR SELECT USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can update own videos" ON storage.objects 
-FOR UPDATE USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can delete own videos" ON storage.objects 
-FOR DELETE USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Apenas admin pode deletar vídeos"
+ON storage.objects FOR DELETE
+USING ( 
+    bucket_id = 'videos'
+    AND auth.role() = 'admin'
+);
 
 -- 7. Função para gerar URLs de upload
 CREATE OR REPLACE FUNCTION generate_upload_url(

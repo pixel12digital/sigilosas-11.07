@@ -1,49 +1,93 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { Database } from '@/lib/database.types';
 
 interface Acompanhante {
   id: number;
   nome: string;
-  email: string;
-  telefone: string;
-  cidade: string;
-  status: 'aprovado' | 'pendente' | 'rejeitado';
-  criado_em: string;
-  cidades?: { nome: string };
+  email: string | null;
+  telefone: string | null;
+  cidade: string | null;
+  status: 'aprovado' | 'pendente' | 'rejeitado' | 'bloqueado';
+  criado_em: string | null;
+  foto: string | null;
 }
 
 export default function AcompanhantesPage() {
   const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'todos' | 'aprovado' | 'pendente' | 'rejeitado'>('todos');
+  const [filter, setFilter] = useState<'todos' | 'aprovado' | 'pendente' | 'rejeitado' | 'bloqueado'>('todos');
   const router = useRouter();
+  const supabase = createClientComponentClient<Database>();
+  const [cidades, setCidades] = useState<{[key: number]: string}>({});
+
+  const fetchCidades = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cidades')
+        .select('id, nome');
+
+      if (error) throw error;
+
+      const cidadesMap = (data || []).reduce((acc: {[key: number]: string}, cidade) => {
+        acc[cidade.id] = cidade.nome;
+        return acc;
+      }, {});
+
+      setCidades(cidadesMap);
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+    }
+  };
 
   useEffect(() => {
     fetchAcompanhantes();
+    fetchCidades();
   }, []);
 
   const fetchAcompanhantes = async () => {
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from('acompanhantes')
-        .select('id, nome, telefone, cidade_id, status, criado_em, email')
+        .select(`
+          id,
+          nome,
+          telefone,
+          cidade_id,
+          status,
+          criado_em,
+          email,
+          fotos (
+            id,
+            url,
+            capa
+          )
+        `)
         .order('criado_em', { ascending: false });
 
-      console.log('Acompanhantes do banco:', data, error);
+      console.log('Resposta do Supabase:', { data, error });
 
-      if (error) throw error;
-      setAcompanhantes((data || []).map((item: any) => ({
+      if (error) {
+        console.error('Erro ao buscar acompanhantes:', error);
+        throw error;
+      }
+
+      // Mapear os dados para o formato esperado pela interface
+      setAcompanhantes((data || []).map(item => ({
         id: item.id,
         nome: item.nome,
-        telefone: item.telefone,
-        cidade: item.cidade_id,
+        telefone: item.telefone || '',
+        cidade: cidades[item.cidade_id || 0] || '',
         status: item.status,
-        criado_em: item.criado_em || "",
-        email: item.email || "",
+        criado_em: item.criado_em || '',
+        email: item.email || '',
+        foto: item.fotos?.find(f => f.capa)?.url || item.fotos?.[0]?.url || ''
       })));
     } catch (error) {
       console.error('Erro ao buscar acompanhantes:', error);
@@ -54,15 +98,72 @@ export default function AcompanhantesPage() {
 
   const handleStatusChange = async (id: number, novoStatus: string) => {
     try {
+      console.log('Tentando atualizar status:', { id, novoStatus });
+      
       const { error } = await supabase
         .from('acompanhantes')
         .update({ status: novoStatus })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado do Supabase:', error);
+        throw error;
+      }
+
+      console.log('Status atualizado com sucesso');
       fetchAcompanhantes();
+      alert('Status atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      alert('Erro ao atualizar status. Por favor, verifique o console para mais detalhes.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita.')) {
+      try {
+        // Excluir arquivos do storage
+        const storagePromises = [
+          supabase.storage.from('perfil').remove([`${id}/*`]),
+          supabase.storage.from('documentos').remove([`${id}/*`]),
+          supabase.storage.from('videos-verificacao').remove([`${id}/*`]),
+          supabase.storage.from('galeria').remove([`${id}/*`])
+        ];
+        
+        await Promise.all(storagePromises);
+
+        // Excluir registros das tabelas
+        const deletePromises = [
+          supabase.from('fotos_galeria').delete().eq('acompanhante_id', id),
+          supabase.from('documentos').delete().eq('acompanhante_id', id),
+          supabase.from('videos_verificacao').delete().eq('acompanhante_id', id)
+        ];
+
+        await Promise.all(deletePromises);
+
+        // Por último, excluir o registro principal
+        const { error } = await supabase.from('acompanhantes').delete().eq('id', id);
+        
+        if (error) throw error;
+
+        // Atualizar a lista sem recarregar a página
+        fetchAcompanhantes();
+        alert('Cadastro excluído com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert('Erro ao excluir o cadastro. Por favor, tente novamente.');
+      }
+    }
+  };
+
+  const handleBlock = async (id: string) => {
+    if (confirm('Tem certeza que deseja bloquear este perfil?')) {
+      try {
+        await handleStatusChange(Number(id), 'bloqueado');
+      } catch (error) {
+        console.error('Erro ao bloquear o perfil:', error);
+        alert('Erro ao bloquear o perfil.');
+      }
     }
   };
 
@@ -76,6 +177,7 @@ export default function AcompanhantesPage() {
       case 'aprovado': return 'bg-green-100 text-green-800';
       case 'pendente': return 'bg-yellow-100 text-yellow-800';
       case 'rejeitado': return 'bg-red-100 text-red-800';
+      case 'bloqueado': return 'bg-gray-300 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -140,6 +242,16 @@ export default function AcompanhantesPage() {
         >
           Rejeitados ({acompanhantes.filter(a => a.status === 'rejeitado').length})
         </button>
+        <button
+          onClick={() => setFilter('bloqueado')}
+          className={`px-4 py-2 rounded-md font-semibold transition-colors ${
+            filter === 'bloqueado' 
+              ? 'bg-gray-600 text-white' 
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Bloqueados ({acompanhantes.filter(a => a.status === 'bloqueado').length})
+        </button>
       </div>
 
       {/* Tabela de acompanhantes */}
@@ -166,7 +278,7 @@ export default function AcompanhantesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.cidade}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(acompanhante.status)}`}>
-                      {acompanhante.status === 'aprovado' ? 'Aprovado' : acompanhante.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
+                      {acompanhante.status === 'aprovado' ? 'Aprovado' : acompanhante.status === 'pendente' ? 'Pendente' : acompanhante.status === 'bloqueado' ? 'Bloqueado' : 'Rejeitado'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -181,12 +293,26 @@ export default function AcompanhantesPage() {
                       : ''}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => router.push(`/painel/acompanhantes/${acompanhante.id}`)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                    >
-                      Revisar
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => router.push(`/painel/acompanhantes/${acompanhante.id}`)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Revisar
+                      </button>
+                      <button
+                        onClick={() => handleBlock(acompanhante.id.toString())}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                      >
+                        Bloquear
+                      </button>
+                      <button
+                        onClick={() => handleDelete(acompanhante.id.toString())}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

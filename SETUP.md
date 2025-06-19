@@ -158,3 +158,150 @@ Após a configuração inicial:
 
 **Status Atual:** ✅ Dependências instaladas, estrutura criada
 **Próximo Passo:** Configurar Supabase e variáveis de ambiente 
+
+# Configuração do Projeto
+
+Este documento contém as instruções para configurar o projeto do zero.
+
+## 1. Pré-requisitos
+
+- Node.js 18+ instalado
+- Conta no Supabase (https://supabase.com)
+- Git instalado
+
+## 2. Configuração do Ambiente
+
+1. Clone o repositório:
+```bash
+git clone <url-do-repositorio>
+cd sigilosas-vercel
+```
+
+2. Instale as dependências:
+```bash
+npm install
+```
+
+3. Crie um arquivo `.env.local` com as seguintes variáveis:
+```env
+NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role_do_supabase
+```
+
+## 3. Configuração do Banco de Dados
+
+1. Execute o script de criação do banco:
+```bash
+psql -h seu_host -U seu_usuario -d seu_banco -f supabase-schema.sql
+```
+
+Ou através da interface do Supabase:
+- Vá para Database > SQL Editor
+- Cole o conteúdo de `supabase-schema.sql`
+- Execute o script
+
+2. Configure o storage:
+```bash
+node scripts/setup-storage.js
+```
+
+## 4. Configurações Adicionais
+
+1. Configure as políticas de autenticação no Supabase:
+- Habilite "Email Auth"
+- Configure os templates de email
+- Defina as URLs de redirecionamento
+
+2. Configure os buckets do storage:
+```bash
+psql -h seu_host -U seu_usuario -d seu_banco -f supabase-storage-setup.sql
+```
+
+## 5. Desenvolvimento Local
+
+1. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
+
+2. Acesse http://localhost:3000
+
+## 6. Estrutura do Projeto
+
+```
+src/
+  ├── app/              # Páginas e rotas
+  ├── components/       # Componentes React
+  ├── lib/             # Utilitários e configurações
+  └── styles/          # Estilos globais
+public/
+  ├── assets/          # Arquivos estáticos
+  └── images/          # Imagens
+scripts/               # Scripts de configuração
+supabase/             # Configurações do Supabase
+```
+
+## 7. Comandos Úteis
+
+- `npm run dev`: Inicia o servidor de desenvolvimento
+- `npm run build`: Gera build de produção
+- `npm run start`: Inicia o servidor de produção
+- `npm run lint`: Executa o linter
+- `npm run test`: Executa os testes
+
+## 8. Troubleshooting
+
+### Problemas Comuns
+
+1. Erro de conexão com Supabase:
+- Verifique as variáveis de ambiente
+- Confirme se as chaves estão corretas
+- Verifique se o IP está liberado
+
+2. Erro no upload de arquivos:
+- Verifique as políticas do storage
+- Confirme os limites de tamanho
+- Verifique as permissões dos buckets
+
+3. Erro de autenticação:
+- Verifique as configurações de auth
+- Confirme as URLs de redirecionamento
+- Verifique os templates de email
+
+### Logs e Monitoramento
+
+- Logs do servidor: `npm run dev`
+- Logs do Supabase: Dashboard > Logs
+- Monitoramento: Dashboard > Monitoring
+
+## 9. Segurança
+
+1. Nunca comite:
+- Arquivos .env
+- Chaves de API
+- Credenciais
+- Tokens de acesso
+
+2. Mantenha atualizado:
+- Dependências (npm audit)
+- Node.js
+- Supabase CLI
+
+## 10. Deploy
+
+1. Vercel:
+```bash
+vercel
+```
+
+2. Configure as variáveis de ambiente no Vercel
+
+3. Configure o domínio personalizado
+
+## Suporte
+
+Para suporte, entre em contato através de:
+- Email: suporte@sigilosasvip.com
+- Discord: [link]
+- GitHub Issues 

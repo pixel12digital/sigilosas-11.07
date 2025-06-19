@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Acompanhante } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface AcompanhanteCardProps {
   acompanhante: Acompanhante & {
@@ -15,11 +16,31 @@ interface AcompanhanteCardProps {
 export default function AcompanhanteCard({ acompanhante }: AcompanhanteCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const supabase = createClientComponentClient();
+
+  // Adicionar logs para debug
+  console.log('Dados do acompanhante:', {
+    id: acompanhante.id,
+    nome: acompanhante.nome,
+    foto: acompanhante.foto,
+    fotos: acompanhante.fotos
+  });
 
   const fotoCapa = acompanhante.fotos?.find(foto => foto.capa)?.url || 
                    acompanhante.fotos?.[0]?.url || 
                    acompanhante.foto ||
                    '/assets/img/placeholder.jpg';
+  
+  console.log('Foto selecionada:', fotoCapa);
+
+  // Função para obter URL pública da foto
+  const getFotoUrl = (fotoPath: string) => {
+    if (!fotoPath) return '';
+    const { data: { publicUrl } } = supabase.storage
+      .from('perfil')
+      .getPublicUrl(fotoPath.split('/').pop() || '');
+    return publicUrl;
+  };
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -44,12 +65,18 @@ export default function AcompanhanteCard({ acompanhante }: AcompanhanteCardProps
         {/* Imagem */}
         <div className="relative mb-4 overflow-hidden rounded-lg">
           <Image
-            src={imageError ? '/assets/img/placeholder.jpg' : fotoCapa}
+            src={imageError ? '/assets/img/placeholder.jpg' : getFotoUrl(fotoCapa) || '/assets/img/placeholder.png'}
             alt={`Foto de ${acompanhante.nome}`}
             width={300}
             height={400}
             className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              console.error('Erro ao carregar imagem:', {
+                src: e.currentTarget.src,
+                error: e
+              });
+              setImageError(true);
+            }}
           />
           
           {/* Badges */}

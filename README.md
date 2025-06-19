@@ -172,4 +172,58 @@ Para dúvidas ou problemas:
 
 ## 📄 Licença
 
-Este projeto é privado e proprietário. 
+Este projeto é privado e proprietário.
+
+# Sigilosas VIP - Painel Administrativo
+
+## Configuração Inicial
+
+1. Clone o repositório
+2. Instale as dependências:
+```bash
+npm install
+```
+
+3. Configure as variáveis de ambiente:
+- Crie um arquivo `.env.local` na raiz do projeto com:
+```
+NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_de_servico_do_supabase
+```
+
+4. Execute as migrações do banco de dados:
+```bash
+npx supabase migration up
+```
+
+5. Atualize a senha do admin:
+```bash
+node scripts/update-admin-password.js
+```
+
+6. Execute o projeto:
+```bash
+npm run dev
+```
+
+7. Acesse o painel:
+- URL: http://localhost:3000/login
+- Usuário: admin
+- Senha: admin123
+
+## Estrutura do Projeto
+
+- `/src/app`: Páginas e rotas da aplicação
+- `/src/components`: Componentes reutilizáveis
+- `/src/lib`: Utilitários e configurações
+- `/public`: Arquivos estáticos
+- `/scripts`: Scripts de configuração
+- `/supabase`: Configurações do Supabase
+
+## Tecnologias
+
+- Next.js 13 (App Router)
+- Supabase (Banco de Dados)
+- Tailwind CSS
+- TypeScript 
