@@ -159,7 +159,7 @@ export default function EditarAcompanhanteAdmin() {
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+    setForm((f: any) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSave = async () => {
@@ -185,7 +185,7 @@ export default function EditarAcompanhanteAdmin() {
     setFotoMsg("Enviando...");
     const file = e.target.files[0];
     const url = await handleFotoUpload(file);
-    if (url) setForm({ ...form, foto: url });
+    if (url) setForm((f: any) => ({ ...f, foto: url }));
     setFotoMsg("Foto enviada com sucesso!");
   };
 
@@ -195,7 +195,7 @@ export default function EditarAcompanhanteAdmin() {
     // Remove do array
     const galeria = form.galeria_fotos.filter((f: string) => f !== fotoUrl);
     const { error } = await supabase.from('acompanhantes').update({ galeria_fotos: galeria }).eq('id', id);
-    if (!error) setForm({ ...form, galeria_fotos: galeria });
+    if (!error) setForm((f: any) => ({ ...f, galeria_fotos: galeria }));
     // Opcional: remover do storage (não obrigatório, mas recomendado)
     const path = fotoUrl.split('/acompanhantes/')[1];
     if (path) await supabase.storage.from('acompanhantes').remove([path]);
@@ -213,15 +213,15 @@ export default function EditarAcompanhanteAdmin() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className={labelClass}>Nome do acompanhante *</label>
-                <input type="text" name="nome" className={inputClass} value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} required />
+                <input type="text" name="nome" className={inputClass} value={form.nome} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} required />
               </div>
               <div>
                 <label className={labelClass}>Idade *</label>
-                <input type="number" name="idade" className={inputClass} value={form.idade} onChange={e => setForm(f => ({ ...f, idade: e.target.value }))} min={18} required />
+                <input type="number" name="idade" className={inputClass} value={form.idade} onChange={e => setForm((f: any) => ({ ...f, idade: e.target.value }))} min={18} required />
               </div>
               <div>
                 <label className={labelClass}>Gênero *</label>
-                <select name="genero" className={inputClass} value={form.genero} onChange={e => setForm(f => ({ ...f, genero: e.target.value }))} required>
+                <select name="genero" className={inputClass} value={form.genero} onChange={e => setForm((f: any) => ({ ...f, genero: e.target.value }))} required>
                   <option value="">Selecione</option>
                   <option value="F">Feminino</option>
                   <option value="M">Masculino</option>
@@ -235,7 +235,7 @@ export default function EditarAcompanhanteAdmin() {
                   className={inputClass}
                   value={form.genitalia}
                   onChange={e => {
-                    setForm(f => ({ ...f, genitalia: e.target.value }));
+                    setForm((f: any) => ({ ...f, genitalia: e.target.value }));
                     setShowGenitaliaOutro(e.target.value === "Outro");
                   }}
                 >
@@ -250,7 +250,7 @@ export default function EditarAcompanhanteAdmin() {
                     className={inputClass + " mt-2"}
                     placeholder="Descreva a genitália"
                     value={form.genitalia_outro || ""}
-                    onChange={e => setForm(f => ({ ...f, genitalia_outro: e.target.value }))}
+                    onChange={e => setForm((f: any) => ({ ...f, genitalia_outro: e.target.value }))}
                   />
                 )}
               </div>
@@ -261,7 +261,7 @@ export default function EditarAcompanhanteAdmin() {
                   className={inputClass}
                   value={form.preferencia_sexual}
                   onChange={e => {
-                    setForm(f => ({ ...f, preferencia_sexual: e.target.value }));
+                    setForm((f: any) => ({ ...f, preferencia_sexual: e.target.value }));
                     setShowPrefOutro(e.target.value === "Outro");
                   }}
                 >
@@ -277,17 +277,17 @@ export default function EditarAcompanhanteAdmin() {
                     className={inputClass + " mt-2"}
                     placeholder="Descreva a preferência sexual"
                     value={form.preferencia_sexual_outro || ""}
-                    onChange={e => setForm(f => ({ ...f, preferencia_sexual_outro: e.target.value }))}
+                    onChange={e => setForm((f: any) => ({ ...f, preferencia_sexual_outro: e.target.value }))}
                   />
                 )}
               </div>
               <div>
                 <label className={labelClass}>Peso (kg)</label>
-                <input type="text" name="peso" className={inputClass} value={form.peso} onChange={e => setForm(f => ({ ...f, peso: e.target.value }))} />
+                <input type="text" name="peso" className={inputClass} value={form.peso} onChange={e => setForm((f: any) => ({ ...f, peso: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Altura (m)</label>
-                <input type="text" name="altura" className={inputClass} value={form.altura} onChange={e => setForm(f => ({ ...f, altura: e.target.value }))} />
+                <input type="text" name="altura" className={inputClass} value={form.altura} onChange={e => setForm((f: any) => ({ ...f, altura: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Etnia</label>
@@ -295,7 +295,7 @@ export default function EditarAcompanhanteAdmin() {
                   name="etnia"
                   className={inputClass}
                   value={form.etnia}
-                  onChange={e => setForm(f => ({ ...f, etnia: e.target.value }))}
+                  onChange={e => setForm((f: any) => ({ ...f, etnia: e.target.value }))}
                 >
                   <option value="">Selecione</option>
                   <option value="Branca">Branca</option>
@@ -308,42 +308,42 @@ export default function EditarAcompanhanteAdmin() {
               </div>
               <div>
                 <label className={labelClass}>Cor dos olhos</label>
-                <input type="text" name="cor_olhos" className={inputClass} value={form.cor_olhos} onChange={e => setForm(f => ({ ...f, cor_olhos: e.target.value }))} />
+                <input type="text" name="cor_olhos" className={inputClass} value={form.cor_olhos} onChange={e => setForm((f: any) => ({ ...f, cor_olhos: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Estilo de cabelo</label>
-                <input type="text" name="estilo_cabelo" className={inputClass} value={form.estilo_cabelo} onChange={e => setForm(f => ({ ...f, estilo_cabelo: e.target.value }))} />
+                <input type="text" name="estilo_cabelo" className={inputClass} value={form.estilo_cabelo} onChange={e => setForm((f: any) => ({ ...f, estilo_cabelo: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Tamanho do cabelo</label>
-                <input type="text" name="tamanho_cabelo" className={inputClass} value={form.tamanho_cabelo} onChange={e => setForm(f => ({ ...f, tamanho_cabelo: e.target.value }))} />
+                <input type="text" name="tamanho_cabelo" className={inputClass} value={form.tamanho_cabelo} onChange={e => setForm((f: any) => ({ ...f, tamanho_cabelo: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Tamanho do pé</label>
-                <input type="text" name="tamanho_pe" className={inputClass} value={form.tamanho_pe} onChange={e => setForm(f => ({ ...f, tamanho_pe: e.target.value }))} />
+                <input type="text" name="tamanho_pe" className={inputClass} value={form.tamanho_pe} onChange={e => setForm((f: any) => ({ ...f, tamanho_pe: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-8 items-center flex-wrap mb-2">
-              <label className={labelClass}><input type="checkbox" checked={form.silicone} onChange={e => setForm(f => ({ ...f, silicone: e.target.checked }))} className={checkboxClass} />Silicone</label>
-              <label className={labelClass}><input type="checkbox" checked={form.tatuagens} onChange={e => setForm(f => ({ ...f, tatuagens: e.target.checked }))} className={checkboxClass} />Tatuagens</label>
-              <label className={labelClass}><input type="checkbox" checked={form.piercings} onChange={e => setForm(f => ({ ...f, piercings: e.target.checked }))} className={checkboxClass} />Piercings</label>
+              <label className={labelClass}><input type="checkbox" checked={form.silicone} onChange={e => setForm((f: any) => ({ ...f, silicone: e.target.checked }))} className={checkboxClass} />Silicone</label>
+              <label className={labelClass}><input type="checkbox" checked={form.tatuagens} onChange={e => setForm((f: any) => ({ ...f, tatuagens: e.target.checked }))} className={checkboxClass} />Tatuagens</label>
+              <label className={labelClass}><input type="checkbox" checked={form.piercings} onChange={e => setForm((f: any) => ({ ...f, piercings: e.target.checked }))} className={checkboxClass} />Piercings</label>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className={labelClass}>Fumante</label>
-                <input type="text" name="fumante" className={inputClass} value={form.fumante} onChange={e => setForm(f => ({ ...f, fumante: e.target.value }))} />
+                <input type="text" name="fumante" className={inputClass} value={form.fumante} onChange={e => setForm((f: any) => ({ ...f, fumante: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Idiomas</label>
-                <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={e => setForm(f => ({ ...f, idiomas: e.target.value }))} />
+                <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={e => setForm((f: any) => ({ ...f, idiomas: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Endereço</label>
-                <input type="text" name="endereco" className={inputClass} value={form.endereco} onChange={e => setForm(f => ({ ...f, endereco: e.target.value }))} />
+                <input type="text" name="endereco" className={inputClass} value={form.endereco} onChange={e => setForm((f: any) => ({ ...f, endereco: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Cidade *</label>
-                <select name="cidade_id" className={inputClass} value={form.cidade_id} onChange={e => setForm(f => ({ ...f, cidade_id: e.target.value }))} required>
+                <select name="cidade_id" className={inputClass} value={form.cidade_id} onChange={e => setForm((f: any) => ({ ...f, cidade_id: e.target.value }))} required>
                   <option value="">Selecione</option>
                   {cidades.map(c => (
                     <option key={c.id} value={c.id}>{c.nome}</option>
@@ -352,24 +352,24 @@ export default function EditarAcompanhanteAdmin() {
               </div>
               <div>
                 <label className={labelClass}>Clientes em conjunto</label>
-                <input type="number" name="clientes_conjunto" className={inputClass} value={form.clientes_conjunto} onChange={e => setForm(f => ({ ...f, clientes_conjunto: e.target.value }))} />
+                <input type="number" name="clientes_conjunto" className={inputClass} value={form.clientes_conjunto} onChange={e => setForm((f: any) => ({ ...f, clientes_conjunto: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Atende</label>
-                <input type="text" name="atende" className={inputClass} value={form.atende} onChange={e => setForm(f => ({ ...f, atende: e.target.value }))} />
+                <input type="text" name="atende" className={inputClass} value={form.atende} onChange={e => setForm((f: any) => ({ ...f, atende: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Horário de expediente</label>
-                <input type="text" name="horario_expediente" className={inputClass} value={form.horario_expediente} onChange={e => setForm(f => ({ ...f, horario_expediente: e.target.value }))} />
+                <input type="text" name="horario_expediente" className={inputClass} value={form.horario_expediente} onChange={e => setForm((f: any) => ({ ...f, horario_expediente: e.target.value }))} />
               </div>
               <div>
                 <label className={labelClass}>Formas de pagamento</label>
-                <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={e => setForm(f => ({ ...f, formas_pagamento: e.target.value }))} />
+                <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={e => setForm((f: any) => ({ ...f, formas_pagamento: e.target.value }))} />
               </div>
             </div>
             <div>
               <label className={labelClass}>Descrição</label>
-              <textarea name="descricao" className={inputClass} rows={4} value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} />
+              <textarea name="descricao" className={inputClass} rows={4} value={form.descricao} onChange={e => setForm((f: any) => ({ ...f, descricao: e.target.value }))} />
             </div>
             <div>
               <label className={labelClass}>E-mail</label>
@@ -407,7 +407,7 @@ export default function EditarAcompanhanteAdmin() {
                   }
                   const novosDocs = Array.isArray(form.documentos) ? [...form.documentos, ...uploadedUrls] : uploadedUrls;
                   await supabase.from('acompanhantes').update({ documentos: novosDocs }).eq('id', id);
-                  setForm(f => ({ ...f, documentos: novosDocs }));
+                  setForm((f: any) => ({ ...f, documentos: novosDocs }));
                 }}
               />
               <div className="flex gap-4 mt-3 flex-wrap">
@@ -425,7 +425,7 @@ export default function EditarAcompanhanteAdmin() {
                       onClick={async () => {
                         const novosDocs = form.documentos.filter((_: any, i: number) => i !== idx);
                         await supabase.from('acompanhantes').update({ documentos: novosDocs }).eq('id', id);
-                        setForm(f => ({ ...f, documentos: novosDocs }));
+                        setForm((f: any) => ({ ...f, documentos: novosDocs }));
                       }}
                       title="Remover"
                     >×</button>
@@ -447,7 +447,7 @@ export default function EditarAcompanhanteAdmin() {
                     await supabase.storage.from('fotos').upload(path, file);
                     const { data: { publicUrl } } = supabase.storage.from('fotos').getPublicUrl(path);
                     await supabase.from('acompanhantes').update({ video_verificacao: publicUrl }).eq('id', id);
-                    setForm(f => ({ ...f, video_verificacao: publicUrl }));
+                    setForm((f: any) => ({ ...f, video_verificacao: publicUrl }));
                   }
                 }}
               />
@@ -461,7 +461,7 @@ export default function EditarAcompanhanteAdmin() {
                       className="absolute -top-2 -right-2 bg-[#CA5272] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-[#a03a5a]"
                       onClick={async () => {
                         await supabase.from('acompanhantes').update({ video_verificacao: null }).eq('id', id);
-                        setForm(f => ({ ...f, video_verificacao: null }));
+                        setForm((f: any) => ({ ...f, video_verificacao: null }));
                       }}
                       title="Remover vídeo"
                     >×</button>
@@ -496,7 +496,7 @@ export default function EditarAcompanhanteAdmin() {
                     const novaGaleria = Array.isArray(form.galeria_fotos) ? [...form.galeria_fotos.filter(Boolean), ...uploadedUrls] : uploadedUrls;
                     const { error } = await supabase.from('acompanhantes').update({ galeria_fotos: novaGaleria }).eq('id', id);
                     if (error) setMsg('Erro ao salvar galeria: ' + error.message);
-                    else setForm(f => ({ ...f, galeria_fotos: novaGaleria }));
+                    else setForm((f: any) => ({ ...f, galeria_fotos: novaGaleria }));
                   }
                 }}
               />
@@ -517,7 +517,7 @@ export default function EditarAcompanhanteAdmin() {
                         const novaGaleria = form.galeria_fotos.filter((_: any, i: number) => i !== idx && Boolean(_));
                         const { error } = await supabase.from('acompanhantes').update({ galeria_fotos: novaGaleria.length > 0 ? novaGaleria : null }).eq('id', id);
                         if (error) setMsg('Erro ao remover foto: ' + error.message);
-                        else setForm(f => ({ ...f, galeria_fotos: novaGaleria }));
+                        else setForm((f: any) => ({ ...f, galeria_fotos: novaGaleria }));
                       }}
                       title="Remover"
                     >×</button>
