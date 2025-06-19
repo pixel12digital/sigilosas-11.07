@@ -19,7 +19,7 @@ export default function Home() {
   });
   const [showPopup, setShowPopup] = useState(true);
   const [cidadeInput, setCidadeInput] = useState('');
-  const [cidadeIdSelecionada, setCidadeIdSelecionada] = useState('');
+  const [cidadeIdSelecionada, setCidadeIdSelecionada] = useState<number | string | null>(null);
   const [sugestoesCidades, setSugestoesCidades] = useState<Cidade[]>([]);
   const sugestoesRef = useRef<HTMLDivElement>(null);
 
@@ -112,7 +112,7 @@ export default function Home() {
   const handleCidadeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const valor = e.target.value;
     setCidadeInput(valor);
-    setCidadeIdSelecionada('');
+    setCidadeIdSelecionada(null);
     if (valor.length >= 3) {
       const sugestoes = cidades.filter(c => c.nome.toLowerCase().includes(valor.toLowerCase()));
       setSugestoesCidades(sugestoes);
@@ -142,7 +142,7 @@ export default function Home() {
     event.preventDefault();
     const inputGenero = document.getElementById('inputBuscaGenero') as HTMLSelectElement;
     const genero = inputGenero.value;
-    const cidadeId = cidadeIdSelecionada;
+    const cidadeId = cidadeIdSelecionada ? String(cidadeIdSelecionada) : '';
     const novosFiltros = {
       cidade: cidadeId,
       genero: genero
