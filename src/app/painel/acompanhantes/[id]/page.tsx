@@ -110,11 +110,11 @@ export default function EditarAcompanhanteAdmin() {
     const payload = { ...form };
     // Garante que galeria_fotos, documentos e outros arrays sejam arrays de strings ou null
     if (Array.isArray(payload.galeria_fotos)) {
-      payload.galeria_fotos = payload.galeria_fotos.filter(f => typeof f === 'string' && f.startsWith('http'));
+      payload.galeria_fotos = payload.galeria_fotos.filter((f: string) => typeof f === 'string' && f.startsWith('http'));
       if (payload.galeria_fotos.length === 0) payload.galeria_fotos = null;
     }
     if (Array.isArray(payload.documentos)) {
-      payload.documentos = payload.documentos.filter(f => typeof f === 'string' && f.length > 0);
+      payload.documentos = payload.documentos.filter((f: string) => typeof f === 'string' && f.length > 0);
       if (payload.documentos.length === 0) payload.documentos = null;
     }
     if (payload.video_verificacao && typeof payload.video_verificacao !== 'string') {
