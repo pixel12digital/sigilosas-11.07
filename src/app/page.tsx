@@ -341,29 +341,21 @@ export default function Home() {
       */}
 
       {/* Cards de acompanhantes */}
-      <section id="secao-acompanhantes" className="max-w-7xl mx-auto mb-10">
-        <h3 className="text-2xl text-[#4E3950] font-bold mb-4 text-center">
-          Acompanhantes em destaque
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
-          {loading ? (
-            <LoadingSpinner />
-          ) : acompanhantes.length > 0 ? (
-            acompanhantes.map(acompanhante => {
-              const cidadeNome = cidades.find(c => c.id === acompanhante.cidade_id)?.nome || '';
-              return (
-                <AcompanhanteCard 
-                  key={acompanhante.id} 
-                  acompanhante={{ ...acompanhante, cidade: cidadeNome }} 
-                />
-              );
-            })
-          ) : (
-            <div className="col-span-full text-center py-8">
-              <p className="text-lg text-[#4E3950]">Nenhum acompanhante encontrado</p>
-              <span className="text-sm text-[#CFB78B]">Tente ajustar os filtros</span>
-            </div>
-          )}
+      <section id="secao-acompanhantes" className="container mx-auto py-12 px-4">
+        <h2 className="text-3xl font-bold text-center text-[#4E3950] mb-8">
+          Acompanhantes em Destaque
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {acompanhantes.map(acompanhante => {
+            const cidadeNome = cidades.find(c => c.id === acompanhante.cidade_id)?.nome;
+            return (
+              <AcompanhanteCard
+                key={acompanhante.id}
+                acompanhante={acompanhante}
+                cidadeNome={cidadeNome}
+              />
+            );
+          })}
         </div>
       </section>
 
