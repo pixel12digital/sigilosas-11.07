@@ -8,8 +8,6 @@ interface Cidade {
   id: number;
   nome: string;
   estado: string;
-  status: 'ativo' | 'inativo';
-  criado_em: string;
 }
 
 export default function CidadesPage() {
@@ -20,6 +18,8 @@ export default function CidadesPage() {
     nome: '',
     estado: ''
   });
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editData, setEditData] = useState<{ nome: string; estado: string }>({ nome: '', estado: '' });
 
   useEffect(() => {
     fetchCidades();
@@ -44,19 +44,21 @@ export default function CidadesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    const nome = (formData.nome || '').trim();
+    const estado = (formData.estado || '').trim();
+    if (!nome || !estado) {
+      setMessage('Preencha todos os campos.');
+      setLoading(false);
+      return;
+    }
     try {
       const { error } = await supabase
         .from('cidades')
         .insert({
-          nome: formData.nome.trim(),
-          estado: formData.estado.trim(),
-          status: 'ativo',
-          criado_em: new Date().toISOString()
+          nome,
+          estado
         });
-
       if (error) throw error;
-
       setMessage('Cidade adicionada com sucesso!');
       setFormData({ nome: '', estado: '' });
       fetchCidades();
@@ -65,20 +67,6 @@ export default function CidadesPage() {
       setMessage('Erro ao adicionar cidade. Tente novamente.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleStatusChange = async (id: number, novoStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('cidades')
-        .update({ status: novoStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-      fetchCidades();
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
     }
   };
 
@@ -99,6 +87,60 @@ export default function CidadesPage() {
       console.error('Erro ao excluir cidade:', error);
       setMessage('Erro ao excluir cidade. Tente novamente.');
     }
+  };
+
+  const handleEdit = (cidade: Cidade) => {
+    setEditId(cidade.id);
+    setEditData({ nome: cidade.nome, estado: cidade.estado });
+  };
+
+  const handleSaveEdit = async (id: number) => {
+    setLoading(true);
+    const nome = (editData.nome || '').trim();
+    const estado = (editData.estado || '').trim();
+    if (!nome || !estado) {
+      setMessage('Preencha todos os campos.');
+      setLoading(false);
+      return;
+    }
+    try {
+      const cidadeOriginal = cidades.find(c => c.id === id);
+      if (
+        cidadeOriginal &&
+        (cidadeOriginal.nome || '').trim() === nome &&
+        (cidadeOriginal.estado || '').trim() === estado
+      ) {
+        setEditId(null);
+        setEditData({ nome: '', estado: '' });
+        setMessage('');
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('cidades')
+        .update({ nome, estado })
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      if (data && data.length > 0) {
+        setMessage('Cidade editada com sucesso!');
+      } else {
+        setMessage('Nenhuma alteração realizada.');
+      }
+      setEditId(null);
+      setEditData({ nome: '', estado: '' });
+      fetchCidades();
+    } catch (error: any) {
+      setMessage('Erro ao editar cidade: ' + (error.message || JSON.stringify(error)));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditId(null);
+    setEditData({ nome: '', estado: '' });
+    setMessage('');
   };
 
   if (loading && cidades.length === 0) {
@@ -182,12 +224,6 @@ export default function CidadesPage() {
                   Estado
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Criado em
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -199,39 +235,63 @@ export default function CidadesPage() {
                     {cidade.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {cidade.nome}
+                    {editId === cidade.id ? (
+                      <input
+                        type="text"
+                        value={editData.nome}
+                        onChange={e => setEditData({ ...editData, nome: e.target.value })}
+                        className="px-2 py-1 border rounded"
+                      />
+                    ) : cidade.nome}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {cidade.estado}
+                    {editId === cidade.id ? (
+                      <input
+                        type="text"
+                        value={editData.estado}
+                        onChange={e => setEditData({ ...editData, estado: e.target.value })}
+                        className="px-2 py-1 border rounded"
+                      />
+                    ) : cidade.estado}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      cidade.status === 'ativo' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {cidade.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(cidade.criado_em).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <select
-                      value={cidade.status}
-                      onChange={(e) => handleStatusChange(cidade.id, e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-xs"
-                    >
-                      <option value="ativo">Ativo</option>
-                      <option value="inativo">Inativo</option>
-                    </select>
-                    <button
-                      onClick={() => handleDelete(cidade.id)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                      title="Excluir cidade"
-                    >
-                      🗑️
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap flex gap-2 items-center">
+                    {editId === cidade.id ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveEdit(cidade.id)}
+                          className="text-green-600 hover:text-green-900 transition-colors font-bold"
+                          title="Salvar edição"
+                          disabled={loading}
+                        >
+                          💾
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="text-gray-600 hover:text-gray-900 transition-colors font-bold"
+                          title="Cancelar"
+                          disabled={loading}
+                        >
+                          ✖
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEdit(cidade)}
+                          className="text-blue-600 hover:text-blue-900 transition-colors font-bold"
+                          title="Editar cidade"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cidade.id)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                          title="Excluir cidade"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Acompanhante, Cidade, Configuracao } from '@/lib/supabase';
 import Header from '@/components/Header';
@@ -18,6 +18,10 @@ export default function Home() {
     genero: '',
   });
   const [showPopup, setShowPopup] = useState(true);
+  const [cidadeInput, setCidadeInput] = useState('');
+  const [cidadeIdSelecionada, setCidadeIdSelecionada] = useState('');
+  const [sugestoesCidades, setSugestoesCidades] = useState<Cidade[]>([]);
+  const sugestoesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     carregarDados();
@@ -68,8 +72,7 @@ export default function Home() {
         .from('acompanhantes')
         .select(`
           *,
-          cidades(nome),
-          fotos(url, capa)
+          cidade: cidade_id(nome)
         `)
         .eq('status', 'aprovado')
         .order('destaque', { ascending: false })
@@ -89,7 +92,7 @@ export default function Home() {
       setAcompanhantes(
         (data || []).map((item: any) => ({
           ...item,
-          cidades: Array.isArray(item.cidades) ? item.cidades[0] : item.cidades
+          cidade: item.cidade
         }))
       );
     } catch (error) {
@@ -105,13 +108,55 @@ export default function Home() {
     carregarAcompanhantes(novosFiltros);
   };
 
+  // Autocomplete cidades
+  const handleCidadeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value;
+    setCidadeInput(valor);
+    setCidadeIdSelecionada('');
+    if (valor.length >= 3) {
+      const sugestoes = cidades.filter(c => c.nome.toLowerCase().includes(valor.toLowerCase()));
+      setSugestoesCidades(sugestoes);
+    } else {
+      setSugestoesCidades([]);
+    }
+  };
+
+  const handleSelecionarCidade = (cidade: Cidade) => {
+    setCidadeInput(cidade.nome);
+    setCidadeIdSelecionada(cidade.id);
+    setSugestoesCidades([]);
+  };
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sugestoesRef.current && !sugestoesRef.current.contains(event.target as Node)) {
+        setSugestoesCidades([]);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleBuscaCidade = (event: React.FormEvent) => {
     event.preventDefault();
-    const input = document.getElementById('inputBuscaCidade') as HTMLInputElement;
-    if (input.value.trim()) {
-      // Implementar busca por cidade
-      console.log('Buscar por:', input.value);
-    }
+    const inputGenero = document.getElementById('inputBuscaGenero') as HTMLSelectElement;
+    const genero = inputGenero.value;
+    const cidadeId = cidadeIdSelecionada;
+    const novosFiltros = {
+      cidade: cidadeId,
+      genero: genero
+    };
+    setFiltros(novosFiltros);
+    carregarAcompanhantes(novosFiltros).then(() => {
+      // Scroll suave até os resultados, se houver acompanhantes
+      setTimeout(() => {
+        const secaoResultados = document.getElementById('secao-acompanhantes');
+        if (secaoResultados && acompanhantes.length > 0) {
+          secaoResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 200);
+    });
   };
 
   if (loading) {
@@ -196,13 +241,31 @@ export default function Home() {
         <h2 className="text-3xl text-[#4E3950] font-bold mb-6">
           Sua nova referência em acompanhantes no Brasil!
         </h2>
-        <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8">
-          <input 
-            type="text" 
-            id="inputBuscaCidade"
-            placeholder="Buscar por cidade" 
-            className="w-full md:flex-1 md:max-w-[340px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-          />
+        <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8" autoComplete="off">
+          <div className="relative w-full md:flex-1 md:max-w-[340px]">
+            <input 
+              type="text" 
+              id="inputBuscaCidade"
+              placeholder="Buscar por cidade" 
+              className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
+              value={cidadeInput}
+              onChange={handleCidadeInput}
+              autoComplete="off"
+            />
+            {sugestoesCidades.length > 0 && (
+              <div ref={sugestoesRef} className="absolute z-10 left-0 right-0 bg-white border border-[#CFB78B] rounded-b-lg shadow-lg max-h-48 overflow-y-auto">
+                {sugestoesCidades.map(cidade => (
+                  <div
+                    key={cidade.id}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#F8F6F9]"
+                    onClick={() => handleSelecionarCidade(cidade)}
+                  >
+                    {cidade.nome}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <select 
             id="inputBuscaGenero"
             className="w-full md:flex-1 md:max-w-[220px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
@@ -275,7 +338,7 @@ export default function Home() {
       */}
 
       {/* Cards de acompanhantes */}
-      <section className="max-w-7xl mx-auto mb-10">
+      <section id="secao-acompanhantes" className="max-w-7xl mx-auto mb-10">
         <h3 className="text-2xl text-[#4E3950] font-bold mb-4 text-center">
           Acompanhantes em destaque
         </h3>

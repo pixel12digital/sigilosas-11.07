@@ -39,7 +39,7 @@ export default function AcompanhanteCard({ acompanhante }: AcompanhanteCardProps
   };
 
   return (
-    <Link href={`/perfil/${acompanhante.id}`} className="block">
+    <Link href={`/acompanhantes/${acompanhante.id}`} className="block">
       <div className="card hover:shadow-xl transition-all duration-300 group">
         {/* Imagem */}
         <div className="relative mb-4 overflow-hidden rounded-lg">
@@ -186,6 +186,13 @@ export default function AcompanhanteCard({ acompanhante }: AcompanhanteCardProps
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-end mt-2">
+          <Link href={`/acompanhantes/${acompanhante.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline flex items-center gap-1">
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M5 19l14-14"/></svg>
+            Ver perfil público
+          </Link>
         </div>
       </div>
     </Link>
