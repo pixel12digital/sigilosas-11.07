@@ -70,7 +70,17 @@ export default function Home() {
       
       let query = supabase
         .from('acompanhantes')
-        .select('id, nome, idade, genero, valor, descricao, destaque, data_cadastro, status, verificado, bairro, aceita_pix, silicone, tatuagens, piercings, atende_casal, local_proprio, seguidores, favoritos, cidade_id, foto, fotos(url, capa)')
+        .select(`
+          id, nome, idade, genero, valor, descricao, destaque, data_cadastro, status, 
+          disponibilidade, verificado, bairro, aceita_cartao, atende_casal, 
+          local_proprio, aceita_pix, genitalia, preferencia_sexual, peso, altura, 
+          etnia, cor_olhos, estilo_cabelo, tamanho_cabelo, tamanho_pe, silicone, 
+          tatuagens, piercings, fumante, idiomas, endereco, comodidades, 
+          bairros_atende, cidades_vizinhas, clientes_conjunto, atende_genero, 
+          horario_expediente, formas_pagamento, seguidores, favoritos, penalidades, 
+          contato_seguro, data_criacao, foto, video_verificacao,
+          fotos ( url, capa )
+        `)
         .eq('status', 'aprovado')
         .order('destaque', { ascending: false })
         .order('data_cadastro', { ascending: false });
