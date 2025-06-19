@@ -31,6 +31,7 @@ export default function EditarAcompanhanteAdmin() {
   const [documentosFiles, setDocumentosFiles] = useState<File[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>("");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [galeriaFiles, setGaleriaFiles] = useState<File[]>([]);
   const [galeriaPreview, setGaleriaPreview] = useState<string[]>([]);
   const documentosRef = useRef<HTMLInputElement>(null);
@@ -104,6 +105,18 @@ export default function EditarAcompanhanteAdmin() {
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [galeriaFiles]);
 
+  useEffect(() => {
+    if (form?.video_verificacao) {
+      const fetchVideo = async () => {
+        const videoData = await loadVideo();
+        if (videoData) {
+          setVideoUrl(videoData.url);
+        }
+      };
+      fetchVideo();
+    }
+  }, [form?.video_verificacao]);
+
   if (loading) return <div className="p-8 text-center">Carregando...</div>;
 
   if (!form) return <div className="p-8 text-center">Acompanhante não encontrada</div>;
@@ -164,6 +177,7 @@ export default function EditarAcompanhanteAdmin() {
 
   // Carregar vídeo de verificação
   const loadVideo = async () => {
+    if (!form?.video_verificacao) return null;
     const { data: video, error } = await supabase
       .from('videos_verificacao')
       .select('*')
@@ -715,10 +729,10 @@ export default function EditarAcompanhanteAdmin() {
             {/* Vídeo de verificação */}
             <div className="space-y-4">
               <label className={labelClass}>Vídeo de verificação</label>
-              {form.video_verificacao && (
+              {(videoUrl || videoPreview) && (
                 <div className="mb-4">
                   <video
-                    src={loadVideo()?.url}
+                    src={videoPreview || videoUrl || ''}
                     controls
                     className="w-full max-w-md mx-auto rounded-lg"
                   />
