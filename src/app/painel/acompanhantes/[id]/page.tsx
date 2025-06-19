@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '@/lib/database.types';
@@ -13,15 +13,10 @@ const checkboxClass = "accent-[#CFB78B] w-5 h-5 mr-2 align-middle";
 const buttonClass = "w-full py-3 bg-[#4E3950] text-white border-none rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-[#CFB78B] hover:text-[#4E3950] disabled:opacity-50 disabled:cursor-not-allowed mt-2";
 const uploadButtonClass = "flex items-center justify-center gap-2 w-full py-3 bg-white border-2 border-dashed border-[#CFB78B] rounded-lg font-medium text-[#4E3950] cursor-pointer transition-all hover:bg-[#fdf8ed] hover:border-[#b89a76] active:bg-[#f5e9d4] disabled:opacity-50 disabled:cursor-not-allowed";
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default function EditarAcompanhanteAdmin({ params }: PageProps) {
+export default function EditarAcompanhanteAdmin() {
   const supabase = createClientComponentClient<Database>();
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const [cidades, setCidades] = useState<any[]>([]);
   const [form, setForm] = useState<any>(null);
