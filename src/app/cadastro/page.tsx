@@ -371,7 +371,7 @@ export default function CadastroAcompanhante() {
       const galeriaUrls: string[] = [];
       for (const file of galeriaFiles) {
         const result = await handleGaleriaUpload(file);
-        if (!result) {
+        if (!result || !result.url) {
           setMsg("Erro ao enviar foto da galeria");
           await cleanupFiles(uploadedFiles);
           setLoading(false);
