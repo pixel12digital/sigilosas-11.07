@@ -335,6 +335,8 @@ export default function CadastroAcompanhante() {
     setLoading(true);
     setMsg("");
 
+    const uploadedFiles: { path: string }[] = [];
+
     try {
       // Validar telefone
       const telefoneError = validarTelefone(form.telefone);
@@ -351,8 +353,6 @@ export default function CadastroAcompanhante() {
         setLoading(false);
         return;
       }
-
-      const uploadedFiles: { path: string }[] = [];
 
       // Upload da foto principal
       let fotoUrl = null;
