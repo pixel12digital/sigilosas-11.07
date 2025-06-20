@@ -56,7 +56,7 @@ export default function CadastroAcompanhante() {
     fumante: "",
     idiomas: "",
     endereco: "",
-    cidade: "",
+    cidade_id: "",
     estado: "",
     horario_expediente: "",
     formas_pagamento: "",
@@ -107,9 +107,9 @@ export default function CadastroAcompanhante() {
   
   useEffect(() => {
     if (estadoSelecionado) {
-      const filtradas = cidades.filter(c => c.estado === estadoSelecionado);
+      const filtradas = cidades.filter(c => c.estado_uf === estadoSelecionado);
       setCidadesFiltradas(filtradas);
-      setForm(prev => ({ ...prev, cidade: "" })); // Reseta a cidade ao mudar o estado
+      setForm(prev => ({ ...prev, cidade_id: "" })); // Reseta a cidade ao mudar o estado
     } else {
       setCidadesFiltradas([]);
     }
@@ -387,7 +387,7 @@ export default function CadastroAcompanhante() {
         email: form.email,
         telefone: telefoneFormatado,
         senha: form.senha,
-        cidade: form.cidade,
+        cidade_id: form.cidade_id,
         estado: form.estado,
         idade: form.idade,
         genero: form.genero,
@@ -687,16 +687,16 @@ export default function CadastroAcompanhante() {
               <label htmlFor="cidade" className={labelClass}>Cidade</label>
               <select
                 id="cidade"
-                name="cidade"
-                value={form.cidade}
-                onChange={(e) => setForm({ ...form, cidade: e.target.value })}
+                name="cidade_id"
+                value={form.cidade_id}
+                onChange={(e) => setForm({ ...form, cidade_id: e.target.value })}
                 className={inputClass}
                 required
                 disabled={!estadoSelecionado}
               >
                 <option value="">Selecione uma cidade</option>
                 {cidadesFiltradas.map(c => (
-                  <option key={c.id} value={c.nome}>{c.nome}</option>
+                  <option key={c.id} value={c.id}>{c.nome}</option>
                 ))}
               </select>
             </div>
