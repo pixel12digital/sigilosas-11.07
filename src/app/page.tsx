@@ -1,383 +1,193 @@
-'use client';
+"use client";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { validarTelefone, formatarTelefone } from '@/lib/validation';
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { Acompanhante, Cidade, Configuracao } from '@/lib/supabase';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import AcompanhanteCard from '@/components/AcompanhanteCard';
-import LoadingSpinner from '@/components/LoadingSpinner';
+interface Cidade {
+  id: string;
+  nome: string;
+  estado_uf: string;
+}
 
-export default function Home() {
-  const [config, setConfig] = useState<Record<string, string>>({});
-  const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
+const ESTADOS = [
+  { uf: 'AC', nome: 'Acre' }, { uf: 'AL', nome: 'Alagoas' }, { uf: 'AP', nome: 'Amapá' },
+  { uf: 'AM', nome: 'Amazonas' }, { uf: 'BA', nome: 'Bahia' }, { uf: 'CE', nome: 'Ceará' },
+  { uf: 'DF', nome: 'Distrito Federal' }, { uf: 'ES', nome: 'Espírito Santo' }, { uf: 'GO', nome: 'Goiás' },
+  { uf: 'MA', nome: 'Maranhão' }, { uf: 'MT', nome: 'Mato Grosso' }, { uf: 'MS', nome: 'Mato Grosso do Sul' },
+  { uf: 'MG', nome: 'Minas Gerais' }, { uf: 'PA', nome: 'Pará' }, { uf: 'PB', nome: 'Paraíba' },
+  { uf: 'PR', nome: 'Paraná' }, { uf: 'PE', nome: 'Pernambuco' }, { uf: 'PI', nome: 'Piauí' },
+  { uf: 'RJ', nome: 'Rio de Janeiro' }, { uf: 'RN', nome: 'Rio Grande do Norte' }, { uf: 'RS', nome: 'Rio Grande do Sul' },
+  { uf: 'RO', nome: 'Rondônia' }, { uf: 'RR', nome: 'Roraima' }, { uf: 'SC', nome: 'Santa Catarina' },
+  { uf: 'SP', nome: 'São Paulo' }, { uf: 'SE', nome: 'Sergipe' }, { uf: 'TO', nome: 'Tocantins' }
+];
+
+const inputClass = "w-full bg-white border border-[#CFB78B] rounded-lg px-4 py-2 text-[#4E3950] focus:outline-none focus:ring-2 focus:ring-[#CFB78B] text-base transition mb-0 placeholder-[#CFB78B]";
+const labelClass = "block font-semibold text-[#4E3950] mb-1";
+
+export default function CadastroAcompanhante() {
   const [cidades, setCidades] = useState<Cidade[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState({
-    cidade: '',
-    genero: '',
+  const [cidadesFiltradas, setCidadesFiltradas] = useState<Cidade[]>([]);
+  const [estadoSelecionado, setEstadoSelecionado] = useState("");
+  const [form, setForm] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+    telefone: "",
+    idade: "",
+    genero: "",
+    cidade_id: "",
+    descricao: "",
+    foto: "",
+    galeria_fotos: [],
   });
-  const [showPopup, setShowPopup] = useState(true);
-  const [cidadeInput, setCidadeInput] = useState('');
-  const [cidadeIdSelecionada, setCidadeIdSelecionada] = useState<number | string | null>(null);
-  const [sugestoesCidades, setSugestoesCidades] = useState<Cidade[]>([]);
-  const sugestoesRef = useRef<HTMLDivElement>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [galeriaFiles, setGaleriaFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    carregarDados();
-  }, []);
-
-  useEffect(() => {
-    if (showPopup && typeof window !== 'undefined') {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(() => {}, () => {});
+    const fetchCidades = async () => {
+      const supabase = createClientComponentClient();
+      const { data, error } = await supabase
+        .from("vw_cidades_estados")
+        .select("id:cidade_id, nome:cidade, estado_uf")
+        .order("nome");
+      if (error) {
+        console.error("Erro ao buscar cidades:", error);
+      } else if (data) {
+        setCidades(data);
       }
-    }
-  }, [showPopup]);
-
-  const carregarDados = async () => {
-    try {
-      // Carregar configurações
-      const { data: configData } = await supabase
-        .from('configuracoes')
-        .select('chave, valor');
-
-      const configObj: Record<string, string> = {};
-      configData?.forEach(item => {
-        configObj[item.chave] = item.valor || '';
-      });
-      setConfig(configObj);
-
-      // Carregar cidades
-      const { data: cidadesData } = await supabase
-        .from('cidades')
-        .select('*')
-        .order('nome');
-      setCidades(cidadesData || []);
-
-      // Carregar acompanhantes em destaque
-      await carregarAcompanhantes();
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const carregarAcompanhantes = async (filtrosAplicados = filtros) => {
-    try {
-      setLoading(true);
-      
-      let query = supabase
-        .from('acompanhantes')
-        .select(`
-          id, nome, idade, genero, valor, descricao, destaque, data_cadastro, status, 
-          disponibilidade, verificado, bairro, aceita_cartao, atende_casal, 
-          local_proprio, aceita_pix, genitalia, preferencia_sexual, peso, altura, 
-          etnia, cor_olhos, estilo_cabelo, tamanho_cabelo, tamanho_pe, silicone, 
-          tatuagens, piercings, fumante, idiomas, endereco, comodidades, 
-          bairros_atende, cidades_vizinhas, clientes_conjunto, atende_genero, 
-          horario_expediente, formas_pagamento, seguidores, favoritos, penalidades, 
-          contato_seguro, data_criacao, foto, video_verificacao,
-          fotos ( url, capa )
-        `)
-        .eq('status', 'aprovado')
-        .order('destaque', { ascending: false })
-        .order('data_cadastro', { ascending: false });
-
-      if (filtrosAplicados.cidade) {
-        query = query.eq('cidade_id', filtrosAplicados.cidade);
-      }
-
-      if (filtrosAplicados.genero) {
-        query = query.eq('genero', filtrosAplicados.genero);
-      }
-
-      const { data, error } = await query.limit(12);
-
-      if (error) throw error;
-      const acompanhantesVisiveis = data?.filter(a => a.status === 'aprovado') || [];
-      setAcompanhantes(acompanhantesVisiveis);
-    } catch (error) {
-      console.error('Erro ao carregar acompanhantes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFiltroChange = (campo: string, valor: string) => {
-    const novosFiltros = { ...filtros, [campo]: valor };
-    setFiltros(novosFiltros);
-    carregarAcompanhantes(novosFiltros);
-  };
-
-  // Autocomplete cidades
-  const handleCidadeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value;
-    setCidadeInput(valor);
-    setCidadeIdSelecionada(null);
-    if (valor.length >= 3) {
-      const sugestoes = cidades.filter(c => c.nome.toLowerCase().includes(valor.toLowerCase()));
-      setSugestoesCidades(sugestoes);
-    } else {
-      setSugestoesCidades([]);
-    }
-  };
-
-  const handleSelecionarCidade = (cidade: Cidade) => {
-    setCidadeInput(cidade.nome);
-    setCidadeIdSelecionada(cidade.id);
-    setSugestoesCidades([]);
-  };
-
-  // Fechar sugestões ao clicar fora
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (sugestoesRef.current && !sugestoesRef.current.contains(event.target as Node)) {
-        setSugestoesCidades([]);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleBuscaCidade = (event: React.FormEvent) => {
-    event.preventDefault();
-    const inputGenero = document.getElementById('inputBuscaGenero') as HTMLSelectElement;
-    const genero = inputGenero.value;
-    const cidadeId = cidadeIdSelecionada ? String(cidadeIdSelecionada) : '';
-    const novosFiltros = {
-      cidade: cidadeId,
-      genero: genero
     };
-    setFiltros(novosFiltros);
-    carregarAcompanhantes(novosFiltros).then(() => {
-      // Scroll suave até os resultados, se houver acompanhantes
-      setTimeout(() => {
-        const secaoResultados = document.getElementById('secao-acompanhantes');
-        if (secaoResultados && acompanhantes.length > 0) {
-          secaoResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 200);
-    });
+    fetchCidades();
+  }, []);
+
+  useEffect(() => {
+    if (estadoSelecionado) {
+      const filtradas = cidades.filter(c => c.estado_uf === estadoSelecionado);
+      setCidadesFiltradas(filtradas);
+      setForm(prev => ({ ...prev, cidade_id: "" }));
+    } else {
+      setCidadesFiltradas([]);
+    }
+  }, [estadoSelecionado, cidades]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const handleEstadoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEstadoSelecionado(e.target.value);
+  };
+
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(prev => ({ ...prev, telefone: formatarTelefone(e.target.value) }));
+  };
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFotoFile(e.target.files[0]);
+    }
+  };
+
+  const handleGaleriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setGaleriaFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg("");
+
+    try {
+      const supabase = createClientComponentClient();
+      let foto_url = "";
+      if (fotoFile) {
+        const fileName = `perfil/${Date.now()}_${fotoFile.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("images")
+          .upload(fileName, fotoFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        foto_url = urlData.publicUrl;
+      }
+
+      const galeria_urls = [];
+      for (const file of galeriaFiles) {
+        const fileName = `galeria/${Date.now()}_${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("images")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        galeria_urls.push(urlData.publicUrl);
+      }
+
+      const submissionData = { ...form, foto: foto_url, galeria_fotos: galeria_urls };
+      const res = await fetch("/api/cadastro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Erro no servidor");
+      }
+      
+      router.push("/obrigado");
+    } catch (error: any) {
+      setMsg(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8F6F9]">
-      {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-[370px] w-full p-6 border border-[#CFB78B] text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-4xl font-extrabold text-[#4E3950]">18+</span>
-              <div className="text-left">
-                <div className="text-xs font-bold text-[#4E3950] leading-tight">CONTEÚDO</div>
-                <div className="text-base font-bold text-[#4E3950] leading-tight -mt-1">ADULTO</div>
-              </div>
-            </div>
-            <hr className="my-2 border-[#CFB78B]" />
-            <p className="text-[#4E3950] text-base mb-2">
-              Entendo que o site <span className="font-bold">Sigilosas VIP</span> apresenta <span className="font-bold">conteúdo explícito</span> destinado a adultos.<br />
-              <a href="/termos" className="underline text-[#CFB78B]">Termos de uso</a>
-            </p>
-            <hr className="my-2 border-[#CFB78B]" />
-            <div className="mb-2">
-              <div className="text-xs font-bold text-[#4E3950] mb-1">AVISO DE COOKIES E LOCALIZAÇÃO</div>
-              <p className="text-[#4E3950] text-sm">
-                Usamos cookies, tecnologias semelhantes e localização para melhorar sua experiência em nosso site.
-              </p>
-            </div>
-            <hr className="my-2 border-[#CFB78B]" />
-            <div className="text-xs text-[#4E3950] mb-4">
-              A profissão de acompanhante é legalizada no Brasil e deve ser respeitada. <a href="/saiba-mais" className="underline text-[#CFB78B]">Saiba mais</a>
-            </div>
-            <button
-              className="w-full py-3 bg-[#4E3950] text-white rounded-lg font-semibold text-lg tracking-wide transition-colors hover:bg-[#CFB78B] hover:text-[#4E3950]"
-              onClick={() => setShowPopup(false)}
-            >
-              Concordo
-            </button>
-          </div>
-        </div>
-      )}
-      <Header config={config} />
-      
-      {/* Banner principal */}
-      <section
-        className="w-full flex items-center justify-between gap-6 md:gap-10 px-4 md:px-8 lg:px-20 mx-auto flex-wrap"
-        style={{
-          background: "linear-gradient(90deg, #F8F6F9 0%, #CFB78B 50%, #4E3950 100%)",
-          borderBottom: '1px solid #CFB78B',
-          minHeight: 'unset',
-          paddingTop: 16,
-          paddingBottom: 4,
-        }}
-      >
-        <div className="flex-1 min-w-[320px] max-w-[900px] flex flex-col justify-center h-full px-6 pt-8 md:pl-[60px] md:pt-0 md:px-0">
-          <h1 className="w-full max-w-[900px] text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight md:leading-[1.1] break-words text-[#4E3950] relative animate-fade-in">
-            <span className="reluzente-title">CONECTANDO DESEJOS COM ELEGÂNCIA<br />E PRIVACIDADE!</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-[#4E3950] mb-8 max-w-[600px]">
-            Um espaço seguro, respeitoso e exclusivo
-          </p>
-          <div className="flex gap-6 flex-wrap mb-2">
-            <a href="/cadastro" className="btn-secondary text-base md:text-lg px-6 py-3">
-              Anunciar como acompanhante
-            </a>
-          </div>
-        </div>
-        <div className="flex-1 min-w-[320px] max-w-[700px] flex items-end justify-center mt-[-32px] md:mt-0">
-          <img 
-            src="/assets/img/imagem_banner.png" 
-            alt="Banner principal" 
-            className="w-auto h-[336px] md:h-[416px] lg:h-[480px] object-contain drop-shadow-xl"
-            style={{ background: 'none', maxHeight: '80%', paddingTop: 16, paddingBottom: 4 }}
-          />
-        </div>
-      </section>
-
-      {/* Bloco de destaque */}
-      <section className="max-w-4xl mx-auto mb-8 p-10 md:p-12 bg-white rounded-2xl shadow-lg text-center border border-[#CFB78B] mt-12">
-        <h2 className="text-3xl text-[#4E3950] font-bold mb-6">
-          Sua nova referência em acompanhantes no Brasil!
-        </h2>
-        <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8" autoComplete="off">
-          <div className="relative w-full md:flex-1 md:max-w-[340px]">
-            <input 
-              type="text" 
-              id="inputBuscaCidade"
-              placeholder="Buscar por cidade" 
-              className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-              value={cidadeInput}
-              onChange={handleCidadeInput}
-              autoComplete="off"
-            />
-            {sugestoesCidades.length > 0 && (
-              <div ref={sugestoesRef} className="absolute z-10 left-0 right-0 bg-white border border-[#CFB78B] rounded-b-lg shadow-lg max-h-48 overflow-y-auto">
-                {sugestoesCidades.map(cidade => (
-                  <div
-                    key={cidade.id}
-                    className="px-4 py-2 cursor-pointer hover:bg-[#F8F6F9]"
-                    onClick={() => handleSelecionarCidade(cidade)}
-                  >
-                    {cidade.nome}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <select 
-            id="inputBuscaGenero"
-            className="w-full md:flex-1 md:max-w-[220px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-          >
-            <option value="">Todos os gêneros</option>
-            <option value="F">Feminino</option>
-            <option value="M">Masculino</option>
-            <option value="O">Outro</option>
+    <div className="bg-white min-h-screen text-[#4E3950]">
+      <div className="max-w-4xl mx-auto p-8">
+        <h1 className="text-3xl font-bold text-center mb-8">Cadastro de Acompanhante</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <input type="text" name="nome" placeholder="Nome" onChange={handleChange} className={inputClass} required />
+          <input type="email" name="email" placeholder="E-mail" onChange={handleChange} className={inputClass} required />
+          <input type="password" name="senha" placeholder="Senha" onChange={handleChange} className={inputClass} required />
+          <input type="tel" name="telefone" placeholder="Telefone" value={form.telefone} onChange={handleTelefoneChange} className={inputClass} required />
+          <input type="number" name="idade" placeholder="Idade" onChange={handleChange} className={inputClass} required min="18" />
+          <select name="genero" onChange={handleChange} className={inputClass} required>
+            <option value="">Selecione o Gênero</option>
+            <option value="feminino">Feminino</option>
+            <option value="masculino">Masculino</option>
+            <option value="trans">Trans</option>
           </select>
-          <button 
-            type="submit" 
-            className="bg-[#CFB78B] text-[#4E3950] px-7 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors"
-          >
-            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="7"/>
-              <line x1="16" y1="16" x2="21" y2="21"/>
-            </svg>
-          </button>
-        </form>
-        <p className="text-[#4E3950] text-lg mt-4">Sigiloso, seguro e exclusivo.</p>
-      </section>
-
-      {/* Filtro compacto */}
-      {/*
-      <section className="max-w-2xl mx-auto mb-8 p-6 bg-white rounded-2xl shadow-lg border border-[#CFB78B]">
-        <form className="flex gap-4 flex-wrap items-end justify-center">
-          <div className="flex-1 min-w-[160px]">
-            <label htmlFor="cidadeFiltro" className="font-medium text-[#4E3950] mb-2 block">
-              Cidade
-            </label>
-            <select 
-              id="cidadeFiltro"
-              value={filtros.cidade}
-              onChange={(e) => handleFiltroChange('cidade', e.target.value)}
-              className="w-full border border-[#CFB78B] rounded-lg px-3 py-2 text-base bg-[#F8F6F9] text-[#4E3950]"
-            >
-              <option value="">Todas as cidades</option>
-              {cidades.map(cidade => (
-                <option key={cidade.id} value={cidade.id}>
-                  {cidade.nome}
-                </option>
-              ))}
-            </select>
+          <select name="estado" onChange={handleEstadoChange} className={inputClass} required>
+            <option value="">Selecione um Estado</option>
+            {ESTADOS.map(e => <option key={e.uf} value={e.uf}>{e.nome}</option>)}
+          </select>
+          <select name="cidade_id" onChange={handleChange} className={inputClass} required disabled={!estadoSelecionado}>
+            <option value="">Selecione uma Cidade</option>
+            {cidadesFiltradas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+          <textarea name="descricao" placeholder="Descrição" onChange={handleChange} className={inputClass} />
+          <div>
+            <label className={labelClass}>Foto de Perfil</label>
+            <input type="file" onChange={handleFotoChange} />
           </div>
-          <div className="flex-1 min-w-[140px]">
-            <label htmlFor="generoFiltro" className="font-medium text-[#4E3950] mb-2 block">
-              Gênero
-            </label>
-            <select 
-              id="generoFiltro"
-              value={filtros.genero}
-              onChange={(e) => handleFiltroChange('genero', e.target.value)}
-              className="w-full border border-[#CFB78B] rounded-lg px-3 py-2 text-base bg-[#F8F6F9] text-[#4E3950]"
-            >
-              <option value="">Todos</option>
-              <option value="F">Feminino</option>
-              <option value="M">Masculino</option>
-              <option value="O">Outro</option>
-            </select>
+          <div>
+            <label className={labelClass}>Galeria de Fotos</label>
+            <input type="file" multiple onChange={handleGaleriaChange} />
           </div>
-          <button
-            type="button"
-            className="bg-[#CFB78B] text-[#4E3950] px-8 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors mt-4"
-            onClick={() => carregarAcompanhantes()}
-          >
-            Buscar
+          <button type="submit" disabled={loading} className="w-full py-3 bg-[#4E3950] text-white rounded-lg font-semibold hover:bg-[#CFB78B]">
+            {loading ? "Enviando..." : "Cadastrar"}
           </button>
+          {msg && <p className="text-red-500 text-center mt-4">{msg}</p>}
         </form>
-      </section>
-      */}
-
-      {/* Cards de acompanhantes */}
-      <section id="secao-acompanhantes" className="container mx-auto py-12 px-4">
-        <h2 className="text-3xl font-bold text-center text-[#4E3950] mb-8">
-          Acompanhantes em Destaque
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {acompanhantes.map(acompanhante => {
-            const cidadeNome = cidades.find(c => c.id === acompanhante.cidade_id)?.nome;
-            return (
-              <AcompanhanteCard
-                key={acompanhante.id}
-                acompanhante={acompanhante}
-                cidadeNome={cidadeNome}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Bloco de verificação, documentos e fotos reais */}
-      {/*
-      <section className="flex gap-8 justify-center mb-10 flex-wrap">
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-search.svg" alt="Verificação facial" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Verificação facial</div>
-        </div>
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-painel.svg" alt="Documentos validados" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Documentos validados</div>
-        </div>
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-menu.svg" alt="Fotos reais" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Fotos reais</div>
-        </div>
-      </section>
-      */}
-
-      <Footer />
+      </div>
     </div>
   );
-} 
+}
