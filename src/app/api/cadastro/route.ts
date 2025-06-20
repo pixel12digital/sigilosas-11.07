@@ -2,6 +2,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
+  // ADICIONA UMA VERIFICAÇÃO PARA O CLIENTE ADMIN DO SUPABASE
+  if (!supabaseAdmin) {
+    console.error('Erro: Variáveis de ambiente do Supabase (admin) não estão configuradas.');
+    return NextResponse.json({
+      success: false,
+      error: 'Erro de configuração no servidor. O administrador foi notificado.',
+    }, { status: 500 });
+  }
+  
   try {
     const body = await request.json();
 
