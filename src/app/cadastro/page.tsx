@@ -9,7 +9,7 @@ import { validarTelefone, formatarTelefone } from '@/lib/validation';
 interface Cidade {
   id: string;
   nome: string;
-  estado: string;
+  estado_uf: string;
 }
 
 const ESTADOS = [
@@ -97,10 +97,15 @@ export default function CadastroAcompanhante() {
     const fetchCidades = async () => {
       const supabase = createClientComponentClient();
       const { data, error } = await supabase
-        .from("cidades")
-        .select("id, nome, estado")
+        .from("vw_cidades_estados")
+        .select("id:cidade_id, nome:cidade, estado_uf")
         .order("nome");
-      if (!error && data) setCidades(data);
+
+      if (error) {
+        console.error("Erro ao buscar cidades:", error);
+      } else if (data) {
+        setCidades(data);
+      }
     };
     fetchCidades();
   }, []);
