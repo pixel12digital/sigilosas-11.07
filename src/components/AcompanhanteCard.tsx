@@ -193,25 +193,10 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
                 Piercings
               </span>
             )}
-            {acompanhante.atende_casal && (
-              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                Atende casal
-              </span>
-            )}
-            {acompanhante.local_proprio && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                Local próprio
-              </span>
-            )}
           </div>
 
-          {/* Estatísticas */}
+          {/* Estatísticas removidas temporariamente para corrigir build */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span>❤️ {acompanhante.favoritos}</span>
-              <span>👁️ {acompanhante.seguidores}</span>
-            </div>
-            
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <svg 
