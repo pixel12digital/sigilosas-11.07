@@ -173,9 +173,6 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
               <div className="text-lg font-bold text-[#CA5272]">
                 {formatarValor(acompanhante.valor_padrao)}
               </div>
-              {acompanhante.aceita_pix && (
-                <div className="text-xs text-green-600">Aceita PIX</div>
-              )}
             </div>
           </div>
 
