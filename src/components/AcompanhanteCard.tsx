@@ -51,12 +51,12 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
   
   console.log('Foto selecionada:', fotoCapa);
 
-  // Função para obter URL pública da foto
+  // Função para obter URL pública da foto, corrigida para usar o caminho completo.
   const getFotoUrl = (fotoPath: string) => {
     if (!fotoPath) return '';
     const { data: { publicUrl } } = supabase.storage
-      .from('media')
-      .getPublicUrl(fotoPath.split('/').pop() || '');
+      .from('media') 
+      .getPublicUrl(fotoPath);
     return publicUrl;
   };
 
