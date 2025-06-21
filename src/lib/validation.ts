@@ -1,27 +1,28 @@
 /**
- * Validação de telefone no formato (XX) XXXXX-XXXX
+ * Validação de telefone no formato (XX) XXXXX-XXXX.
+ * Retorna true se válido, false caso contrário.
  */
-export const validarTelefone = (telefone: string): string => {
+export const validarTelefone = (telefone: string): boolean => {
   // Remove tudo que não é número
   const numeros = telefone.replace(/\D/g, '');
   
-  // Verifica se tem 11 dígitos
+  // Verifica se tem 11 dígitos (DDD + 9 + número)
   if (numeros.length !== 11) {
-    return 'O telefone deve ter 11 dígitos';
+    return false;
   }
   
-  // Verifica se o DDD é válido (10-99)
+  // Verifica se o DDD é válido (códigos de 11 a 99)
   const ddd = parseInt(numeros.slice(0, 2));
-  if (ddd < 10 || ddd > 99) {
-    return 'DDD inválido';
+  if (ddd < 11 || ddd > 99) {
+    return false;
   }
   
-  // Verifica se o primeiro dígito do número é válido (9)
+  // Verifica se o número de celular começa com 9
   if (numeros[2] !== '9') {
-    return 'O número deve começar com 9';
+    return false;
   }
   
-  return '';
+  return true;
 };
 
 /**

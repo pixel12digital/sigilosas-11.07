@@ -9,7 +9,24 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 interface AcompanhanteCardProps {
   acompanhante: Acompanhante & {
     cidades?: { nome: string };
-    fotos?: { url: string; capa: boolean }[];
+    fotos?: { 
+      id: string;
+      url: string; 
+      storage_path: string;
+      tipo: string;
+      principal: boolean; 
+    }[];
+    videos_verificacao?: { 
+      id: string;
+      url: string; 
+      storage_path: string;
+    }[];
+    documentos_acompanhante?: { 
+      id: string;
+      url: string; 
+      storage_path: string;
+      tipo: string;
+    }[];
   };
   cidadeNome?: string;
 }
@@ -23,13 +40,13 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
   console.log('Dados do acompanhante:', {
     id: acompanhante.id,
     nome: acompanhante.nome,
-    foto: acompanhante.foto,
     fotos: acompanhante.fotos
   });
 
-  const fotoCapa = acompanhante.fotos?.find(foto => foto.capa)?.url || 
-                   acompanhante.fotos?.[0]?.url || 
-                   acompanhante.foto ||
+  const fotoCapa = acompanhante.fotos?.find(foto => foto.tipo === 'perfil' && foto.principal)?.url || 
+                   acompanhante.fotos?.find(foto => foto.tipo === 'perfil')?.url || 
+                   acompanhante.fotos?.find(foto => foto.principal)?.url ||
+                   acompanhante.fotos?.[0]?.url ||
                    '/assets/img/placeholder.jpg';
   
   console.log('Foto selecionada:', fotoCapa);
@@ -38,7 +55,7 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
   const getFotoUrl = (fotoPath: string) => {
     if (!fotoPath) return '';
     const { data: { publicUrl } } = supabase.storage
-      .from('perfil')
+      .from('media')
       .getPublicUrl(fotoPath.split('/').pop() || '');
     return publicUrl;
   };
@@ -154,7 +171,7 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
             
             <div className="text-right">
               <div className="text-lg font-bold text-[#CA5272]">
-                {formatarValor(acompanhante.valor)}
+                {formatarValor(acompanhante.valor_padrao)}
               </div>
               {acompanhante.aceita_pix && (
                 <div className="text-xs text-green-600">Aceita PIX</div>

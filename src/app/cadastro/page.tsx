@@ -6,10 +6,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { validarTelefone, formatarTelefone } from '@/lib/validation';
 
-interface Cidade {
-  id: string;
+interface Estado {
+  id: number;
   nome: string;
-  estado_uf: string;
+  uf: string;
+}
+
+interface Cidade {
+  id: string; // UUID
+  nome: string;
+  estado_id: number;
 }
 
 const ESTADOS = [
@@ -32,6 +38,7 @@ const buttonClass = "w-full py-3 bg-[#4E3950] text-white border-none rounded-lg 
 const uploadButtonClass = "flex items-center justify-center gap-2 w-full py-3 bg-white border-2 border-dashed border-[#CFB78B] rounded-lg font-medium text-[#4E3950] cursor-pointer transition-all hover:bg-[#fdf8ed] hover:border-[#b89a76] active:bg-[#f5e9d4] disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function CadastroAcompanhante() {
+  const [estados, setEstados] = useState<Estado[]>([]);
   const [cidades, setCidades] = useState<Cidade[]>([]);
   const [cidadesFiltradas, setCidadesFiltradas] = useState<Cidade[]>([]);
   const [estadoSelecionado, setEstadoSelecionado] = useState("");
@@ -57,7 +64,7 @@ export default function CadastroAcompanhante() {
     idiomas: "",
     endereco: "",
     cidade_id: "",
-    estado: "",
+    estado_id: "",
     horario_expediente: "",
     formas_pagamento: "",
     data_criacao: "",
@@ -93,31 +100,37 @@ export default function CadastroAcompanhante() {
 
   const router = useRouter();
 
+  // Busca inicial de ESTADOS e CIDADES
   useEffect(() => {
-    const fetchCidades = async () => {
-      const supabase = createClientComponentClient();
-      const { data, error } = await supabase
-        .from("vw_cidades_estados")
-        .select("id:cidade_id, nome:cidade, estado_uf")
-        .order("nome");
+    const supabase = createClientComponentClient();
 
-      if (error) {
-        console.error("Erro ao buscar cidades:", error);
-      } else if (data) {
-        setCidades(data);
-      }
+    const fetchEstados = async () => {
+      const { data, error } = await supabase.from("estados").select("id, nome, uf").order("nome");
+      if (error) console.error("Erro ao buscar estados:", error);
+      else if (data) setEstados(data as Estado[]);
     };
+
+    const fetchCidades = async () => {
+      const { data, error } = await supabase.from("cidades").select("id, nome, estado_id").order("nome");
+      if (error) console.error("Erro ao buscar cidades:", error);
+      else if (data) setCidades(data as Cidade[]);
+    };
+
+    fetchEstados();
     fetchCidades();
   }, []);
   
+  // Filtra as cidades quando um estado é selecionado
   useEffect(() => {
     if (estadoSelecionado) {
-      const filtradas = cidades.filter(c => c.estado_uf === estadoSelecionado);
+      const idEstadoSelecionado = Number(estadoSelecionado);
+      const filtradas = cidades.filter(c => c.estado_id === idEstadoSelecionado);
       setCidadesFiltradas(filtradas);
-      setForm(prev => ({ ...prev, cidade_id: "" })); // Reseta a cidade ao mudar o estado
     } else {
       setCidadesFiltradas([]);
     }
+    // Reseta a cidade ao mudar o estado
+    setForm(prev => ({ ...prev, cidade_id: "" }));
   }, [estadoSelecionado, cidades]);
 
   // Preview da foto
@@ -140,7 +153,7 @@ export default function CadastroAcompanhante() {
     
     try {
       const { data, error } = await supabase.storage
-        .from("images")
+        .from("media")
         .upload(fileName, file, { upsert: false });
       
       if (error) {
@@ -149,15 +162,10 @@ export default function CadastroAcompanhante() {
         return null;
       }
 
-      const { data: publicUrl } = supabase.storage
-        .from("images")
-        .getPublicUrl(fileName);
-
+      // A API espera o path, não a URL completa
       setFotoMsg("Foto enviada com sucesso!");
-      return {
-        url: publicUrl?.publicUrl || null,
-        path: fileName
-      };
+      return { path: fileName };
+
     } catch (error) {
       console.error("Erro no upload:", error);
       setFotoMsg("Erro ao enviar foto.");
@@ -171,16 +179,14 @@ export default function CadastroAcompanhante() {
     const fileExt = file.name.split(".").pop();
     const fileName = `documentos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const { data, error } = await supabase.storage
-      .from("documents")
+      .from("media")
       .upload(fileName, file, { upsert: false });
     if (error) {
       console.error("Erro ao enviar documento:", error);
       return null;
     }
-    const { data: publicUrl } = supabase.storage
-      .from("documents")
-      .getPublicUrl(fileName);
-    return publicUrl?.publicUrl || null;
+     // Retorna o path para ser usado
+    return { path: fileName };
   };
 
   // Upload de vídeo para Supabase Storage
@@ -189,16 +195,14 @@ export default function CadastroAcompanhante() {
     const fileExt = file.name.split(".").pop();
     const fileName = `videos-verificacao/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const { data, error } = await supabase.storage
-      .from("videos")
+      .from("media")
       .upload(fileName, file, { upsert: false });
     if (error) {
       console.error("Erro ao enviar vídeo:", error);
       return null;
     }
-    const { data: publicUrl } = supabase.storage
-      .from("videos")
-      .getPublicUrl(fileName);
-    return publicUrl?.publicUrl || null;
+    // Retorna o path para ser usado
+    return { path: fileName };
   };
 
   // Upload de fotos da galeria
@@ -209,7 +213,7 @@ export default function CadastroAcompanhante() {
     
     try {
       const { data, error } = await supabase.storage
-        .from("images")
+        .from("media")
         .upload(fileName, file, { upsert: false });
       
       if (error) {
@@ -217,14 +221,8 @@ export default function CadastroAcompanhante() {
         return null;
       }
 
-      const { data: publicUrl } = supabase.storage
-        .from("images")
-        .getPublicUrl(fileName);
-
-      return {
-        url: publicUrl?.publicUrl || null,
-        path: fileName
-      };
+      // Retorna o path para ser usado
+      return { path: fileName };
     } catch (error) {
       console.error("Erro no upload da galeria:", error);
       return null;
@@ -294,7 +292,7 @@ export default function CadastroAcompanhante() {
     for (const file of files) {
       try {
         const { error } = await supabase.storage
-          .from("images")
+          .from("media")
           .remove([file.path]);
         
         if (error) {
@@ -307,31 +305,7 @@ export default function CadastroAcompanhante() {
   };
 
   const handleEstadoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const novoEstado = e.target.value;
-    setEstadoSelecionado(novoEstado);
-    setForm(prev => ({ ...prev, estado: novoEstado }));
-  };
-  
-  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let valor = e.target.value;
-    
-    // Remove tudo que não é número
-    const numeros = valor.replace(/\D/g, '');
-    
-    // Formata o número conforme vai digitando
-    if (numeros.length <= 2) {
-      valor = numeros;
-    } else if (numeros.length <= 7) {
-      valor = `(${numeros.slice(0,2)}) ${numeros.slice(2)}`;
-    } else {
-      valor = `(${numeros.slice(0,2)}) ${numeros.slice(2,7)}-${numeros.slice(7,11)}`;
-    }
-    
-    // Atualiza o estado do formulário
-    setForm(prev => ({
-      ...prev,
-      telefone: valor
-    }));
+    setEstadoSelecionado(e.target.value);
   };
 
   // Handle form submit
@@ -340,174 +314,115 @@ export default function CadastroAcompanhante() {
     setLoading(true);
     setMsg("");
 
-    const uploadedFiles: { path: string }[] = [];
+    let fotoData = null;
+    let videoUrl = null;
+    let galeriaUrls = [];
+    let documentosPaths = [];
 
     try {
-      // Validar telefone
-      const telefoneError = validarTelefone(form.telefone);
-      if (telefoneError) {
-        setMsg(telefoneError);
-        setLoading(false);
-        return;
-      }
-
-      // Formatar telefone
-      const telefoneFormatado = formatarTelefone(form.telefone);
-      if (!telefoneFormatado) {
-        setMsg("Telefone inválido. Use o formato (XX) XXXXX-XXXX");
-        setLoading(false);
-        return;
-      }
-
-      // Upload da foto principal
-      let fotoUrl = null;
+      // 1. Upload da foto de perfil (se existir)
       if (fotoFile) {
-        const result = await handleFotoUpload(fotoFile);
-        if (!result) {
-          setMsg("Erro ao enviar foto principal");
-          setLoading(false);
-          return;
-        }
-        fotoUrl = result.url;
-        uploadedFiles.push({ path: result.path });
+        fotoData = await handleFotoUpload(fotoFile);
+        if (!fotoData?.path) throw new Error("Falha no upload da foto de perfil.");
       }
 
-      // Upload das fotos da galeria
-      const galeriaUrls: string[] = [];
-      for (const file of galeriaFiles) {
-        const result = await handleGaleriaUpload(file);
-        if (!result || !result.url) {
-          setMsg("Erro ao enviar foto da galeria");
-          await cleanupFiles(uploadedFiles);
-          setLoading(false);
-          return;
-        }
-        galeriaUrls.push(result.url);
-        uploadedFiles.push({ path: result.path });
+      // 2. Upload do vídeo de verificação (se existir)
+      if (videoFile) {
+        const videoResult = await handleVideoUpload(videoFile);
+        if (!videoResult) throw new Error("Falha no upload do vídeo de verificação.");
+        videoUrl = videoResult.path;
       }
 
-      // Preparar dados para envio
-      const dadosParaEnvio = {
-        nome: form.nome,
-        email: form.email,
-        telefone: telefoneFormatado,
+      // 3. Upload das fotos da galeria (se existirem)
+      if (galeriaFiles.length > 0) {
+        for (const file of galeriaFiles) {
+          const result = await handleGaleriaUpload(file);
+          if (result?.path) {
+            galeriaUrls.push(result.path);
+          } else {
+            console.warn(`Falha no upload de um arquivo da galeria: ${file.name}`);
+            // Decide-se por continuar ou parar. Por enquanto, continuamos.
+          }
+        }
+        if (galeriaUrls.length !== galeriaFiles.length) {
+            // Opcional: Lançar erro se nem todos os uploads da galeria funcionaram
+            // throw new Error("Falha no upload de uma ou mais fotos da galeria.");
+        }
+      }
+
+      // 4. Upload dos documentos (se existirem)
+      if (documentosFiles.length > 0) {
+        for (const file of documentosFiles) {
+          const result = await handleDocumentosUpload(file);
+          if (result?.path) {
+            // Ajustado para enviar apenas o 'path', conforme a nova função SQL.
+            documentosPaths.push({ path: result.path });
+          } else {
+            console.warn(`Falha no upload de um documento: ${file.name}`);
+          }
+        }
+      }
+
+      // 5. Montar o corpo da requisição com todos os dados e URLs
+      const dadosCadastro = {
+        ...form,
         senha: form.senha,
-        cidade_id: form.cidade_id,
-        estado: form.estado,
-        idade: form.idade,
-        genero: form.genero,
-        genitalia: form.genitalia,
-        genitalia_outro: form.genitalia_outro,
-        preferencia_sexual: form.preferencia_sexual,
-        preferencia_sexual_outro: form.preferencia_sexual_outro,
-        peso: form.peso,
-        altura: form.altura,
-        etnia: form.etnia,
-        cor_olhos: form.cor_olhos,
-        estilo_cabelo: form.estilo_cabelo,
-        tamanho_cabelo: form.tamanho_cabelo,
-        tamanho_pe: form.tamanho_pe,
-        silicone: form.silicone,
-        tatuagens: form.tatuagens,
-        piercings: form.piercings,
-        fumante: form.fumante,
-        idiomas: form.idiomas,
-        endereco: form.endereco,
-        horario_expediente: form.horario_expediente,
-        formas_pagamento: form.formas_pagamento,
-        descricao: form.descricao,
-        foto: fotoUrl,
-        galeria_fotos: galeriaUrls
+        foto: fotoData?.path || null,
+        galeria_fotos: galeriaUrls,
+        video_url: videoUrl,
+        documentos: documentosPaths,
+        // Garante que "Outro" seja tratado
+        genitalia: form.genitalia === 'Outro' ? form.genitalia_outro : form.genitalia,
+        preferencia_sexual: form.preferencia_sexual === 'Outro' ? form.preferencia_sexual_outro : form.preferencia_sexual,
       };
 
-      // Enviar dados para API
-      console.log('7. Iniciando requisição para API...');
+      // 6. Enviar tudo para a API
       const response = await fetch('/api/cadastro', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(dadosParaEnvio),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosCadastro),
       });
 
-      let data;
-      const contentType = response.headers.get("content-type");
-      
-      try {
-        // Verifica se a resposta é JSON
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-          data = await response.json();
-        } else {
-          // Se não for JSON, pega o texto da resposta para debug
-          const text = await response.text();
-          console.error('9. ERRO: Resposta não-JSON recebida:', {
-            status: response.status,
-            contentType,
-            text: text.substring(0, 500) // Limita o tamanho do log
-          });
-          throw new Error('Erro interno do servidor. Por favor, tente novamente em alguns minutos.');
-        }
-      } catch (error) {
-        console.error('9. ERRO ao processar resposta:', error);
-        await cleanupFiles(uploadedFiles);
-        setMsg("Erro interno do servidor. Por favor, tente novamente em alguns minutos.");
-        setLoading(false);
-        return;
-      }
-
-      console.log('8. Resposta da API:', {
-        status: response.status,
-        ok: response.ok,
-        data
-      });
-
-      // Tratamento específico para erro de rate limit
-      if (response.status === 429) {
-        console.log('9. ERRO: Rate limit atingido (429)');
-        const retryAfter = parseInt(response.headers.get('Retry-After') || '60');
-        setMsg("Sistema temporariamente indisponível. Por favor, aguarde...");
-        startRetryTimer(retryAfter);
-        await cleanupFiles(uploadedFiles);
-        setLoading(false);
-        return;
-      }
-
-      // Tratamento para erro interno do servidor
-      if (response.status === 500) {
-        console.error('9. ERRO: Erro interno do servidor (500):', data);
-        setMsg("Erro interno do servidor. Por favor, tente novamente em alguns minutos.");
-        await cleanupFiles(uploadedFiles);
-        setLoading(false);
-        return;
-      }
+      const result = await response.json();
 
       if (!response.ok) {
-        console.error('9. ERRO na resposta da API:', data);
-        
-        if (typeof data.erro === 'string' && data.erro.toLowerCase().includes('rate limit')) {
-          setMsg("Sistema temporariamente indisponível. Por favor, aguarde...");
-          startRetryTimer(parseInt(response.headers.get('Retry-After') || '60'));
-        } else {
-          setMsg(data.erro || "Erro ao processar o cadastro");
-        }
-        
-        await cleanupFiles(uploadedFiles);
+        // Se a API retornar erro, limpa os arquivos e exibe a mensagem diretamente.
+        const filesToClean = [{ path: fotoData?.path }].concat(galeriaUrls.map(p => ({ path: p })));
+        if(videoUrl) filesToClean.push({path: videoUrl});
+        await cleanupFiles(filesToClean.filter(f => f.path) as {path: string}[]);
+
+        const errorMessage = result.error?.message || 'Ocorreu um erro desconhecido no cadastro.';
+        setMsg(errorMessage);
         setLoading(false);
-        return;
+        return; // Para a execução aqui
       }
-
-      console.log('9. Cadastro realizado com sucesso');
-      console.log('=== FIM DO PROCESSO DE CADASTRO (FRONTEND) ===');
-
-      // Se chegou até aqui, cadastro foi realizado com sucesso
+      
+      // Se tudo correu bem, redireciona para a página de sucesso
       router.push('/obrigado');
 
-    } catch (error) {
-      console.error('ERRO GERAL no processo de cadastro:', error);
-      await cleanupFiles(uploadedFiles);
-      setMsg("Erro ao processar o cadastro. Por favor, tente novamente.");
+    } catch (error: any) {
+      // Este catch agora lidará com erros de upload ou falhas de rede
+      setMsg(error.message || "Erro ao processar o cadastro. Tente novamente.");
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+
+    if (type === "checkbox") {
+      const { checked } = e.target as HTMLInputElement;
+      setForm(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
+
+    if (name === "genitalia") {
+      setShowGenitaliaOutro(value === "Outro");
+    }
+    if (name === "preferencia_sexual") {
+      setShowPrefOutro(value === "Outro");
     }
   };
 
@@ -530,19 +445,20 @@ export default function CadastroAcompanhante() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className={labelClass}>Nome do acompanhante *</label>
-              <input type="text" name="nome" className={inputClass} value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} required />
+              <input type="text" name="nome" className={inputClass} value={form.nome} onChange={handleChange} required />
             </div>
             <div>
               <label className={labelClass}>Idade *</label>
-              <input type="number" name="idade" className={inputClass} value={form.idade} onChange={e => setForm(f => ({ ...f, idade: e.target.value }))} min={18} required />
+              <input type="number" name="idade" className={inputClass} value={form.idade} onChange={handleChange} min={18} required />
             </div>
             <div>
               <label className={labelClass}>Gênero *</label>
-              <select name="genero" className={inputClass} value={form.genero} onChange={e => setForm(f => ({ ...f, genero: e.target.value }))} required>
+              <select name="genero" className={inputClass} value={form.genero} onChange={handleChange} required>
                 <option value="">Selecione</option>
-                <option value="F">Feminino</option>
-                <option value="M">Masculino</option>
-                <option value="Outro">Outro</option>
+                <option value="feminino">Feminino</option>
+                <option value="masculino">Masculino</option>
+                <option value="trans">Trans</option>
+                <option value="outro">Outro</option>
               </select>
             </div>
             <div>
@@ -551,15 +467,12 @@ export default function CadastroAcompanhante() {
                 name="genitalia"
                 className={inputClass}
                 value={form.genitalia}
-                onChange={e => {
-                  setForm(f => ({ ...f, genitalia: e.target.value }));
-                  setShowGenitaliaOutro(e.target.value === "Outro");
-                }}
+                onChange={handleChange}
               >
                 <option value="">Selecione</option>
-                <option value="Vagina">Vagina</option>
-                <option value="Pênis">Pênis</option>
-                <option value="Outro">Outro</option>
+                <option value="vagina">Vagina</option>
+                <option value="penis">Pênis</option>
+                <option value="outro">Outro</option>
               </select>
               {showGenitaliaOutro && (
                 <input
@@ -567,7 +480,7 @@ export default function CadastroAcompanhante() {
                   className={inputClass + " mt-2"}
                   placeholder="Descreva a genitália"
                   value={form.genitalia_outro || ""}
-                  onChange={e => setForm(f => ({ ...f, genitalia_outro: e.target.value }))}
+                  onChange={handleChange}
                 />
               )}
             </div>
@@ -577,16 +490,13 @@ export default function CadastroAcompanhante() {
                 name="preferencia_sexual"
                 className={inputClass}
                 value={form.preferencia_sexual}
-                onChange={e => {
-                  setForm(f => ({ ...f, preferencia_sexual: e.target.value }));
-                  setShowPrefOutro(e.target.value === "Outro");
-                }}
+                onChange={handleChange}
               >
                 <option value="">Selecione</option>
-                <option value="Hetero">Hetero</option>
-                <option value="Homo">Homo</option>
-                <option value="Bi">Bi</option>
-                <option value="Outro">Outro</option>
+                <option value="heterossexual">Heterossexual</option>
+                <option value="homossexual">Homossexual</option>
+                <option value="bissexual">Bissexual</option>
+                <option value="outro">Outro</option>
               </select>
               {showPrefOutro && (
                 <input
@@ -594,17 +504,17 @@ export default function CadastroAcompanhante() {
                   className={inputClass + " mt-2"}
                   placeholder="Descreva a preferência sexual"
                   value={form.preferencia_sexual_outro || ""}
-                  onChange={e => setForm(f => ({ ...f, preferencia_sexual_outro: e.target.value }))}
+                  onChange={handleChange}
                 />
               )}
             </div>
             <div>
               <label className={labelClass}>Peso (kg)</label>
-              <input type="text" name="peso" className={inputClass} value={form.peso} onChange={e => setForm(f => ({ ...f, peso: e.target.value }))} />
+              <input type="text" name="peso" className={inputClass} value={form.peso} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Altura (m)</label>
-              <input type="text" name="altura" className={inputClass} value={form.altura} onChange={e => setForm(f => ({ ...f, altura: e.target.value }))} />
+              <input type="text" name="altura" className={inputClass} value={form.altura} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Etnia</label>
@@ -612,7 +522,7 @@ export default function CadastroAcompanhante() {
                 name="etnia"
                 className={inputClass}
                 value={form.etnia}
-                onChange={e => setForm(f => ({ ...f, etnia: e.target.value }))}
+                onChange={handleChange}
               >
                 <option value="">Selecione</option>
                 <option value="Branca">Branca</option>
@@ -625,40 +535,40 @@ export default function CadastroAcompanhante() {
             </div>
             <div>
               <label className={labelClass}>Cor dos olhos</label>
-              <input type="text" name="cor_olhos" className={inputClass} value={form.cor_olhos} onChange={e => setForm(f => ({ ...f, cor_olhos: e.target.value }))} />
+              <input type="text" name="cor_olhos" className={inputClass} value={form.cor_olhos} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Estilo de cabelo</label>
-              <input type="text" name="estilo_cabelo" className={inputClass} value={form.estilo_cabelo} onChange={e => setForm(f => ({ ...f, estilo_cabelo: e.target.value }))} />
+              <input type="text" name="estilo_cabelo" className={inputClass} value={form.estilo_cabelo} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Tamanho do cabelo</label>
-              <input type="text" name="tamanho_cabelo" className={inputClass} value={form.tamanho_cabelo} onChange={e => setForm(f => ({ ...f, tamanho_cabelo: e.target.value }))} />
+              <input type="text" name="tamanho_cabelo" className={inputClass} value={form.tamanho_cabelo} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Tamanho do pé</label>
-              <input type="text" name="tamanho_pe" className={inputClass} value={form.tamanho_pe} onChange={e => setForm(f => ({ ...f, tamanho_pe: e.target.value }))} />
+              <input type="text" name="tamanho_pe" className={inputClass} value={form.tamanho_pe} onChange={handleChange} />
             </div>
           </div>
           {/* Características */}
           <div className="flex gap-8 items-center flex-wrap mb-2">
-            <label className={labelClass}><input type="checkbox" checked={form.silicone} onChange={e => setForm(f => ({ ...f, silicone: e.target.checked }))} className={checkboxClass} />Silicone</label>
-            <label className={labelClass}><input type="checkbox" checked={form.tatuagens} onChange={e => setForm(f => ({ ...f, tatuagens: e.target.checked }))} className={checkboxClass} />Tatuagens</label>
-            <label className={labelClass}><input type="checkbox" checked={form.piercings} onChange={e => setForm(f => ({ ...f, piercings: e.target.checked }))} className={checkboxClass} />Piercings</label>
+            <label className={labelClass}><input type="checkbox" name="silicone" checked={form.silicone} onChange={handleChange} className={checkboxClass} />Silicone</label>
+            <label className={labelClass}><input type="checkbox" name="tatuagens" checked={form.tatuagens} onChange={handleChange} className={checkboxClass} />Tatuagens</label>
+            <label className={labelClass}><input type="checkbox" name="piercings" checked={form.piercings} onChange={handleChange} className={checkboxClass} />Piercings</label>
           </div>
           {/* Outros dados */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className={labelClass}>Fumante</label>
-              <input type="text" name="fumante" className={inputClass} value={form.fumante} onChange={e => setForm(f => ({ ...f, fumante: e.target.value }))} />
+              <input type="text" name="fumante" className={inputClass} value={form.fumante} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Idiomas</label>
-              <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={e => setForm(f => ({ ...f, idiomas: e.target.value }))} />
+              <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Endereço</label>
-              <input type="text" name="endereco" className={inputClass} value={form.endereco} onChange={e => setForm(f => ({ ...f, endereco: e.target.value }))} />
+              <input type="text" name="endereco" className={inputClass} value={form.endereco} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Telefone *</label>
@@ -667,61 +577,66 @@ export default function CadastroAcompanhante() {
                 name="telefone"
                 className={inputClass}
                 value={form.telefone || ''}
-                onChange={handleTelefoneChange}
-                placeholder="(XX) XXXXX-XXXX"
+                onChange={handleChange}
+                placeholder="Apenas números, ex: 47999999999"
+                maxLength={11}
                 required
               />
             </div>
             <div className="md:col-span-1">
-              <label htmlFor="estado" className={labelClass}>Estado</label>
+              <label htmlFor="estado" className={labelClass}>Estado *</label>
               <select
                 id="estado"
-                name="estado"
+                name="estado_id"
                 value={estadoSelecionado}
                 onChange={handleEstadoChange}
                 className={inputClass}
                 required
               >
                 <option value="">Selecione um estado</option>
-                {ESTADOS.map(e => (
-                  <option key={e.uf} value={e.uf}>{e.nome}</option>
+                {estados.map((estado) => (
+                  <option key={estado.id} value={estado.id}>
+                    {estado.nome}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="md:col-span-1">
-              <label htmlFor="cidade" className={labelClass}>Cidade</label>
+              <label htmlFor="cidade_id" className={labelClass}>Cidade *</label>
               <select
-                id="cidade"
+                id="cidade_id"
                 name="cidade_id"
                 value={form.cidade_id}
-                onChange={(e) => setForm({ ...form, cidade_id: e.target.value })}
+                onChange={handleChange}
                 className={inputClass}
                 required
-                disabled={!estadoSelecionado}
+                disabled={!estadoSelecionado || cidadesFiltradas.length === 0}
               >
                 <option value="">Selecione uma cidade</option>
-                {cidadesFiltradas.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
+                {cidadesFiltradas.map((cidade) => (
+                  <option key={cidade.id} value={cidade.id}>
+                    {cidade.nome}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
               <label className={labelClass}>Horário de expediente</label>
-              <input type="text" name="horario_expediente" className={inputClass} value={form.horario_expediente} onChange={e => setForm(f => ({ ...f, horario_expediente: e.target.value }))} />
+              <input type="text" name="horario_expediente" className={inputClass} value={form.horario_expediente} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Formas de pagamento</label>
-              <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={e => setForm(f => ({ ...f, formas_pagamento: e.target.value }))} />
+              <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={handleChange} />
             </div>
             <div>
               <label className={labelClass}>Data de criação</label>
-              <input type="date" name="data_criacao" className={inputClass} value={form.data_criacao} onChange={e => setForm(f => ({ ...f, data_criacao: e.target.value }))} />
+              <input type="date" name="data_criacao" className={inputClass} value={form.data_criacao} onChange={handleChange} />
             </div>
           </div>
           {/* Descrição */}
           <div>
             <label className={labelClass}>Descrição</label>
-            <textarea name="descricao" className={inputClass} rows={4} value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} />
+            <textarea name="descricao" className={inputClass} rows={4} value={form.descricao} onChange={handleChange} />
           </div>
           {/* Foto de capa */}
           <div className="space-y-4">
@@ -790,7 +705,8 @@ export default function CadastroAcompanhante() {
                       </div>
                     )}
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         setDocumentosFiles(files => files.filter((_, i) => i !== index));
                         setDocumentosPreview(prev => prev.filter((_, i) => i !== index));
                       }}
@@ -836,7 +752,8 @@ export default function CadastroAcompanhante() {
                   className="w-full max-w-md mx-auto rounded-lg"
                 />
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setVideoFile(null);
                     setVideoPreview("");
                   }}
@@ -892,7 +809,8 @@ export default function CadastroAcompanhante() {
                       />
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         setGaleriaFiles(files => files.filter((_, i) => i !== index));
                         setGaleriaPreview(prev => prev.filter((_, i) => i !== index));
                       }}
@@ -930,11 +848,11 @@ export default function CadastroAcompanhante() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
             <div>
               <label className={labelClass}>E-mail *</label>
-              <input type="email" name="email" className={inputClass} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
+              <input type="email" name="email" className={inputClass} value={form.email} onChange={handleChange} required />
             </div>
             <div>
               <label className={labelClass}>Senha *</label>
-              <input type="password" name="senha" className={inputClass} value={form.senha} onChange={e => setForm(f => ({ ...f, senha: e.target.value }))} required />
+              <input type="password" name="senha" className={inputClass} value={form.senha} onChange={handleChange} required />
             </div>
           </div>
           <div className="flex justify-end">
@@ -955,14 +873,9 @@ export default function CadastroAcompanhante() {
             </button>
           </div>
           {msg && (
-            <div className={`p-4 rounded ${msg.includes('sucesso') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {msg}
-              {retryTimeLeft > 0 && (
-                <div className="mt-2">
-                  Você poderá tentar novamente em {retryTimeLeft} segundos.
-                </div>
-              )}
-            </div>
+            <p className={`text-center p-3 rounded-lg ${String(msg).includes('sucesso') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+              {String(msg)}
+            </p>
           )}
         </form>
       </main>

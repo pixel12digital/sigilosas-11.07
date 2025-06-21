@@ -71,19 +71,14 @@ export default function Home() {
       let query = supabase
         .from('acompanhantes')
         .select(`
-          id, nome, idade, genero, valor, descricao, destaque, data_cadastro, status, 
-          disponibilidade, verificado, bairro, aceita_cartao, atende_casal, 
-          local_proprio, aceita_pix, genitalia, preferencia_sexual, peso, altura, 
-          etnia, cor_olhos, estilo_cabelo, tamanho_cabelo, tamanho_pe, silicone, 
-          tatuagens, piercings, fumante, idiomas, endereco, comodidades, 
-          bairros_atende, cidades_vizinhas, clientes_conjunto, atende_genero, 
-          horario_expediente, formas_pagamento, seguidores, favoritos, penalidades, 
-          contato_seguro, data_criacao, foto, video_verificacao,
-          fotos ( url, capa )
+          id, nome, status, idade, etnia, bairro, destaque, verificado, silicone, tatuagens, piercings, cidade_id, valor_padrao,
+          fotos ( url, storage_path, tipo, principal ),
+          videos_verificacao ( url, storage_path ),
+          documentos_acompanhante ( url, storage_path, tipo )
         `)
         .eq('status', 'aprovado')
         .order('destaque', { ascending: false })
-        .order('data_cadastro', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (filtrosAplicados.cidade) {
         query = query.eq('cidade_id', filtrosAplicados.cidade);
@@ -97,7 +92,7 @@ export default function Home() {
 
       if (error) throw error;
       const acompanhantesVisiveis = data?.filter(a => a.status === 'aprovado') || [];
-      setAcompanhantes(acompanhantesVisiveis);
+      setAcompanhantes(acompanhantesVisiveis as any);
     } catch (error) {
       console.error('Erro ao carregar acompanhantes:', error);
     } finally {
@@ -111,51 +106,21 @@ export default function Home() {
     carregarAcompanhantes(novosFiltros);
   };
 
-  // Autocomplete cidades
-  const handleCidadeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value;
-    setCidadeInput(valor);
-    setCidadeIdSelecionada(null);
-    if (valor.length >= 3) {
-      const sugestoes = cidades.filter(c => c.nome.toLowerCase().includes(valor.toLowerCase()));
-      setSugestoesCidades(sugestoes);
-    } else {
-      setSugestoesCidades([]);
-    }
-  };
-
-  const handleSelecionarCidade = (cidade: Cidade) => {
-    setCidadeInput(cidade.nome);
-    setCidadeIdSelecionada(cidade.id);
-    setSugestoesCidades([]);
-  };
-
-  // Fechar sugestões ao clicar fora
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (sugestoesRef.current && !sugestoesRef.current.contains(event.target as Node)) {
-        setSugestoesCidades([]);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleBuscaCidade = (event: React.FormEvent) => {
     event.preventDefault();
+    const inputCidade = document.getElementById('inputBuscaCidade') as HTMLSelectElement;
     const inputGenero = document.getElementById('inputBuscaGenero') as HTMLSelectElement;
-    const genero = inputGenero.value;
-    const cidadeId = cidadeIdSelecionada ? String(cidadeIdSelecionada) : '';
+    
     const novosFiltros = {
-      cidade: cidadeId,
-      genero: genero
+      cidade: inputCidade.value,
+      genero: inputGenero.value
     };
+
     setFiltros(novosFiltros);
     carregarAcompanhantes(novosFiltros).then(() => {
-      // Scroll suave até os resultados, se houver acompanhantes
       setTimeout(() => {
         const secaoResultados = document.getElementById('secao-acompanhantes');
-        if (secaoResultados && acompanhantes.length > 0) {
+        if (secaoResultados) {
           secaoResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 200);
@@ -246,38 +211,33 @@ export default function Home() {
         </h2>
         <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8" autoComplete="off">
           <div className="relative w-full md:flex-1 md:max-w-[340px]">
-            <input 
-              type="text" 
+             <select 
               id="inputBuscaCidade"
-              placeholder="Buscar por cidade" 
               className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-              value={cidadeInput}
-              onChange={handleCidadeInput}
-              autoComplete="off"
-            />
-            {sugestoesCidades.length > 0 && (
-              <div ref={sugestoesRef} className="absolute z-10 left-0 right-0 bg-white border border-[#CFB78B] rounded-b-lg shadow-lg max-h-48 overflow-y-auto">
-                {sugestoesCidades.map(cidade => (
-                  <div
-                    key={cidade.id}
-                    className="px-4 py-2 cursor-pointer hover:bg-[#F8F6F9]"
-                    onClick={() => handleSelecionarCidade(cidade)}
-                  >
-                    {cidade.nome}
-                  </div>
-                ))}
-              </div>
-            )}
+              value={filtros.cidade}
+              onChange={(e) => handleFiltroChange('cidade', e.target.value)}
+            >
+              <option value="">Todas as cidades</option>
+              {cidades.map(cidade => (
+                <option key={cidade.id} value={cidade.id}>
+                  {cidade.nome}
+                </option>
+              ))}
+            </select>
           </div>
-          <select 
-            id="inputBuscaGenero"
-            className="w-full md:flex-1 md:max-w-[220px] px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-          >
-            <option value="">Todos os gêneros</option>
-            <option value="F">Feminino</option>
-            <option value="M">Masculino</option>
-            <option value="O">Outro</option>
-          </select>
+          <div className="relative w-full md:flex-1 md:max-w-[240px]">
+             <select 
+              id="inputBuscaGenero"
+              className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
+              value={filtros.genero}
+              onChange={(e) => handleFiltroChange('genero', e.target.value)}
+            >
+              <option value="">Todos os gêneros</option>
+              <option value="F">Feminino</option>
+              <option value="M">Masculino</option>
+              <option value="O">Outro</option>
+            </select>
+          </div>
           <button 
             type="submit" 
             className="bg-[#CFB78B] text-[#4E3950] px-7 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors"

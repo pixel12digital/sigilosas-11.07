@@ -1,57 +1,108 @@
--- Habilita a extensão pgcrypto se ainda não estiver habilitada, necessária para o hash de senhas.
+-- Remove o gatilho antigo se ele existir, para evitar duplicação.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Habilita a extensão pgcrypto, se ainda não estiver habilitada.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Função para lidar com o cadastro de uma nova acompanhante.
--- Agrupa a criação do usuário, inserção na tabela 'acompanhantes' e inserção das fotos em uma única transação.
-CREATE OR REPLACE FUNCTION public.handle_new_user_signup(
-    -- Dados do formulário
-    nome text,
-    email text,
-    senha text,
-    telefone text,
-    idade int,
-    genero text,
-    cidade_id uuid, -- Alterado de volta para uuid
-    -- Adicione aqui todos os outros campos do formulário com seus respectivos tipos
-    -- Exemplo: peso text, altura text, etnia text, etc.
-    descricao text,
-    foto text,
-    galeria_fotos text[]
-)
-RETURNS uuid -- Retorna o ID do novo usuário criado
+-- Remove a função antiga que tentava criar um usuário manualmente.
+DROP FUNCTION IF EXISTS public.handle_new_user_signup(text, text, text, text, int, text, int, text, text, text[], text);
+DROP FUNCTION IF EXISTS public.handle_new_user_signup(text, text, text, text, int, text, uuid, text, text, text[], text);
+DROP FUNCTION IF EXISTS public.handle_new_user_signup(); -- Remove a versão sem argumentos se existir
+
+-- Cria a nova função que será usada como um gatilho (trigger).
+CREATE OR REPLACE FUNCTION public.handle_new_user_signup()
+RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  new_user_id uuid;
-  new_acompanhante_id uuid;
-  new_estado_id int;
+  v_acompanhante_id uuid;
+  v_cidade_id uuid;
+  v_estado_id int;
+  v_meta_data jsonb;
+  v_foto_url_item text;
+  v_sql_state text;
+  v_message_text text;
+  v_context text;
 BEGIN
-  -- 0. Busca o estado_id correspondente à cidade_id
-  SELECT estado_id INTO new_estado_id FROM public.cidades WHERE id = cidade_id;
+  -- Log inicial
+  INSERT INTO public.trigger_debug_log (log_message) VALUES ('Iniciando gatilho handle_new_user_signup para o usuário: ' || NEW.email);
 
-  -- 1. Cria o usuário no sistema de autenticação do Supabase.
-  -- O ID do novo usuário é armazenado na variável new_user_id.
-  INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, recovery_token, recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, phone, phone_confirmed_at, confirmation_token, confirmation_sent_at, email_change, email_change_sent_at)
-  VALUES (current_setting('app.instance_id')::uuid, extensions.uuid_generate_v4(), 'authenticated', 'authenticated', email, crypt(senha, gen_salt('bf')), now(), '', null, null, '{"provider":"email","providers":["email"]}', '{}', now(), now(), telefone, now(), '', null, '', null)
-  RETURNING id INTO new_user_id;
+  v_acompanhante_id := NEW.id;
+  v_meta_data := NEW.raw_user_meta_data;
+  INSERT INTO public.trigger_debug_log (log_message) VALUES ('Metadados do usuário extraídos: ' || v_meta_data::text);
 
-  -- 2. Insere os dados na tabela 'acompanhantes'.
-  -- O ID da nova acompanhante é armazenado na variável new_acompanhante_id.
-  INSERT INTO public.acompanhantes (id, user_id, nome, idade, genero, cidade_id, estado_id, descricao, foto, status)
-  VALUES (extensions.uuid_generate_v4(), new_user_id, nome, idade, genero::genero_enum, cidade_id, new_estado_id, descricao, foto, 'pendente')
-  RETURNING id INTO new_acompanhante_id;
+  v_cidade_id := (v_meta_data->>'cidade_id')::uuid;
+  INSERT INTO public.trigger_debug_log (log_message) VALUES ('ID da cidade extraído: ' || v_cidade_id);
 
-  -- 3. Insere as fotos da galeria na tabela 'fotos'.
-  -- Itera sobre o array de URLs de fotos e insere cada uma.
-  IF array_length(galeria_fotos, 1) > 0 THEN
-    FOR i IN 1..array_length(galeria_fotos, 1) LOOP
-      INSERT INTO public.fotos (acompanhante_id, url, capa)
-      VALUES (new_acompanhante_id, galeria_fotos[i], (i = 1)); -- Define a primeira foto como capa.
-    END LOOP;
+  SELECT estado_id INTO v_estado_id FROM public.cidades WHERE id = v_cidade_id;
+  INSERT INTO public.trigger_debug_log (log_message) VALUES ('ID do estado buscado: ' || v_estado_id);
+
+  -- Bloco de exceção para a inserção principal
+  BEGIN
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Tentando inserir na tabela acompanhantes...');
+    INSERT INTO public.acompanhantes (id, user_id, nome, email, telefone, idade, genero, cidade_id, estado_id, descricao, status)
+    VALUES (
+      v_acompanhante_id,
+      NEW.id,
+      v_meta_data->>'nome',
+      NEW.email,
+      NEW.phone,
+      (v_meta_data->>'idade')::int,
+      v_meta_data->>'genero',
+      v_cidade_id,
+      v_estado_id,
+      v_meta_data->>'descricao',
+      'pendente'
+    );
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Inserção na tabela acompanhantes bem-sucedida.');
+  EXCEPTION
+    WHEN others THEN
+      GET STACKED DIAGNOSTICS
+        v_sql_state = RETURNED_SQLSTATE,
+        v_message_text = MESSAGE_TEXT,
+        v_context = PG_EXCEPTION_CONTEXT;
+      INSERT INTO public.trigger_debug_log (log_message)
+      VALUES (
+        'ERRO AO INSERIR EM ACOMPANHANTES: ' ||
+        'SQLSTATE: ' || v_sql_state || ' | ' ||
+        'MENSAGEM: ' || v_message_text || ' | ' ||
+        'CONTEXTO: ' || v_context
+      );
+      RAISE; -- Re-lança a exceção para que a transação seja desfeita
+  END;
+
+  IF v_meta_data->>'foto' IS NOT NULL THEN
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Tentando inserir foto de perfil...');
+    INSERT INTO public.fotos (acompanhante_id, url, storage_path, tipo, principal, aprovada)
+    VALUES (v_acompanhante_id, v_meta_data->>'foto', v_meta_data->>'foto', 'perfil', true, false);
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Foto de perfil inserida.');
   END IF;
-  
-  -- Retorna o ID do usuário criado na tabela auth.users.
-  RETURN new_user_id;
+
+  IF jsonb_array_length(v_meta_data->'galeria_fotos') > 0 THEN
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Tentando inserir fotos da galeria...');
+    FOR v_foto_url_item IN SELECT jsonb_array_elements_text(v_meta_data->'galeria_fotos')
+    LOOP
+      INSERT INTO public.fotos (acompanhante_id, url, storage_path, tipo, principal, aprovada)
+      VALUES (v_acompanhante_id, v_foto_url_item, v_foto_url_item, 'galeria', false, false);
+    END LOOP;
+    INSERT INTO public.trigger_debug_log (log_message) VALUES ('Fotos da galeria inseridas.');
+  END IF;
+
+  IF v_meta_data->>'video_url' IS NOT NULL THEN
+     INSERT INTO public.trigger_debug_log (log_message) VALUES ('Tentando inserir vídeo...');
+    INSERT INTO public.videos_verificacao (acompanhante_id, url, storage_path, verificado)
+    VALUES (v_acompanhante_id, v_meta_data->>'video_url', v_meta_data->>'video_url', false);
+     INSERT INTO public.trigger_debug_log (log_message) VALUES ('Vídeo inserido.');
+  END IF;
+
+  INSERT INTO public.trigger_debug_log (log_message) VALUES ('Gatilho concluído com sucesso.');
+  RETURN NEW;
 END;
-$$; 
+$$;
+
+-- Cria o gatilho que executa a função 'handle_new_user_signup'
+-- sempre que um novo usuário é criado na tabela 'auth.users'.
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_signup();

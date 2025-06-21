@@ -16,57 +16,45 @@ export const supabaseAdmin =
 
 // Tipos para as tabelas do Supabase
 export interface Acompanhante {
-  id: number;
+  id: string;
   nome: string;
-  cidade_id?: number;
+  cidade_id?: string;
   idade?: number;
-  genero?: 'F' | 'M' | 'Outro';
-  valor?: number;
+  genero?: string;
+  valor_padrao?: number;
   descricao?: string;
   destaque?: boolean;
-  data_cadastro?: string;
+  created_at?: string;
   status: 'pendente' | 'aprovado' | 'rejeitado' | 'bloqueado';
-  disponibilidade?: string;
   verificado?: boolean;
   bairro?: string;
-  aceita_cartao?: boolean;
-  atende_casal?: boolean;
-  local_proprio?: boolean;
-  aceita_pix?: boolean;
-  genitalia?: string;
-  preferencia_sexual?: string;
-  peso?: string;
-  altura?: string;
-  etnia?: 'Branca' | 'Negra' | 'Parda' | 'Amarela' | 'Indígena' | 'Outro';
-  cor_olhos?: string;
-  estilo_cabelo?: string;
-  tamanho_cabelo?: string;
-  tamanho_pe?: string;
+  etnia?: string;
   silicone?: boolean;
   tatuagens?: boolean;
   piercings?: boolean;
-  fumante?: string;
-  idiomas?: string;
-  endereco?: string;
-  comodidades?: string;
-  bairros_atende?: string;
-  cidades_vizinhas?: string;
-  clientes_conjunto?: number;
-  atende_genero?: string;
-  horario_expediente?: string;
-  formas_pagamento?: string;
-  seguidores?: number;
-  favoritos?: number;
-  penalidades?: boolean;
-  contato_seguro?: boolean;
-  data_criacao?: string;
-  foto?: string;
-  video_verificacao?: string;
-  fotos?: { url: string; capa: boolean }[];
+  // Relacionamentos com mídia
+  fotos?: { 
+    id: string;
+    url: string; 
+    storage_path: string;
+    tipo: string;
+    principal: boolean; 
+  }[];
+  videos_verificacao?: { 
+    id: string;
+    url: string; 
+    storage_path: string;
+  }[];
+  documentos_acompanhante?: { 
+    id: string;
+    url: string; 
+    storage_path: string;
+    tipo: string;
+  }[];
 }
 
 export interface Cidade {
-  id: number;
+  id: string;
   nome: string;
 }
 

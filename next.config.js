@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'localhost',
-      'supabase.co',
-      'your-project.supabase.co', // Substitua pelo seu domínio do Supabase
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
     ],
-    formats: ['image/webp', 'image/avif'],
   },
   async headers() {
     return [

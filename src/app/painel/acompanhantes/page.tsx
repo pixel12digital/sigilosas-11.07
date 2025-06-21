@@ -6,47 +6,47 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
 
+// Tipos atualizados para corresponder ao esquema do banco de dados
+type AcompanhanteStatus = 'aprovado' | 'pendente' | 'rejeitado' | 'bloqueado';
+
 interface Acompanhante {
-  id: number;
+  id: string; // ID é UUID (string)
   nome: string;
   email: string | null;
   telefone: string | null;
   cidade: string | null;
-  status: 'aprovado' | 'pendente' | 'rejeitado' | 'bloqueado';
-  criado_em: string | null;
-  foto: string | null;
+  status: AcompanhanteStatus;
+  created_at: string | null; // Corrigido de criado_em para created_at
+  foto_perfil: string | null;
+  fotos: {
+    id: string;
+    url: string;
+    storage_path: string;
+    tipo: string;
+    principal: boolean;
+  }[];
+  videos_verificacao: {
+    id: string;
+    url: string;
+    storage_path: string;
+  }[];
+  documentos_acompanhante: {
+    id: string;
+    url: string;
+    storage_path: string;
+    tipo: string;
+  }[];
 }
 
 export default function AcompanhantesPage() {
   const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'todos' | 'aprovado' | 'pendente' | 'rejeitado' | 'bloqueado'>('todos');
+  const [filter, setFilter] = useState<'todos' | AcompanhanteStatus>('todos');
   const router = useRouter();
   const supabase = createClientComponentClient<Database>();
-  const [cidades, setCidades] = useState<{[key: number]: string}>({});
-
-  const fetchCidades = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('cidades')
-        .select('id, nome');
-
-      if (error) throw error;
-
-      const cidadesMap = (data || []).reduce((acc: {[key: number]: string}, cidade) => {
-        acc[cidade.id] = cidade.nome;
-        return acc;
-      }, {});
-
-      setCidades(cidadesMap);
-    } catch (error) {
-      console.error('Erro ao buscar cidades:', error);
-    }
-  };
 
   useEffect(() => {
     fetchAcompanhantes();
-    fetchCidades();
   }, []);
 
   const fetchAcompanhantes = async () => {
@@ -59,46 +59,56 @@ export default function AcompanhantesPage() {
           id,
           nome,
           telefone,
-          cidade_id,
           status,
-          criado_em,
+          created_at, 
           email,
-          fotos (
-            id,
-            url,
-            capa
-          )
+          cidades ( nome ),
+          fotos ( id, url, storage_path, tipo, principal ),
+          videos_verificacao ( id, url, storage_path ),
+          documentos_acompanhante ( id, url, storage_path, tipo )
         `)
-        .order('criado_em', { ascending: false });
-
-      console.log('Resposta do Supabase:', { data, error });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Erro ao buscar acompanhantes:', error);
         throw error;
       }
 
-      // Mapear os dados para o formato esperado pela interface
-      setAcompanhantes((data || []).map(item => ({
-        id: item.id,
-        nome: item.nome,
-        telefone: item.telefone || '',
-        cidade: cidades[item.cidade_id || 0] || '',
-        status: item.status,
-        criado_em: item.criado_em || '',
-        email: item.email || '',
-        foto: item.fotos?.find(f => f.capa)?.url || item.fotos?.[0]?.url || ''
-      })));
+      // Mapeamento corrigido para lidar com a nova estrutura da consulta
+      const acompanhantesMapeadas = (data || []).map(item => {
+        // Acessa o nome da cidade através do objeto aninhado
+        const cidadeNome = item.cidades?.nome || 'N/A';
+        
+        // Busca a foto de perfil
+        const fotoPerfilObj = item.fotos?.find(foto => foto.tipo === 'perfil');
+        const fotoPerfil = fotoPerfilObj?.url || null;
+          
+        return {
+          id: item.id,
+          nome: item.nome,
+          telefone: item.telefone || '',
+          cidade: cidadeNome,
+          status: item.status as AcompanhanteStatus,
+          created_at: item.created_at || '',
+          email: item.email || '',
+          foto_perfil: fotoPerfil,
+          fotos: item.fotos || [],
+          videos_verificacao: item.videos_verificacao || [],
+          documentos_acompanhante: item.documentos_acompanhante || [],
+        };
+      });
+
+      setAcompanhantes(acompanhantesMapeadas);
+
     } catch (error) {
-      console.error('Erro ao buscar acompanhantes:', error);
+      console.error('Erro ao processar acompanhantes:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (id: number, novoStatus: string) => {
+  const handleStatusChange = async (id: string, novoStatus: string) => {
     try {
-      console.log('Tentando atualizar status:', { id, novoStatus });
       
       const { error } = await supabase
         .from('acompanhantes')
@@ -110,8 +120,7 @@ export default function AcompanhantesPage() {
         throw error;
       }
 
-      console.log('Status atualizado com sucesso');
-      fetchAcompanhantes();
+      await fetchAcompanhantes(); // Re-fetch para atualizar a UI
       alert('Status atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
@@ -120,38 +129,40 @@ export default function AcompanhantesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este cadastro? Esta ação não pode ser desfeita.')) {
+    if (confirm('Tem certeza que deseja excluir este cadastro? Esta ação é PERMANENTE e removerá o usuário da autenticação.')) {
       try {
-        // Excluir arquivos do storage
-        const storagePromises = [
-          supabase.storage.from('perfil').remove([`${id}/*`]),
-          supabase.storage.from('documentos').remove([`${id}/*`]),
-          supabase.storage.from('videos-verificacao').remove([`${id}/*`]),
-          supabase.storage.from('galeria').remove([`${id}/*`])
-        ];
+        const response = await fetch('/api/excluir-perfil', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: id }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Erro desconhecido ao excluir perfil.');
+        }
+
+        await fetchAcompanhantes(); // Re-fetch para atualizar a UI
+        alert('Perfil e usuário excluídos com sucesso!');
         
-        await Promise.all(storagePromises);
-
-        // Excluir registros das tabelas
-        const deletePromises = [
-          supabase.from('fotos_galeria').delete().eq('acompanhante_id', id),
-          supabase.from('documentos').delete().eq('acompanhante_id', id),
-          supabase.from('videos_verificacao').delete().eq('acompanhante_id', id)
-        ];
-
-        await Promise.all(deletePromises);
-
-        // Por último, excluir o registro principal
-        const { error } = await supabase.from('acompanhantes').delete().eq('id', id);
-        
-        if (error) throw error;
-
-        // Atualizar a lista sem recarregar a página
-        fetchAcompanhantes();
-        alert('Cadastro excluído com sucesso!');
       } catch (error) {
         console.error('Erro ao excluir:', error);
-        alert('Erro ao excluir o cadastro. Por favor, tente novamente.');
+        const errorMessage = error instanceof Error ? error.message : 'Por favor, tente novamente.';
+        alert(`Erro ao excluir o cadastro: ${errorMessage}`);
+      }
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    if (confirm('Tem certeza que deseja aprovar este perfil?')) {
+      try {
+        await handleStatusChange(id, 'aprovado');
+      } catch (error) {
+        console.error('Erro ao aprovar o perfil:', error);
+        alert('Erro ao aprovar o perfil.');
       }
     }
   };
@@ -159,7 +170,7 @@ export default function AcompanhantesPage() {
   const handleBlock = async (id: string) => {
     if (confirm('Tem certeza que deseja bloquear este perfil?')) {
       try {
-        await handleStatusChange(Number(id), 'bloqueado');
+        await handleStatusChange(id, 'bloqueado');
       } catch (error) {
         console.error('Erro ao bloquear o perfil:', error);
         alert('Erro ao bloquear o perfil.');
@@ -180,6 +191,15 @@ export default function AcompanhantesPage() {
       case 'bloqueado': return 'bg-gray-300 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Função para obter URL pública da foto
+  const getFotoUrl = (fotoPath: string) => {
+    if (!fotoPath) return '/assets/img/placeholder.svg';
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(fotoPath.split('/').pop() || '');
+    return publicUrl || '/assets/img/placeholder.svg';
   };
 
   if (loading) {
@@ -260,21 +280,27 @@ export default function AcompanhantesPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cidade</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criado em</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cidade
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Criado em
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAcompanhantes.map((acompanhante) => (
                 <tr key={acompanhante.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{acompanhante.nome}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.telefone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{acompanhante.cidade}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(acompanhante.status)}`}>
@@ -282,8 +308,8 @@ export default function AcompanhantesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {acompanhante.criado_em
-                      ? new Date(acompanhante.criado_em).toLocaleString('pt-BR', {
+                    {acompanhante.created_at
+                      ? new Date(acompanhante.created_at).toLocaleString('pt-BR', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -294,20 +320,26 @@ export default function AcompanhantesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => router.push(`/painel/acompanhantes/${acompanhante.id}`)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      <Link
+                        href={`/painel/acompanhantes/${acompanhante.id}`}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-center"
                       >
                         Revisar
+                      </Link>
+                      <button
+                        onClick={() => handleApprove(acompanhante.id)}
+                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Aprovar
                       </button>
                       <button
-                        onClick={() => handleBlock(acompanhante.id.toString())}
+                        onClick={() => handleBlock(acompanhante.id)}
                         className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
                       >
                         Bloquear
                       </button>
                       <button
-                        onClick={() => handleDelete(acompanhante.id.toString())}
+                        onClick={() => handleDelete(acompanhante.id)}
                         className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                       >
                         Excluir

@@ -4,8 +4,6 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '@/lib/database.types';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 const inputClass = "w-full bg-white border border-[#CFB78B] rounded-lg px-4 py-2 text-[#4E3950] focus:outline-none focus:ring-2 focus:ring-[#CFB78B] text-base transition mb-0 placeholder-[#CFB78B]";
 const labelClass = "block font-semibold text-[#4E3950] mb-1";
@@ -33,77 +31,189 @@ export default function EditarAcompanhanteAdmin() {
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [galeriaFiles, setGaleriaFiles] = useState<File[]>([]);
-  const [galeriaPreview, setGaleriaPreview] = useState<string[]>([]);
+  const [galeriaPreview, setGaleriaPreview] = useState<any[]>([]);
   const documentosRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
   const galeriaFotosRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchCidades = async () => {
-      const { data, error } = await supabase.from("cidades").select("id, nome").order("nome");
-      if (!error && data) setCidades(data);
-    };
-    fetchCidades();
-  }, []);
-
-  useEffect(() => {
     loadAcompanhante();
-  }, []);
+    fetchCidades();
+  }, [id]);
+
+  const fetchCidades = async () => {
+    const { data, error } = await supabase.from("cidades").select("id, nome").order("nome");
+    if (!error && data) setCidades(data);
+  };
 
   const loadAcompanhante = async () => {
+    if (!id) return;
+    setLoading(true);
+    setMsg("");
     try {
-      const { data, error } = await supabase
+      // 1. Busca o perfil principal primeiro
+      const { data: perfil, error: perfilError } = await supabase
         .from('acompanhantes')
-        .select('*')
+        .select(`
+          *,
+          cidades (id, nome)
+        `)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      setForm(data);
-      setShowGenitaliaOutro(data.genitalia === "Outro");
-      setShowPrefOutro(data.preferencia_sexual === "Outro");
+      if (perfilError) {
+        console.error("Erro ao buscar o perfil da acompanhante:", perfilError);
+        throw new Error(`Falha ao carregar perfil: ${perfilError.message}`);
+      }
+      
+      if (perfil) {
+        // Normalize boolean-like fields that might come as strings from the DB
+        const processedPerfil = { ...perfil };
+        const booleanKeys = ['fumante', 'silicone', 'tatuagens', 'piercings'];
+        for (const key of booleanKeys) {
+          if (Object.prototype.hasOwnProperty.call(processedPerfil, key)) {
+            (processedPerfil as any)[key] = String((processedPerfil as any)[key]).toLowerCase() === 'true';
+          }
+        }
+        
+        setForm({
+          ...processedPerfil,
+          cidade_id: perfil.cidades?.id || null,
+          altura: perfil.altura,
+        });
+
+        // 2. Busca as mídias em chamadas separadas e não bloqueantes
+        const { data: fotos } = await supabase.from('fotos').select('*').eq('acompanhante_id', id);
+        const { data: videos } = await supabase.from('videos_verificacao').select('*').eq('acompanhante_id', id);
+        const { data: documentos } = await supabase.from('documentos_acompanhante').select('*').eq('acompanhante_id', id);
+
+        console.log("DADOS BRUTOS DO SUPABASE:");
+        console.log("Fotos:", fotos);
+        console.log("Vídeos:", videos);
+        console.log("Documentos:", documentos);
+
+        // Processar e definir previews das mídias
+        const fotoPerfil = fotos?.find(f => f.tipo === 'perfil');
+        if (fotoPerfil?.url) {
+          const { data } = supabase.storage.from('media').getPublicUrl(fotoPerfil.url);
+          setFotoPreview(data?.publicUrl || "");
+        }
+
+        const fotosGaleria = fotos?.filter(f => f.tipo === 'galeria');
+        if (fotosGaleria && fotosGaleria.length > 0) {
+          const galeriaItems = fotosGaleria.map(foto => {
+            if (!foto.url) return null;
+            const { data } = supabase.storage.from('media').getPublicUrl(foto.url);
+            if (!data?.publicUrl) return null;
+            return {
+              id: foto.id,
+              url: data.publicUrl,
+              name: foto.storage_path || `galeria_foto_${foto.id}`
+            };
+          }).filter(Boolean);
+          setGaleriaPreview(galeriaItems as any[]);
+        }
+
+        if (videos && videos.length > 0 && videos[0].url) {
+          const { data } = supabase.storage.from('media').getPublicUrl(videos[0].url);
+          if (data?.publicUrl) {
+            console.log("URL Pública do Vídeo:", data.publicUrl);
+            setVideoPreview(data.publicUrl);
+          }
+        }
+
+        // Carrega os documentos da tabela 'documentos_acompanhante'
+        if (documentos && documentos.length > 0) {
+          const documentosUrls = documentos.map(doc => {
+             // Extrai o caminho do arquivo, seja de um objeto JSON ou de um texto simples.
+             let docPath = '';
+             try {
+                // Tenta interpretar como um objeto JSON: {"path":"..."}
+                const parsedUrl = JSON.parse(doc.url);
+                docPath = parsedUrl.path;
+             } catch (e) {
+                // Se falhar, assume que é um texto simples.
+                docPath = doc.url;
+             }
+
+             if (!docPath) return null;
+
+             const { data } = supabase.storage.from('media').getPublicUrl(docPath);
+             if (!data?.publicUrl) return null;
+             return { 
+               url: data.publicUrl, 
+               name: doc.storage_path || 'documento',
+               id: doc.id
+             };
+          }).filter(Boolean);
+          console.log("URLs Processadas dos Documentos:", documentosUrls);
+          setDocumentosPreview(documentosUrls as any[]);
+        }
+      }
+
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro geral ao carregar dados da acompanhante:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
+      setMsg(`Falha ao carregar os dados. Tente recarregar a página. Detalhes: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!fotoFile) { setFotoPreview(""); return; }
-    const url = URL.createObjectURL(fotoFile);
-    setFotoPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [fotoFile]);
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFotoFile(file);
+      const url = URL.createObjectURL(file);
+      setFotoPreview(url);
+    }
+  };
 
-  useEffect(() => {
-    if (!documentosFiles.length) { setDocumentosPreview([]); return; }
-    const previews = documentosFiles.map(file => {
-      if (file.type.startsWith("image/")) {
-        return { url: URL.createObjectURL(file), type: "image", name: file.name };
-      } else if (file.type === "application/pdf") {
-        return { url: "/assets/img/pdf-icon.png", type: "pdf", name: file.name };
-      } else {
-        return { url: "", type: "other", name: file.name };
-      }
-    });
-    setDocumentosPreview(previews);
-    return () => previews.forEach(p => p.type === "image" && URL.revokeObjectURL(p.url));
-  }, [documentosFiles]);
+  const handleDocumentosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length > 0) {
+      // Adiciona os novos arquivos à lista de arquivos a serem enviados
+      setDocumentosFiles(prevFiles => [...prevFiles, ...newFiles]);
 
-  useEffect(() => {
-    if (!videoFile) { setVideoPreview(""); return; }
-    const url = URL.createObjectURL(videoFile);
-    setVideoPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [videoFile]);
+      // Cria previews para os novos arquivos
+      const newPreviews = newFiles.map(file => {
+        if (file.type.startsWith("image/")) {
+          // O 'id' aqui é temporário e usado apenas para a key do React. A ausência de um UUID real indica que é um novo arquivo.
+          return { id: `local-${file.name}-${Date.now()}`, url: URL.createObjectURL(file), type: "image", name: file.name };
+        } else if (file.type === "application/pdf") {
+          return { id: `local-${file.name}-${Date.now()}`, url: "/assets/img/pdf-icon.png", type: "pdf", name: file.name };
+        }
+        return { id: `local-${file.name}-${Date.now()}`, url: "", type: "other", name: file.name };
+      });
 
-  useEffect(() => {
-    if (!galeriaFiles.length) { setGaleriaPreview([]); return; }
-    const urls = galeriaFiles.map(file => URL.createObjectURL(file));
-    setGaleriaPreview(urls);
-    return () => urls.forEach(url => URL.revokeObjectURL(url));
-  }, [galeriaFiles]);
+      // Adiciona os novos previews à lista de exibição existente
+      setDocumentosPreview(prevPreviews => [...prevPreviews, ...newPreviews]);
+    }
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVideoFile(file);
+      const url = URL.createObjectURL(file);
+      setVideoPreview(url);
+    }
+  };
+
+  const handleGaleriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length > 0) {
+      setGaleriaFiles(prevFiles => [...prevFiles, ...newFiles]);
+
+      const newPreviews = newFiles.map(file => ({
+        id: `local-${file.name}-${Date.now()}`,
+        url: URL.createObjectURL(file),
+        name: file.name
+      }));
+
+      setGaleriaPreview(prevPreviews => [...prevPreviews, ...newPreviews]);
+    }
+  };
 
   useEffect(() => {
     if (form?.video_verificacao) {
@@ -125,8 +235,8 @@ export default function EditarAcompanhanteAdmin() {
   const getFotoPerfilUrl = (fotoPath: string) => {
     if (!fotoPath) return ''
     const { data: { publicUrl } } = supabase.storage
-      .from('perfil')
-      .getPublicUrl(fotoPath.split('/').pop() || '')
+      .from('media')
+      .getPublicUrl(fotoPath)
     return publicUrl
   }
 
@@ -134,8 +244,8 @@ export default function EditarAcompanhanteAdmin() {
   const getDocumentoUrl = (docPath: string) => {
     if (!docPath) return ''
     const { data: { publicUrl } } = supabase.storage
-      .from('documentos')
-      .getPublicUrl(docPath.split('/').pop() || '')
+      .from('media')
+      .getPublicUrl(docPath)
     return publicUrl
   }
 
@@ -143,8 +253,8 @@ export default function EditarAcompanhanteAdmin() {
   const getVideoUrl = (videoPath: string) => {
     if (!videoPath) return ''
     const { data: { publicUrl } } = supabase.storage
-      .from('videos-verificacao')
-      .getPublicUrl(videoPath.split('/').pop() || '')
+      .from('media')
+      .getPublicUrl(videoPath)
     return publicUrl
   }
 
@@ -152,8 +262,8 @@ export default function EditarAcompanhanteAdmin() {
   const getFotoGaleriaUrl = (fotoPath: string) => {
     if (!fotoPath) return ''
     const { data: { publicUrl } } = supabase.storage
-      .from('galeria')
-      .getPublicUrl(fotoPath.split('/').pop() || '')
+      .from('media')
+      .getPublicUrl(fotoPath)
     return publicUrl
   }
 
@@ -271,59 +381,122 @@ export default function EditarAcompanhanteAdmin() {
     e.preventDefault();
     setLoading(true);
     setMsg("");
-    // Filtrar campos inválidos
-    const payload = { ...form };
-    // Remove senha from payload since it belongs to usuarios table
-    const senha = payload.senha;
-    delete payload.senha;
-    
-    // Garante que galeria_fotos, documentos e outros arrays sejam arrays de strings ou null
-    if (Array.isArray(payload.galeria_fotos)) {
-      payload.galeria_fotos = payload.galeria_fotos.filter((f: string) => typeof f === 'string' && f.startsWith('http'));
-      if (payload.galeria_fotos.length === 0) payload.galeria_fotos = null;
-    }
-    if (Array.isArray(payload.documentos)) {
-      payload.documentos = payload.documentos.filter((f: string) => typeof f === 'string' && f.length > 0);
-      if (payload.documentos.length === 0) payload.documentos = null;
-    }
-    if (payload.video_verificacao && typeof payload.video_verificacao !== 'string') {
-      payload.video_verificacao = null;
-    }
-    // Logar payload para debug
-    console.log('Payload enviado:', payload);
-    // Salvar alterações do acompanhante
-    const { error } = await supabase.from('acompanhantes').update(payload).eq('id', id);
-    if (!error) {
-      // Se status for aprovado, criar usuário se não existir
-      if (payload.status === 'aprovado' && payload.email && senha) {
-        // Verifica se já existe usuário com esse e-mail
-        const { data: existingUser, error: userError } = await supabase
-          .from('usuarios')
-          .select('id')
-          .eq('email', payload.email)
-          .single();
-        if (!existingUser && !userError) {
-          // Cria usuário
-          const { error: createUserError } = await supabase.from('usuarios').insert({
-            email: payload.email,
-            senha: senha,
-            tipo: 'acompanhante',
-            acompanhante_id: id
-          });
-          if (createUserError) {
-            setMsg('Acompanhante aprovado, mas erro ao criar usuário: ' + createUserError.message);
-            setLoading(false);
-            return;
-          }
+
+    try {
+      // 1. Fazer upload de novas mídias e obter os paths
+      // A lógica de upload deve ser adicionada aqui se necessário, similar ao formulário de cadastro.
+      // Por exemplo, se o usuário puder trocar a foto de perfil aqui:
+      if (fotoFile) {
+        const filePath = await handleFileUpload(fotoFile, "perfil");
+        if (filePath) {
+            // Remove a foto antiga antes de adicionar a nova referência
+            const oldFotoPath = form.fotos?.find((f: any) => f.tipo === 'perfil')?.url;
+            if (oldFotoPath) {
+                await supabase.storage.from('media').remove([oldFotoPath]);
+                await supabase.from('fotos').delete().match({ acompanhante_id: id, tipo: 'perfil' });
+            }
+            // Insere a nova foto
+            await supabase.from('fotos').insert({
+                acompanhante_id: id,
+                url: filePath,
+                storage_path: filePath,
+                tipo: 'perfil',
+                principal: true,
+            });
         }
       }
-      setMsg("Alterações salvas com sucesso!");
-      setTimeout(() => router.push("/painel/acompanhantes"), 1200);
-    } else {
-      setMsg("Erro ao salvar alterações: " + (error.message || JSON.stringify(error)));
-      console.error('Erro ao salvar:', error);
+      
+      if (documentosFiles.length > 0) {
+        for (const file of documentosFiles) {
+          const filePath = await handleFileUpload(file, "documentos");
+          if (filePath) {
+            await supabase.from('documentos_acompanhante').insert({
+              acompanhante_id: id,
+              url: filePath, // O path retornado pela função de upload
+              storage_path: filePath,
+              tipo: 'documento',
+            });
+          }
+        }
+        // Limpa os arquivos selecionados após o upload
+        setDocumentosFiles([]);
+      }
+
+      if (galeriaFiles.length > 0) {
+        for (const file of galeriaFiles) {
+          const filePath = await handleFileUpload(file, "galeria");
+          if (filePath) {
+            await supabase.from('fotos').insert({
+              acompanhante_id: id,
+              url: filePath,
+              storage_path: filePath,
+              tipo: 'galeria',
+            });
+          }
+        }
+        setGaleriaFiles([]);
+      }
+
+      // 2. Preparar e salvar os dados do formulário principal
+      // Clona o formulário para evitar mutação do estado
+      const updateData = { ...form };
+
+      // Converte altura para o formato numérico correto (metros), tratando vírgula decimal
+      if (updateData.altura) {
+        const alturaStr = String(updateData.altura).replace(',', '.');
+        updateData.altura = parseFloat(alturaStr);
+      }
+
+      // Remove campos que não devem ir para o update ou que são de outras tabelas
+      delete updateData.cidades; // Objeto de relacionamento
+      delete updateData.auth_user_id; // Campo sensível/interno
+      delete updateData.created_at; 
+      delete updateData.id;
+      // Remova outros campos que não existem na tabela 'acompanhantes' se houver
+      // Ex: delete updateData.fotos; delete updateData.videos_verificacao; etc.
+
+
+      const { error: updateError } = await supabase
+        .from('acompanhantes')
+        .update(updateData)
+        .eq('id', id);
+
+      if (updateError) {
+        console.error("Erro ao salvar no banco de dados:", updateError);
+        throw new Error(`Falha ao salvar alterações: ${updateError.message}`);
+      }
+
+      setMsg("Alterações salvas com sucesso! Redirecionando em 2 segundos...");
+      setTimeout(() => {
+        router.push('/painel/acompanhantes');
+      }, 2000);
+
+    } catch (error: any) {
+      const defaultMessage = "Ocorreu um erro desconhecido ao salvar.";
+      // Checa se a mensagem de erro já é a que queremos exibir
+      const errorMessage = error.message.startsWith("Falha ao salvar alterações:") 
+        ? error.message 
+        : `${defaultMessage} Detalhes: ${error.message}`;
+      setMsg(errorMessage);
+      console.error("Erro no handleSubmit:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleFileUpload = async (file: File, folder: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${id}_${Date.now()}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('media')
+      .upload(fileName, file, { upsert: true });
+
+    if (error) {
+      console.error(`Erro no upload para ${folder}:`, error);
+      return null;
+    }
+    return fileName; // Retorna o path, não a URL pública
   };
 
   const handleChange = (e: any) => {
@@ -348,32 +521,52 @@ export default function EditarAcompanhanteAdmin() {
     }
   };
 
-  // Função para upload de foto
-  const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    setFotoMsg("Enviando...");
-    const file = e.target.files[0];
-    const url = await handleFotoUpload(file);
-    if (url) setForm((f: any) => ({ ...f, foto: url }));
-    setFotoMsg("Foto enviada com sucesso!");
-  };
-
   // Função para remover documento
-  const handleRemoverDocumento = async (docUrl: string) => {
+  const handleRemoverDocumento = async (docToRemove: any) => {
     if (!window.confirm('Tem certeza que deseja remover este documento?')) return;
 
-    // Atualiza o estado
-    setForm((f: any) => ({
-      ...f,
-      documentos: f.documentos.filter((d: string) => d !== docUrl)
-    }));
+    // Caso 1: Documento ainda não foi salvo (é um arquivo local)
+    // Identificamos isso porque o ID não é um UUID ou a URL é um blob.
+    // A forma mais segura é checar se ele está na lista de `documentosFiles`.
+    const isLocalFile = documentosFiles.some(file => file.name === docToRemove.name);
 
-    // Remove do storage
-    const fileName = docUrl.split('/').pop();
-    if (fileName) {
-      await supabase.storage
-        .from('media')
-        .remove([`documentos/${fileName}`]);
+    if (isLocalFile) {
+        // Remove da lista de arquivos a serem enviados
+        setDocumentosFiles(prevFiles => prevFiles.filter(file => file.name !== docToRemove.name));
+        // Remove da lista de previews
+        setDocumentosPreview(prevPreviews => prevPreviews.filter(preview => preview.id !== docToRemove.id));
+        
+        if (docToRemove.url.startsWith('blob:')) {
+            URL.revokeObjectURL(docToRemove.url);
+        }
+        alert('Documento removido da lista de upload.');
+        return;
+    }
+
+    // Caso 2: Documento já salvo no banco de dados
+    try {
+        const urlParts = docToRemove.url.split('/');
+        const bucketAndPath = urlParts.slice(urlParts.indexOf('media') + 2).join('/');
+        
+        const { error: dbError } = await supabase
+            .from('documentos_acompanhante')
+            .delete()
+            .eq('id', docToRemove.id);
+
+        if (dbError) throw new Error(`Falha ao remover do banco de dados: ${dbError.message}`);
+        
+        if (bucketAndPath) {
+            const { error: storageError } = await supabase.storage.from('media').remove([bucketAndPath]);
+            if (storageError) console.warn("Erro ao remover do storage:", storageError);
+        }
+
+        setDocumentosPreview(prev => prev.filter(doc => doc.id !== docToRemove.id));
+        alert('Documento salvo removido com sucesso.');
+
+    } catch (error) {
+        console.error('Erro ao remover documento:', error);
+        const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
+        alert(`Erro ao remover documento: ${errorMessage}`);
     }
   };
 
@@ -397,21 +590,39 @@ export default function EditarAcompanhanteAdmin() {
   };
 
   // Função para remover foto da galeria
-  const handleRemoverFoto = async (fotoUrl: string) => {
+  const handleRemoverFoto = async (fotoToRemove: any) => {
     if (!window.confirm('Tem certeza que deseja remover esta foto?')) return;
 
-    // Atualiza o estado
-    setForm((f: any) => ({
-      ...f,
-      galeria_fotos: f.galeria_fotos.filter((foto: string) => foto !== fotoUrl)
-    }));
+    // Caso 1: Arquivo local ainda não salvo
+    const isLocalFile = galeriaFiles.some(file => file.name === fotoToRemove.name);
+    if (isLocalFile) {
+        setGaleriaFiles(prev => prev.filter(file => file.name !== fotoToRemove.name));
+        setGaleriaPreview(prev => prev.filter(p => p.id !== fotoToRemove.id));
+        if (fotoToRemove.url.startsWith('blob:')) {
+            URL.revokeObjectURL(fotoToRemove.url);
+        }
+        alert('Foto removida da lista de upload.');
+        return;
+    }
 
-    // Remove do storage
-    const fileName = fotoUrl.split('/').pop();
-    if (fileName) {
-      await supabase.storage
-        .from('media')
-        .remove([`galeria/${fileName}`]);
+    // Caso 2: Foto já salva no banco de dados
+    try {
+        const urlParts = fotoToRemove.url.split('/');
+        const bucketAndPath = urlParts.slice(urlParts.indexOf('media') + 2).join('/');
+
+        const { error: dbError } = await supabase.from('fotos').delete().eq('id', fotoToRemove.id);
+        if (dbError) throw new Error(`Falha ao remover do banco de dados: ${dbError.message}`);
+
+        if (bucketAndPath) {
+            const { error: storageError } = await supabase.storage.from('media').remove([bucketAndPath]);
+            if (storageError) console.warn("Erro ao remover do storage:", storageError.message);
+        }
+        
+        setGaleriaPreview(prev => prev.filter(p => p.id !== fotoToRemove.id));
+        alert('Foto da galeria removida com sucesso.');
+    } catch (error) {
+        console.error('Erro ao remover foto da galeria:', error);
+        alert(`Erro ao remover foto: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
     }
   };
 
@@ -423,15 +634,15 @@ export default function EditarAcompanhanteAdmin() {
 
     try {
       setLoading(true);
-      // Excluir arquivos do storage
-      await supabase.storage.from('perfil').remove([`${id}/*`]);
-      await supabase.storage.from('documentos').remove([`${id}/*`]);
-      await supabase.storage.from('videos-verificacao').remove([`${id}/*`]);
-      await supabase.storage.from('galeria').remove([`${id}/*`]);
-
+      // Excluir arquivos do storage - USA UM ÚNICO BUCKET 'media'
+      const { data: files, error: listError } = await supabase.storage.from('media').list(id);
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => `${id}/${file.name}`);
+        await supabase.storage.from('media').remove(filePaths);
+      }
+      
       // Excluir registros das tabelas
-      await supabase.from('fotos_galeria').delete().eq('acompanhante_id', id);
-      await supabase.from('documentos').delete().eq('acompanhante_id', id);
+      await supabase.from('fotos').delete().eq('acompanhante_id', id);
       await supabase.from('videos_verificacao').delete().eq('acompanhante_id', id);
       await supabase.from('acompanhantes').delete().eq('id', id);
 
@@ -474,377 +685,263 @@ export default function EditarAcompanhanteAdmin() {
             Edite os dados do cadastro abaixo. Após salvar, as alterações serão aplicadas imediatamente.
           </p>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <h2 className="text-2xl font-bold text-[#4E3950] mb-6">Informações Pessoais</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <div>
-                <label className={labelClass}>Nome do acompanhante *</label>
-                <input type="text" name="nome" className={inputClass} value={form.nome} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} required />
+                <label htmlFor="nome" className={labelClass}>Nome</label>
+                <input id="nome" name="nome" type="text" value={form.nome || ''} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Idade *</label>
-                <input type="number" name="idade" className={inputClass} value={form.idade} onChange={e => setForm((f: any) => ({ ...f, idade: e.target.value }))} min={18} required />
+                <label htmlFor="idade" className={labelClass}>Idade</label>
+                <input id="idade" name="idade" type="number" value={form.idade || ''} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Gênero *</label>
-                <select name="genero" className={inputClass} value={form.genero} onChange={e => setForm((f: any) => ({ ...f, genero: e.target.value }))} required>
-                  <option value="">Selecione</option>
-                  <option value="F">Feminino</option>
-                  <option value="M">Masculino</option>
-                  <option value="Outro">Outro</option>
+                <label htmlFor="telefone" className={labelClass}>Telefone</label>
+                <input id="telefone" name="telefone" type="text" value={form.telefone || ''} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="email" className={labelClass}>E-mail</label>
+                <input id="email" name="email" type="email" value={form.email || ''} disabled className={`${inputClass} bg-gray-100`} />
+              </div>
+              <div>
+                <label htmlFor="cidade_id" className={labelClass}>Cidade</label>
+                <select id="cidade_id" name="cidade_id" value={form.cidade_id || ''} onChange={handleChange} className={inputClass}>
+                  <option value="">Selecione uma cidade</option>
+                  {cidades.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
-              <div>
-                <label className={labelClass}>Genitália</label>
-                <select
-                  name="genitalia"
-                  className={inputClass}
-                  value={form.genitalia}
-                  onChange={e => {
-                    setForm((f: any) => ({ ...f, genitalia: e.target.value }));
-                    setShowGenitaliaOutro(e.target.value === "Outro");
-                  }}
-                >
-                  <option value="">Selecione</option>
-                  <option value="Vagina">Vagina</option>
-                  <option value="Pênis">Pênis</option>
-                  <option value="Outro">Outro</option>
-                </select>
-                {showGenitaliaOutro && (
-                  <input
-                    type="text"
-                    className={inputClass + " mt-2"}
-                    placeholder="Descreva a genitália"
-                    value={form.genitalia_outro || ""}
-                    onChange={e => setForm((f: any) => ({ ...f, genitalia_outro: e.target.value }))}
-                  />
-                )}
+               <div>
+                <label htmlFor="endereco" className={labelClass}>Endereço (Bairro)</label>
+                <input id="endereco" name="endereco" type="text" value={form.endereco || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Centro" />
               </div>
-              <div>
-                <label className={labelClass}>Preferência sexual</label>
-                <select
-                  name="preferencia_sexual"
-                  className={inputClass}
-                  value={form.preferencia_sexual}
-                  onChange={e => {
-                    setForm((f: any) => ({ ...f, preferencia_sexual: e.target.value }));
-                    setShowPrefOutro(e.target.value === "Outro");
-                  }}
-                >
-                  <option value="">Selecione</option>
-                  <option value="Hetero">Hetero</option>
-                  <option value="Homo">Homo</option>
-                  <option value="Bi">Bi</option>
-                  <option value="Outro">Outro</option>
-                </select>
-                {showPrefOutro && (
-                  <input
-                    type="text"
-                    className={inputClass + " mt-2"}
-                    placeholder="Descreva a preferência sexual"
-                    value={form.preferencia_sexual_outro || ""}
-                    onChange={e => setForm((f: any) => ({ ...f, preferencia_sexual_outro: e.target.value }))}
-                  />
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>Peso (kg)</label>
-                <input type="text" name="peso" className={inputClass} value={form.peso} onChange={e => setForm((f: any) => ({ ...f, peso: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Altura (m)</label>
-                <input type="text" name="altura" className={inputClass} value={form.altura} onChange={e => setForm((f: any) => ({ ...f, altura: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Etnia</label>
-                <select
-                  name="etnia"
-                  className={inputClass}
-                  value={form.etnia}
-                  onChange={e => setForm((f: any) => ({ ...f, etnia: e.target.value }))}
-                >
-                  <option value="">Selecione</option>
-                  <option value="Branca">Branca</option>
-                  <option value="Negra">Negra</option>
-                  <option value="Parda">Parda</option>
-                  <option value="Amarela">Amarela</option>
-                  <option value="Indígena">Indígena</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Cor dos olhos</label>
-                <input type="text" name="cor_olhos" className={inputClass} value={form.cor_olhos} onChange={e => setForm((f: any) => ({ ...f, cor_olhos: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Estilo de cabelo</label>
-                <input type="text" name="estilo_cabelo" className={inputClass} value={form.estilo_cabelo} onChange={e => setForm((f: any) => ({ ...f, estilo_cabelo: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Tamanho do cabelo</label>
-                <input type="text" name="tamanho_cabelo" className={inputClass} value={form.tamanho_cabelo} onChange={e => setForm((f: any) => ({ ...f, tamanho_cabelo: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Tamanho do pé</label>
-                <input type="text" name="tamanho_pe" className={inputClass} value={form.tamanho_pe} onChange={e => setForm((f: any) => ({ ...f, tamanho_pe: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex gap-8 items-center flex-wrap mb-2">
-              <label className={labelClass}><input type="checkbox" checked={form.silicone} onChange={e => setForm((f: any) => ({ ...f, silicone: e.target.checked }))} className={checkboxClass} />Silicone</label>
-              <label className={labelClass}><input type="checkbox" checked={form.tatuagens} onChange={e => setForm((f: any) => ({ ...f, tatuagens: e.target.checked }))} className={checkboxClass} />Tatuagens</label>
-              <label className={labelClass}><input type="checkbox" checked={form.piercings} onChange={e => setForm((f: any) => ({ ...f, piercings: e.target.checked }))} className={checkboxClass} />Piercings</label>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className={labelClass}>Fumante</label>
-                <input type="text" name="fumante" className={inputClass} value={form.fumante} onChange={e => setForm((f: any) => ({ ...f, fumante: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Idiomas</label>
-                <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={e => setForm((f: any) => ({ ...f, idiomas: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Endereço</label>
-                <input type="text" name="endereco" className={inputClass} value={form.endereco} onChange={e => setForm((f: any) => ({ ...f, endereco: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Telefone</label>
-                <input name="telefone" value={form.telefone || ''} onChange={handleChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Cidade *</label>
-                <select name="cidade_id" className={inputClass} value={form.cidade_id} onChange={e => setForm((f: any) => ({ ...f, cidade_id: e.target.value }))} required>
-                  <option value="">Selecione</option>
-                  {cidades.map(c => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Clientes em conjunto</label>
-                <input type="number" name="clientes_conjunto" className={inputClass} value={form.clientes_conjunto} onChange={e => setForm((f: any) => ({ ...f, clientes_conjunto: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Atende</label>
-                <input type="text" name="atende" className={inputClass} value={form.atende} onChange={e => setForm((f: any) => ({ ...f, atende: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Horário de expediente</label>
-                <input type="text" name="horario_expediente" className={inputClass} value={form.horario_expediente} onChange={e => setForm((f: any) => ({ ...f, horario_expediente: e.target.value }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Formas de pagamento</label>
-                <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={e => setForm((f: any) => ({ ...f, formas_pagamento: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Descrição</label>
-              <textarea name="descricao" className={inputClass} rows={4} value={form.descricao} onChange={e => setForm((f: any) => ({ ...f, descricao: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>E-mail</label>
-              <input name="email" value={form.email || ''} onChange={handleChange} className="input-field" />
-            </div>
-            <div>
-              <label className={labelClass}>Senha</label>
-              <input name="senha" type="text" value={form.senha || ''} onChange={handleChange} className="input-field" />
-            </div>
-            {/* Foto */}
-            <div className="space-y-4">
-              <label className={labelClass}>Foto</label>
-              {form.foto && (
-                <div className="relative w-48 h-48 mx-auto mb-4">
-                  <Image
-                    src={getFotoPerfilUrl(form.foto)}
-                    alt="Foto do perfil"
-                    fill
-                    className="object-cover rounded-lg"
-                  />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleUploadFoto}
-                className="hidden"
-                id="foto"
-              />
-              <label
-                htmlFor="foto"
-                className={uploadButtonClass}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                {form.foto ? "Alterar foto" : "Adicionar foto"}
-              </label>
-              {fotoMsg && <p className="text-center text-sm mt-2 text-[#4E3950]">{fotoMsg}</p>}
             </div>
 
-            {/* Documentos */}
-            <div className="space-y-4">
-              <label className={labelClass}>Documentos do perfil</label>
-              {form.documentos && form.documentos.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  {form.documentos.map((doc: string, index: number) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={getDocumentoUrl(doc)}
-                        alt={`Documento ${index + 1}`}
-                        width={200}
-                        height={150}
-                        className="object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => handleRemoverDocumento(doc)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    setDocumentosFiles(Array.from(e.target.files));
-                  }
-                }}
-                className="hidden"
-                id="documentos"
-                multiple
-              />
-              <label
-                htmlFor="documentos"
-                className={uploadButtonClass}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Adicionar documentos
-              </label>
-            </div>
+            {/* DETALHES DO PERFIL */}
+            <div className="bg-white p-8 rounded-xl shadow-md mb-8">
+              <h2 className="text-2xl font-bold text-[#4E3950] mb-6">Detalhes do Perfil</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                {/* Coluna 1 */}
+                <div>
+                  <label htmlFor="genero" className={labelClass}>Gênero</label>
+                  <select id="genero" name="genero" value={form.genero || ''} onChange={handleChange} className={inputClass}>
+                    <option value="">Selecione</option>
+                    <option value="feminino">Feminino</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="trans">Trans</option>
+                    <option value="outro">Outro</option>
+                  </select>
 
-            {/* Vídeo de verificação */}
-            <div className="space-y-4">
-              <label className={labelClass}>Vídeo de verificação</label>
-              {(videoUrl || videoPreview) && (
-                <div className="mb-4">
-                  <video
-                    src={videoPreview || videoUrl || ''}
-                    controls
-                    className="w-full max-w-md mx-auto rounded-lg"
-                  />
-                  <button
-                    onClick={() => handleRemoverVideo()}
-                    className="mt-2 text-red-500 hover:text-red-700 transition-colors flex items-center gap-2 mx-auto"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Remover vídeo
-                  </button>
+                  <label htmlFor="genitalia" className={labelClass}>Genitália</label>
+                  <input id="genitalia" name="genitalia" type="text" value={form.genitalia || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Natural, Operada" />
+                  
+                  <label htmlFor="preferencia_sexual" className={labelClass}>Preferência Sexual</label>
+                  <input id="preferencia_sexual" name="preferencia_sexual" type="text" value={form.preferencia_sexual || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Heterossexual, Bissexual" />
                 </div>
-              )}
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    setVideoFile(e.target.files[0]);
-                  }
-                }}
-                className="hidden"
-                id="video"
-              />
-              <label
-                htmlFor="video"
-                className={uploadButtonClass}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                {form.video_verificacao ? "Alterar vídeo" : "Adicionar vídeo"}
-              </label>
-            </div>
+                {/* Coluna 2 */}
+                <div>
+                  <label htmlFor="peso" className={labelClass}>Peso (kg)</label>
+                  <input id="peso" name="peso" type="number" value={form.peso || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 65" />
+                  
+                  <label htmlFor="altura" className={labelClass}>Altura (m)</label>
+                  <input id="altura" name="altura" type="number" step="0.01" value={form.altura || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 1.70" />
 
-            {/* Galeria de fotos */}
-            <div className="space-y-4">
-              <label className={labelClass}>Galeria de Fotos</label>
-              {form.galeria_fotos && form.galeria_fotos.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {form.galeria_fotos.map((foto: string, index: number) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={getFotoGaleriaUrl(foto)}
-                        alt={`Foto ${index + 1}`}
-                        width={200}
-                        height={150}
-                        className="object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => handleRemoverFoto(foto)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  <label htmlFor="tamanho_pe" className={labelClass}>Tamanho do Pé</label>
+                  <input id="tamanho_pe" name="tamanho_pe" type="number" value={form.tamanho_pe || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 38" />
                 </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    setGaleriaFiles(Array.from(e.target.files));
-                  }
-                }}
-                className="hidden"
-                id="galeria"
-                multiple
-              />
-              <label
-                htmlFor="galeria"
-                className={uploadButtonClass}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Adicionar fotos à galeria
-              </label>
-            </div>
-            <div>
-              <label className={labelClass}>Status</label>
-              <select name="status" value={form.status || ''} onChange={handleChange} className={inputClass}>
-                <option value="pendente">Pendente</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="rejeitado">Rejeitado</option>
-              </select>
-            </div>
-            <div className="flex gap-4">
-              <button type="submit" className={buttonClass} disabled={loading}>
-                {loading ? "Salvando..." : "Salvar Alterações"}
-              </button>
+                {/* Coluna 3 */}
+                <div>
+                  <label htmlFor="etnia" className={labelClass}>Etnia</label>
+                  <input id="etnia" name="etnia" type="text" value={form.etnia || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Branca, Morena, Negra" />
+
+                  <label htmlFor="cor_dos_olhos" className={labelClass}>Cor dos Olhos</label>
+                  <input id="cor_dos_olhos" name="cor_dos_olhos" type="text" value={form.cor_dos_olhos || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Castanhos, Azuis" />
+
+                  <label htmlFor="estilo_cabelo" className={labelClass}>Estilo do Cabelo</label>
+                  <input id="estilo_cabelo" name="estilo_cabelo" type="text" value={form.estilo_cabelo || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Liso, Ondulado" />
+                  
+                  <label htmlFor="tamanho_cabelo" className={labelClass}>Tamanho do Cabelo</label>
+                  <input id="tamanho_cabelo" name="tamanho_cabelo" type="text" value={form.tamanho_cabelo || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Curto, Longo" />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label htmlFor="descricao" className={labelClass}>Descrição / Sobre mim</label>
+                <textarea id="descricao" name="descricao" value={form.descricao || ''} onChange={handleChange} className={inputClass} rows={5}></textarea>
+              </div>
               
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                disabled={loading}
-              >
-                {loading ? "Excluindo..." : "Excluir Acompanhante"}
-              </button>
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="flex items-center">
+                      <input id="fumante" name="fumante" type="checkbox" checked={form.fumante || false} onChange={handleChange} className={checkboxClass} />
+                      <label htmlFor="fumante" className="text-[#4E3950]">Fumante</label>
+                  </div>
+                  <div className="flex items-center">
+                      <input id="silicone" name="silicone" type="checkbox" checked={form.silicone || false} onChange={handleChange} className={checkboxClass} />
+                      <label htmlFor="silicone" className="text-[#4E3950]">Silicone</label>
+                  </div>
+                  <div className="flex items-center">
+                      <input id="tatuagens" name="tatuagens" type="checkbox" checked={form.tatuagens || false} onChange={handleChange} className={checkboxClass} />
+                      <label htmlFor="tatuagens" className="text-[#4E3950]">Tatuagens</label>
+                  </div>
+                  <div className="flex items-center">
+                      <input id="piercings" name="piercings" type="checkbox" checked={form.piercings || false} onChange={handleChange} className={checkboxClass} />
+                      <label htmlFor="piercings" className="text-[#4E3950]">Piercings</label>
+                  </div>
+              </div>
             </div>
-            <button
-              type="button"
-              className="w-full py-3 mt-2 bg-gray-300 text-[#4E3950] border-none rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => router.push('/painel/acompanhantes')}
-            >
-              Cancelar / Sair
-            </button>
-            {msg && <div className="mt-2">{msg}</div>}
+
+            {/* DETALHES DE ATENDIMENTO */}
+            <div className="bg-white p-8 rounded-xl shadow-md mb-8">
+              <h2 className="text-2xl font-bold text-[#4E3950] mb-6">Detalhes de Atendimento</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                 <div>
+                  <label htmlFor="idiomas" className={labelClass}>Idiomas</label>
+                  <input id="idiomas" name="idiomas" type="text" value={form.idiomas || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Português, Inglês" />
+                </div>
+                <div>
+                  <label htmlFor="horario_expediente" className={labelClass}>Horário de Expediente</label>
+                  <input id="horario_expediente" name="horario_expediente" type="text" value={form.horario_expediente || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 08:00 - 18:00" />
+                </div>
+                 <div>
+                  <label htmlFor="formas_pagamento" className={labelClass}>Formas de Pagamento</label>
+                  <input id="formas_pagamento" name="formas_pagamento" type="text" value={form.formas_pagamento || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Dinheiro, Pix, Cartão" />
+                </div>
+              </div>
+            </div>
+
+            {/* MÍDIAS E DOCUMENTOS */}
+            <div className="bg-white p-8 rounded-xl shadow-md mb-8">
+              <h2 className="text-2xl font-bold text-[#4E3950] mb-6">Mídias e Documentos</h2>
+              
+              {/* CAMPO FOTO */}
+              <div className="mb-6">
+                <label className={labelClass}>Foto de Perfil</label>
+                {fotoPreview ? (
+                  <div className="mt-2 text-center">
+                    <Image src={fotoPreview} alt="Preview da Foto" width={192} height={192} className="w-48 h-48 object-cover rounded-lg inline-block" />
+                    <button type="button" onClick={() => { setFotoFile(null); setFotoPreview(""); }} className="mt-2 text-sm text-red-600 hover:text-red-800">Remover Foto</button>
+                  </div>
+                ) : (
+                  <label htmlFor="foto" className={uploadButtonClass}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                    Adicionar foto
+                  </label>
+                )}
+                <input id="foto" type="file" accept="image/*" onChange={handleFotoChange} className="hidden" />
+                {fotoMsg && <p className="text-sm mt-2 text-center">{fotoMsg}</p>}
+              </div>
+
+              {/* CAMPO DOCUMENTOS */}
+              <div className="mb-6">
+                <label className={labelClass}>Documentos do Perfil</label>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {documentosPreview.map((doc) => (
+                    <div key={doc.id} className="relative group">
+                      {doc.type === 'pdf' ? (
+                          <Image src="/assets/img/icons/icon-document.svg" alt={doc.name} width={100} height={100} className="w-full h-32 object-contain rounded-lg border p-2" />
+                      ) : (
+                          <Image src={doc.url} alt={doc.name} width={150} height={150} className="w-full h-32 object-cover rounded-lg" />
+                      )}
+                      <p className="text-xs text-center truncate mt-1">{doc.name}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoverDocumento(doc)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                 <label htmlFor="documentos" className={`${uploadButtonClass} mt-4`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    Adicionar documentos
+                </label>
+                <input id="documentos" type="file" multiple accept="image/*,application/pdf" ref={documentosRef} onChange={handleDocumentosChange} className="hidden" />
+              </div>
+
+              {/* CAMPO VÍDEO DE VERIFICAÇÃO */}
+              <div className="mb-6">
+                <label className={labelClass}>Vídeo de Verificação</label>
+                {videoPreview ? (
+                  <div className="mt-2">
+                    <video src={videoPreview} controls className="w-full rounded-lg max-h-64"></video>
+                    <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(""); }} className="mt-2 text-sm text-red-600 hover:text-red-800">Remover Vídeo</button>
+                  </div>
+                ) : (
+                  <label htmlFor="video" className={uploadButtonClass}>
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.55a1 1 0 01.45 1.72l-2 1.5a1 1 0 01-1.2-.22L13 10M15 10l-2 4.5a1 1 0 01-1.73.45L8 10m7-5a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     Adicionar vídeo
+                  </label>
+                )}
+                <input id="video" type="file" accept="video/*" ref={videoRef} onChange={handleVideoChange} className="hidden" />
+              </div>
+
+              {/* CAMPO GALERIA DE FOTOS */}
+              <div className="mb-6">
+                <label className={labelClass}>Galeria de Fotos</label>
+                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {galeriaPreview.map((foto) => (
+                    <div key={foto.id} className="relative group">
+                      <Image src={foto.url} alt={`Foto da galeria ${foto.name}`} width={150} height={150} className="w-full h-32 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoverFoto(foto)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                 <label htmlFor="galeria" className={`${uploadButtonClass} mt-4`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Adicionar fotos à galeria
+                </label>
+                <input id="galeria" type="file" multiple accept="image/*" ref={galeriaFotosRef} onChange={handleGaleriaChange} className="hidden" />
+              </div>
+
+            </div>
+
+            {/* STATUS E AÇÕES */}
+            <div className="bg-white p-8 rounded-xl shadow-md">
+              <h3 className="text-xl font-bold text-[#4E3950] mb-4">Status e Ações</h3>
+              <div>
+                <label htmlFor="status" className={labelClass}>Status do Perfil</label>
+                <select id="status" name="status" value={form.status || ''} onChange={handleChange} className={inputClass}>
+                  <option value="pendente">Pendente</option>
+                  <option value="aprovado">Aprovado</option>
+                  <option value="rejeitado">Rejeitado</option>
+                </select>
+              </div>
+
+              <div className="mt-8 flex flex-col md:flex-row gap-4">
+                <button
+                  type="submit"
+                  className="w-full md:w-auto flex-1 py-3 px-6 bg-[#4E3950] text-white rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-[#CFB78B] hover:text-[#4E3950] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="w-full md:w-auto flex-1 py-3 px-6 bg-red-600 text-white rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-red-700 disabled:opacity-50"
+                  disabled={loading}
+                >
+                  {loading ? "Excluindo..." : "Excluir"}
+                </button>
+                
+                <button
+                  type="button"
+                  className="w-full md:w-auto flex-1 py-3 px-6 bg-gray-300 text-[#4E3950] rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-gray-400 disabled:opacity-50"
+                  onClick={() => router.push('/painel/acompanhantes')}
+                >
+                  Cancelar
+                </button>
+              </div>
+              {msg && <div className="mt-4 text-center text-sm text-gray-600">{msg}</div>}
+            </div>
           </div>
         </form>
       </main>
