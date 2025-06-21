@@ -77,7 +77,10 @@ export default function AcompanhantesPage() {
       // Mapeamento corrigido para lidar com a nova estrutura da consulta
       const acompanhantesMapeadas = (data || []).map(item => {
         // Acessa o nome da cidade através do objeto aninhado
-        const cidadeNome = item.cidades?.nome || 'N/A';
+        // A consulta do Supabase pode retornar um objeto ou um array dependendo da relação.
+        // O código abaixo trata ambos os casos para segurança.
+        const cidadeObj = Array.isArray(item.cidades) ? item.cidades[0] : item.cidades;
+        const cidadeNome = cidadeObj?.nome || 'N/A';
         
         // Busca a foto de perfil
         const fotoPerfilObj = item.fotos?.find(foto => foto.tipo === 'perfil');
