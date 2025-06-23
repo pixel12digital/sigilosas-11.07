@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 interface HeaderProps {
-  config: Record<string, string>;
+  config?: Record<string, string>;
 }
 
 export default function Header({ config }: HeaderProps) {
