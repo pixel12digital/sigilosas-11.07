@@ -25,6 +25,8 @@ type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
   cidades: Database['public']['Tables']['cidades']['Row'] | null;
 };
 
+type Foto = Database['public']['Tables']['fotos']['Row'];
+
 export default function AcompanhanteProfile({ params }: { params: { id: string } }) {
   const { id } = params;
   
@@ -56,8 +58,8 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
 
         setAcompanhante(data as Acompanhante);
         
-        const galleryPhotos = data.fotos?.filter(f => f.tipo === 'galeria');
-        const principalPhoto = data.fotos?.find(f => f.principal);
+        const galleryPhotos = data.fotos?.filter((f: Foto) => f.tipo === 'galeria');
+        const principalPhoto = data.fotos?.find((f: Foto) => f.principal);
         
         if (principalPhoto) {
           setSelectedImage(principalPhoto.storage_path);
@@ -112,7 +114,7 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
 
   if (!acompanhante) return null;
 
-  const galleryPhotos = acompanhante.fotos?.filter(f => f.tipo === 'galeria') || [];
+  const galleryPhotos = acompanhante.fotos?.filter((f: Foto) => f.tipo === 'galeria') || [];
 
   return (
     <div className="bg-gray-50">
