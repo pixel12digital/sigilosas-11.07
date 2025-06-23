@@ -203,17 +203,6 @@ export default function DashboardPage() {
           </Link>
           
           <Link
-            href="/painel/configuracoes"
-            className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <span className="text-2xl">⚙️</span>
-            <div>
-              <p className="font-semibold text-[#2E1530]">Configurações</p>
-              <p className="text-sm text-gray-600">Configurar o sistema</p>
-            </div>
-          </Link>
-          
-          <Link
             href="/painel/blog"
             className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
           >

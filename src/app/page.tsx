@@ -9,12 +9,22 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { Database } from '@/lib/database.types';
 import Link from 'next/link';
 import { ShieldCheckIcon, ChatBubbleLeftRightIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { supabase } from '@/lib/supabase';
 
 type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
   fotos: Pick<Database['public']['Tables']['fotos']['Row'], 'url' | 'storage_path' | 'tipo' | 'principal'>[];
   cidades: Pick<Database['public']['Tables']['cidades']['Row'], 'nome' | 'estado'> | null;
 };
 type Cidade = Database['public']['Tables']['cidades']['Row'];
+
+interface BlogPost {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  autor: string;
+  created_at: string;
+  imagem_url?: string;
+}
 
 const features = [
   {
@@ -42,6 +52,8 @@ export default function Home() {
   const [cidadeId, setCidadeId] = useState('');
   const [genero, setGenero] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loadingBlog, setLoadingBlog] = useState(true);
 
   const supabase = createClientComponentClient<Database>();
 
@@ -102,6 +114,19 @@ export default function Home() {
     carregarAcompanhantes();
   }, [cidadeId, genero, supabase]);
 
+  useEffect(() => {
+    const fetchBlogPosts = async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(8);
+      if (!error) setBlogPosts(data || []);
+      setLoadingBlog(false);
+    };
+    fetchBlogPosts();
+  }, []);
+
   return (
     <>
       <Header />
@@ -114,7 +139,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 -mt-10 relative z-20">
+        <div id="filtro" className="container mx-auto px-4 -mt-10 relative z-20">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <select
@@ -181,11 +206,47 @@ export default function Home() {
             </div>
         </section>
 
+        <section className="py-12 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Dicas & Inspiração</h2>
+            {loadingBlog ? (
+              <div className="flex justify-center items-center min-h-[120px]">
+                <span className="text-gray-500">Carregando artigos...</span>
+              </div>
+            ) : blogPosts.length === 0 ? (
+              <div className="text-center text-gray-500">Nenhum artigo publicado ainda.</div>
+            ) : (
+              <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-4 md:gap-8 md:overflow-visible md:pb-0">
+                {blogPosts.map(post => (
+                  <div key={post.id} className="min-w-[280px] max-w-xs bg-gray-50 rounded-xl shadow hover:shadow-lg transition-shadow flex flex-col snap-start md:min-w-0 md:max-w-none">
+                    {post.imagem_url && (
+                      <img src={post.imagem_url} alt={post.titulo} className="w-full h-40 object-cover rounded-t-xl" />
+                    )}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-lg font-semibold text-[#4E3950] mb-1 line-clamp-2">{post.titulo}</h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <span>{post.autor}</span>
+                        <span>•</span>
+                        <span>{new Date(post.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <p className="text-gray-700 mb-3 line-clamp-3">{post.conteudo.length > 100 ? post.conteudo.substring(0, 100) + '...' : post.conteudo}</p>
+                      <Link href={`/blog/${post.id}`} className="mt-auto inline-block px-3 py-1 bg-[#4E3950] text-white rounded font-medium text-sm hover:bg-[#2E1530] transition-colors">
+                        Ler artigo
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* About Section */}
-        <div className="relative bg-white py-24 sm:py-32">
+        <div id="sobre" className="relative bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
             <div className="px-6 lg:col-span-7 lg:px-0 xl:col-span-6 flex flex-col justify-center">
               <div className="mx-auto max-w-2xl lg:mx-0">
+                <span className="text-sm text-gray-400 font-normal uppercase tracking-widest mb-2 block">Sobre</span>
                 <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                   Feita por quem entende, para quem merece respeito.
                 </h1>
@@ -244,7 +305,7 @@ export default function Home() {
               <Link href="/cadastro" className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                 Faça parte da nossa comunidade
               </Link>
-              <Link href="/acompanhantes" className="text-sm font-semibold leading-6 text-gray-900">
+              <Link href="/#filtro" className="text-sm font-semibold leading-6 text-gray-900">
                 Ver perfis <span aria-hidden="true">→</span>
               </Link>
             </div>

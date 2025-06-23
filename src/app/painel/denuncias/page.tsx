@@ -32,21 +32,20 @@ export default function DenunciasPage() {
         .select(`
           id,
           acompanhante_id,
-          denunciante_nome,
-          denunciante_email,
+          nome_exibicao,
           motivo,
           descricao,
           status,
-          criado_em,
-          acompanhantes!inner(nome)
+          created_at
         `)
-        .order('criado_em', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const denunciasFormatadas = data?.map(denuncia => ({
         ...denuncia,
-        nome_acompanhante: denuncia.acompanhantes?.[0]?.nome
+        denunciante_nome: denuncia.nome_exibicao,
+        criado_em: denuncia.created_at
       })) || [];
 
       setDenuncias(denunciasFormatadas);
@@ -177,7 +176,6 @@ export default function DenunciasPage() {
                 
                 <div className="flex items-center gap-4 mb-2 text-sm text-gray-600">
                   <span>Denunciante: {denuncia.denunciante_nome}</span>
-                  <span>Email: {denuncia.denunciante_email}</span>
                   <span>Data: {new Date(denuncia.criado_em).toLocaleDateString('pt-BR')}</span>
                 </div>
                 
@@ -204,7 +202,7 @@ export default function DenunciasPage() {
                 </select>
                 
                 <button
-                  onClick={() => window.open(`/acompanhante/${denuncia.acompanhante_id}`, '_blank')}
+                  onClick={() => window.open(`/acompanhantes/${denuncia.acompanhante_id}`, '_blank')}
                   className="text-blue-600 hover:text-blue-900 transition-colors text-sm"
                 >
                   👁️ Ver perfil da acompanhante

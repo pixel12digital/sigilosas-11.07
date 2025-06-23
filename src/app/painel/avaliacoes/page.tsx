@@ -31,20 +31,23 @@ export default function AvaliacoesPage() {
         .select(`
           id,
           acompanhante_id,
-          cliente_nome,
+          nome_exibicao,
           nota,
           comentario,
           status,
-          criado_em,
-          acompanhantes!inner(nome)
+          created_at
         `)
-        .order('criado_em', { ascending: false });
+        .order('created_at', { ascending: false });
+
+      console.log('Avaliações retornadas:', data, error);
 
       if (error) throw error;
 
       const avaliacoesFormatadas = data?.map(avaliacao => ({
         ...avaliacao,
-        nome_acompanhante: avaliacao.acompanhantes?.[0]?.nome
+        cliente_nome: avaliacao.nome_exibicao,
+        nome_acompanhante: '',
+        criado_em: avaliacao.created_at
       })) || [];
 
       setAvaliacoes(avaliacoesFormatadas);
@@ -188,7 +191,7 @@ export default function AvaliacoesPage() {
                 </select>
                 
                 <button
-                  onClick={() => window.open(`/acompanhante/${avaliacao.acompanhante_id}`, '_blank')}
+                  onClick={() => window.open(`/acompanhantes/${avaliacao.acompanhante_id}`, '_blank')}
                   className="text-blue-600 hover:text-blue-900 transition-colors text-sm"
                 >
                   👁️ Ver perfil da acompanhante

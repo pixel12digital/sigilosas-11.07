@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Database } from '@/lib/database.types';
+import { StarIcon } from '@heroicons/react/24/solid';
 
 import {
   CheckBadgeIcon,
@@ -34,6 +35,14 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [avaliacoes, setAvaliacoes] = useState<any[]>([]);
+  const [form, setForm] = useState({ nome: '', nota: 5, comentario: '' });
+  const [enviando, setEnviando] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [showDenuncia, setShowDenuncia] = useState(false);
+  const [denuncia, setDenuncia] = useState({ nome: '', motivo: '', descricao: '' });
+  const [msgDenuncia, setMsgDenuncia] = useState('');
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
 
   const supabase = createClientComponentClient<Database>();
 
@@ -75,6 +84,20 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
     };
 
     fetchAcompanhante();
+  }, [id, supabase]);
+
+  // Buscar avaliações aprovadas
+  useEffect(() => {
+    const fetchAvaliacoes = async () => {
+      const { data, error } = await supabase
+        .from('avaliacoes')
+        .select('*')
+        .eq('acompanhante_id', id)
+        .eq('status', 'aprovado')
+        .order('created_at', { ascending: false });
+      if (!error) setAvaliacoes(data || []);
+    };
+    fetchAvaliacoes();
   }, [id, supabase]);
 
   const getPublicUrl = (path: string | null) => {
@@ -253,6 +276,170 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
                         </dd>
                     </div>}
                 </dl>
+            </div>
+
+            {/* Avaliações */}
+            <div className="bg-white p-6 rounded-lg shadow-lg mt-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Avaliações</h2>
+              {/* Botão discreto para denúncia */}
+              <div className="flex justify-end mb-2">
+                <button
+                  className="text-xs text-gray-400 underline hover:text-red-500 transition-colors"
+                  onClick={() => setShowDenuncia(v => !v)}
+                  type="button"
+                >
+                  {showDenuncia ? 'Fechar denúncia' : 'Denunciar perfil'}
+                </button>
+              </div>
+              {showDenuncia && (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setEnviandoDenuncia(true);
+                    setMsgDenuncia('');
+                    const { error } = await supabase.from('denuncias').insert({
+                      acompanhante_id: id,
+                      nome_exibicao: denuncia.nome || 'Anônimo',
+                      motivo: denuncia.motivo,
+                      descricao: denuncia.descricao,
+                      status: 'pendente',
+                    });
+                    if (error) {
+                      setMsgDenuncia('Erro ao enviar denúncia. Tente novamente.');
+                    } else {
+                      setMsgDenuncia('Denúncia enviada para análise!');
+                      setDenuncia({ nome: '', motivo: '', descricao: '' });
+                      setShowDenuncia(false);
+                    }
+                    setEnviandoDenuncia(false);
+                  }}
+                  className="mb-4 p-4 border rounded-lg bg-gray-50"
+                >
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Nome (opcional)</label>
+                    <input
+                      type="text"
+                      value={denuncia.nome}
+                      onChange={e => setDenuncia({ ...denuncia, nome: e.target.value })}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                      placeholder="Seu nome ou deixe em branco para anônimo"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Motivo *</label>
+                    <input
+                      type="text"
+                      value={denuncia.motivo}
+                      onChange={e => setDenuncia({ ...denuncia, motivo: e.target.value })}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                      placeholder="Motivo da denúncia (ex: comportamento, fotos falsas, etc)"
+                      required
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Descrição *</label>
+                    <textarea
+                      value={denuncia.descricao}
+                      onChange={e => setDenuncia({ ...denuncia, descricao: e.target.value })}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                      placeholder="Descreva o ocorrido"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={enviandoDenuncia}
+                    className="bg-red-500 text-white px-4 py-1 rounded-md text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    {enviandoDenuncia ? 'Enviando...' : 'Enviar denúncia'}
+                  </button>
+                  {msgDenuncia && <div className="mt-2 text-center text-sm text-primary">{msgDenuncia}</div>}
+                </form>
+              )}
+              {avaliacoes.length === 0 && (
+                <p className="text-gray-500 mb-4">Nenhuma avaliação aprovada ainda.</p>
+              )}
+              <ul className="space-y-4 mb-8">
+                {avaliacoes.map((a) => (
+                  <li key={a.id} className="border-b pb-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon key={i} className={`w-5 h-5 ${i < a.nota ? 'text-yellow-400' : 'text-gray-300'}`} />
+                      ))}
+                      <span className="ml-2 font-semibold text-gray-700">{a.nome_exibicao || 'Anônimo'}</span>
+                      <span className="ml-2 text-xs text-gray-400">{new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="text-gray-700">{a.comentario}</div>
+                  </li>
+                ))}
+              </ul>
+              <h3 className="text-lg font-bold mb-2">Deixe sua avaliação</h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setEnviando(true);
+                  setMsg('');
+                  const { error } = await supabase.from('avaliacoes').insert({
+                    acompanhante_id: id,
+                    nome_exibicao: form.nome || 'Anônimo',
+                    nota: form.nota,
+                    comentario: form.comentario,
+                    status: 'pendente',
+                  });
+                  if (error) {
+                    setMsg('Erro ao enviar avaliação. Tente novamente.');
+                  } else {
+                    setMsg('Avaliação enviada para moderação!');
+                    setForm({ nome: '', nota: 5, comentario: '' });
+                  }
+                  setEnviando(false);
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome (opcional)</label>
+                  <input
+                    type="text"
+                    value={form.nome}
+                    onChange={e => setForm({ ...form, nome: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Seu nome ou deixe em branco para anônimo"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nota</label>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        type="button"
+                        key={n}
+                        onClick={() => setForm({ ...form, nota: n })}
+                        className={n <= form.nota ? 'text-yellow-400' : 'text-gray-300'}
+                      >
+                        <StarIcon className="w-7 h-7" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Comentário</label>
+                  <textarea
+                    value={form.comentario}
+                    onChange={e => setForm({ ...form, comentario: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Escreva sua avaliação..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={enviando}
+                  className="bg-primary text-white px-6 py-2 rounded-md font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50"
+                >
+                  {enviando ? 'Enviando...' : 'Enviar Avaliação'}
+                </button>
+                {msg && <div className="mt-2 text-center text-sm text-primary">{msg}</div>}
+              </form>
             </div>
           </div>
         </div>

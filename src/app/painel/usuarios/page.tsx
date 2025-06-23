@@ -1,141 +1,125 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { User } from '@supabase/supabase-js';
 import Link from 'next/link';
-import bcrypt from 'bcryptjs';
 
-interface Usuario {
-  id: number;
-  email: string;
-  tipo: 'admin' | 'editora';
-  acompanhante_id?: number;
-  nome_acompanhante?: string;
-  criado_em: string;
-}
-
-interface Acompanhante {
-  id: number;
-  nome: string;
-}
+type AppUser = User & {
+  is_admin: boolean;
+};
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
-    senha: '',
-    tipo: 'admin' as 'admin' | 'editora',
-    acompanhante_id: ''
+    password: '',
   });
 
-  useEffect(() => {
-    fetchUsuarios();
-    fetchAcompanhantes();
-  }, []);
+  const supabase = createClientComponentClient();
 
-  const fetchUsuarios = async () => {
+  const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select(`
-          id,
-          email,
-          tipo,
-          acompanhante_id,
-          criado_em,
-          acompanhantes!inner(nome)
-        `)
-        .order('id', { ascending: false });
+      // Buscar todos os IDs de administradores
+      const { data: admins, error: adminsError } = await supabase.from('admins').select('id');
+      if (adminsError) throw adminsError;
+      const adminIds = new Set(admins.map(a => a.id));
 
-      if (error) throw error;
+      // Usar a Edge Function para buscar todos os usuários
+      const { data: usersData, error: usersError } = await supabase.functions.invoke('get-all-users');
+      if (usersError) throw new Error(`Erro ao buscar usuários: ${usersError.message}`);
 
-      const usuariosFormatados = data?.map(usuario => ({
-        ...usuario,
-        nome_acompanhante: usuario.acompanhantes?.[0]?.nome
-      })) || [];
+      // Filtrar apenas os administradores
+      const combinedUsers: AppUser[] = usersData.users
+        .filter((user: User) => adminIds.has(user.id))
+        .map((user: User) => ({
+          ...user,
+          is_admin: true,
+        }));
 
-      setUsuarios(usuariosFormatados);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      setUsers(combinedUsers);
+    } catch (err: any) {
+      setError(err.message || 'Ocorreu um erro desconhecido ao carregar os usuários.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchAcompanhantes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('acompanhantes')
-        .select('id, nome')
-        .order('nome');
-
-      if (error) throw error;
-      setAcompanhantes(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar acompanhantes:', error);
-    }
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setMessage('');
+    setError('');
 
     try {
-      const senhaHash = await bcrypt.hash(formData.senha, 10);
-      const { error } = await supabase
-        .from('usuarios')
-        .insert({
-          email: formData.email.trim(),
-          senha: senhaHash,
-          tipo: formData.tipo,
-          acompanhante_id: formData.tipo === 'editora' && formData.acompanhante_id 
-            ? parseInt(formData.acompanhante_id) 
-            : null,
-          criado_em: new Date().toISOString()
+        const { data, error } = await supabase.auth.admin.createUser({
+            email: formData.email,
+            password: formData.password,
+            email_confirm: true,
         });
-
-      if (error) throw error;
-
-      setMessage('Usuário adicionado com sucesso!');
-      setFormData({ email: '', senha: '', tipo: 'admin', acompanhante_id: '' });
-      fetchUsuarios();
-    } catch (error) {
-      console.error('Erro ao adicionar usuário:', error);
-      setMessage('Erro ao adicionar usuário. Tente novamente.');
+        if (error) throw error;
+        // Já adiciona como admin
+        const newUserId = data.user?.id;
+        if (newUserId) {
+          const { error: adminError } = await supabase.from('admins').insert({ id: newUserId });
+          if (adminError) throw adminError;
+        }
+        setMessage('Administrador adicionado com sucesso!');
+        setFormData({ email: '', password: '' });
+        fetchUsers(); // Recarrega a lista
+    } catch (err: any) {
+        setError(err.message || 'Erro ao adicionar administrador.');
     } finally {
-      setLoading(false);
+        setLoading(false);
+    }
+  };
+  
+  const toggleAdmin = async (user: AppUser) => {
+    try {
+        if (user.is_admin) {
+            // Rebaixar para usuário normal
+            const { error } = await supabase.from('admins').delete().eq('id', user.id);
+            if (error) throw error;
+            setMessage(`O usuário ${user.email} não é mais um administrador.`);
+        } else {
+            // Promover para admin
+            const { error } = await supabase.from('admins').insert({ id: user.id });
+            if (error) throw error;
+            setMessage(`O usuário ${user.email} agora é um administrador.`);
+        }
+        fetchUsers(); // Recarrega a lista
+    } catch(err: any) {
+        setError(err.message || 'Ocorreu um erro ao alterar o status do usuário.');
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+  const handleDelete = async (userId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação é irreversível.')) return;
 
     try {
-      const { error } = await supabase
-        .from('usuarios')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setMessage('Usuário excluído com sucesso!');
-      fetchUsuarios();
-    } catch (error) {
-      console.error('Erro ao excluir usuário:', error);
-      setMessage('Erro ao excluir usuário. Tente novamente.');
+        const { error } = await supabase.auth.admin.deleteUser(userId);
+        if (error) throw error;
+        
+        setMessage('Usuário excluído com sucesso!');
+        fetchUsers(); // Recarrega a lista
+    } catch (err: any) {
+        setError(err.message || 'Erro ao excluir usuário.');
     }
   };
 
-  if (loading && usuarios.length === 0) {
+  if (loading && users.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="spinner mx-auto mb-4"></div>
-          <p className="text-[#2E1530] text-lg">Carregando usuários...</p>
-        </div>
+        <p className="text-[#2E1530] text-lg">Carregando usuários...</p>
       </div>
     );
   }
@@ -144,10 +128,9 @@ export default function UsuariosPage() {
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-[#2E1530] mb-2">Gerenciar Usuários</h1>
-        <p className="text-gray-600">Adicione e gerencie usuários do sistema</p>
+        <p className="text-gray-600">Adicione e gerencie administradores do painel</p>
       </div>
 
-      {/* Formulário para adicionar usuário */}
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-7">
         <h2 className="text-xl font-bold text-[#2E1530] mb-4">Adicionar Novo Usuário</h2>
         
@@ -171,46 +154,13 @@ export default function UsuariosPage() {
             </label>
             <input
               type="password"
-              value={formData.senha}
-              onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
+              placeholder="Mínimo 6 caracteres"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo:
-            </label>
-            <select
-              value={formData.tipo}
-              onChange={(e) => setFormData({ ...formData, tipo: e.target.value as 'admin' | 'editora' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="admin">Administrador</option>
-              <option value="editora">Editora/Acompanhante</option>
-            </select>
-          </div>
-
-          {formData.tipo === 'editora' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Acompanhante:
-              </label>
-              <select
-                value={formData.acompanhante_id}
-                onChange={(e) => setFormData({ ...formData, acompanhante_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Selecione uma acompanhante</option>
-                {acompanhantes.map((acompanhante) => (
-                  <option key={acompanhante.id} value={acompanhante.id}>
-                    {acompanhante.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           <button
             type="submit"
@@ -221,76 +171,45 @@ export default function UsuariosPage() {
           </button>
         </form>
 
-        {message && (
-          <div className="mt-4 p-3 bg-green-100 text-green-700 rounded-md text-center font-semibold">
-            {message}
-          </div>
-        )}
+        {message && <p className="mt-4 p-3 bg-green-100 text-green-700 rounded-md text-center">{message}</p>}
+        {error && <p className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-center">{error}</p>}
       </div>
 
-      {/* Tabela de usuários */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acompanhante
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Criado em
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criado em</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {usuarios.map((usuario) => (
-                <tr key={usuario.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {usuario.id}
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {user.is_admin ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Administrador
+                        </span>
+                    ) : (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Usuário
+                        </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {usuario.email}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(user.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      usuario.tipo === 'admin' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {usuario.tipo === 'admin' ? 'Administrador' : 'Editora'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {usuario.nome_acompanhante || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(usuario.criado_em).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleDelete(usuario.id)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                      title="Excluir usuário"
-                    >
-                      🗑️
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-2">
+                    <button onClick={() => toggleAdmin(user)} className={`py-1 px-3 rounded-md text-xs ${user.is_admin ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}>
+                      {user.is_admin ? 'Rebaixar' : 'Promover'}
+                    </button>
+                    <button onClick={() => handleDelete(user.id)} className="py-1 px-3 rounded-md text-xs bg-red-600 hover:bg-red-700 text-white">
+                      Excluir
                     </button>
                   </td>
                 </tr>
@@ -299,14 +218,9 @@ export default function UsuariosPage() {
           </table>
         </div>
       </div>
-
-      {/* Botão voltar */}
-      <div className="text-center">
-        <Link
-          href="/painel"
-          className="inline-flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-gray-700 transition-colors"
-        >
-          🏠 Voltar ao Dashboard
+       <div className="text-center mt-6">
+        <Link href="/painel" className="inline-block bg-gray-700 text-white py-2 px-6 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
+          <span role="img" aria-label="Voltar">🏠</span> Voltar ao Dashboard
         </Link>
       </div>
     </div>

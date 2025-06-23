@@ -45,16 +45,13 @@ export default function Header({ config }: HeaderProps) {
               />
             </Link>
           </div>
-          
-          <Link 
-            href="/painel" 
-            className="ml-4 flex items-center justify-center text-[#4E3950] hover:text-[#CFB78B] md:hidden" 
-            title="Painel"
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="8" r="4" stroke="#CFB78B" strokeWidth="2"/>
-              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#CFB78B" strokeWidth="2" strokeLinecap="round"/>
+          {/* Botão cadastro animado no topo direito */}
+          <Link href="/cadastro" className="ml-auto flex items-center gap-2 group md:hidden" title="Cadastre-se">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#D0BA90" strokeWidth="2" />
+              <path d="M12 13c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v1h16v-1c0-2.66-5.33-4-8-4z" fill="#D0BA90" />
             </svg>
+            <span className="text-[#4E3950] font-semibold animate-pulse group-hover:text-[#D0BA90] transition-colors duration-300">Cadastre-se</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
@@ -67,14 +64,11 @@ export default function Header({ config }: HeaderProps) {
             <Link href="/blog" className="text-[#4E3950] hover:text-[#CFB78B] transition-colors">
               Blog
             </Link>
-            <Link href="/sobre" className="text-[#4E3950] hover:text-[#CFB78B] transition-colors">
+            <Link href="/#sobre" className="text-[#4E3950] hover:text-[#CFB78B] transition-colors">
               Sobre
             </Link>
             <Link href="/cadastro" className="btn-secondary">
               Cadastre-se
-            </Link>
-            <Link href="/login" className="btn-primary">
-              Entrar
             </Link>
           </nav>
         </div>
@@ -133,7 +127,7 @@ export default function Header({ config }: HeaderProps) {
           </li>
           <li className="mb-2">
             <Link 
-              href="/sobre" 
+              href="/#sobre" 
               onClick={closeMenu}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors"
             >
@@ -148,20 +142,10 @@ export default function Header({ config }: HeaderProps) {
             <Link 
               href="/cadastro" 
               onClick={closeMenu}
-              className="flex items-center gap-3 p-3 rounded-lg bg-[#CFB78B] text-white hover:bg-[#b84a65] transition-colors"
+              className="flex items-center gap-3 p-3 rounded-lg bg-[#4E3950] text-white hover:bg-[#B89C78] transition-colors"
             >
               <span className="text-lg">👤</span>
               Cadastre-se
-            </Link>
-          </li>
-          <li className="mb-2">
-            <Link 
-              href="/login" 
-              onClick={closeMenu}
-              className="flex items-center gap-3 p-3 rounded-lg border border-[#CFB78B] text-[#CFB78B] hover:bg-[#CFB78B] hover:text-white transition-colors"
-            >
-              <span className="text-lg">🔑</span>
-              Entrar
             </Link>
           </li>
         </ul>
