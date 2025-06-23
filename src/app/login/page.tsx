@@ -93,7 +93,7 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password-className="sr-only">Senha</label>
+              <label htmlFor="password" className="sr-only">Senha</label>
               <input
                 id="password"
                 name="password"
