@@ -36,7 +36,9 @@ export default function DenunciasPage() {
           motivo,
           descricao,
           status,
-          created_at
+          created_at,
+          nome_acompanhante,
+          denunciante_email
         `)
         .order('created_at', { ascending: false });
 
@@ -45,7 +47,9 @@ export default function DenunciasPage() {
       const denunciasFormatadas = data?.map(denuncia => ({
         ...denuncia,
         denunciante_nome: denuncia.nome_exibicao,
-        criado_em: denuncia.created_at
+        criado_em: denuncia.created_at,
+        nome_acompanhante: denuncia.nome_acompanhante ?? '',
+        denunciante_email: denuncia.denunciante_email ?? '',
       })) || [];
 
       setDenuncias(denunciasFormatadas);
