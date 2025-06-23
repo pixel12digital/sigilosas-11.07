@@ -11,9 +11,11 @@
     "setup-storage": "node scripts/setup-storage.js"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/auth-helpers-react": "^0.4.2",
     "@supabase/supabase-js": "^2.50.0",
+    "@tailwindcss/forms": "^0.5.10",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.0.0",

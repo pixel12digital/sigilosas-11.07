@@ -37,7 +37,7 @@ export default function Header({ config }: HeaderProps) {
             </button>
             <Link href="/" className="flex items-center gap-2 ml-8">
               <Image 
-                src={config.logo || '/assets/img/logo.png'} 
+                src={'/assets/img/logo.png'} 
                 alt="SigilosasVip - Logo" 
                 width={180} 
                 height={48}
@@ -92,7 +92,7 @@ export default function Header({ config }: HeaderProps) {
         
         <div className="p-6 border-b border-gray-200">
           <Image 
-            src={config.logo || '/assets/img/logo.png'} 
+            src={'/assets/img/logo.png'} 
             alt="SigilosasVip" 
             width={160} 
             height={40}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -21,14 +22,14 @@ export default function LoginPage() {
 
     try {
       console.log('🔄 Iniciando login com Supabase Auth...');
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) {
-        console.error('❌ Erro no login:', error.message);
-        if (error.message.includes('Invalid login credentials')) {
+      if (signInError) {
+        console.error('❌ Erro no login:', signInError.message);
+        if (signInError.message.includes('Invalid login credentials')) {
           setError('Email ou senha inválidos!');
         } else {
           setError('Erro ao fazer login. Tente novamente.');
@@ -40,9 +41,11 @@ export default function LoginPage() {
         console.log('✅ Login bem-sucedido!');
         router.push('/painel');
         router.refresh();
+      } else {
+        setError('Ocorreu um erro desconhecido. Por favor, verifique suas credenciais.');
       }
-    } catch (error) {
-      console.error('❌ Erro inesperado:', error);
+    } catch (err) {
+      console.error('❌ Erro inesperado:', err);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
@@ -50,57 +53,72 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f8f8] flex items-center justify-center p-4">
-      <form onSubmit={handleSubmit} className="max-w-[380px] w-full bg-white rounded-[18px] shadow-[0_4px_32px_rgba(184,154,118,0.12)] p-8 md:p-10 flex flex-col items-center">
-        <h2 className="text-center mb-7 text-[#301732] text-3xl font-bold tracking-wide">
-          Acesso ao Painel
-        </h2>
-        
-        {error && (
-          <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-center text-lg">
-              {error}
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+      <div className="max-w-md w-full mx-auto">
+        <div className="text-center mb-8">
+            <Link href="/" className="inline-block">
+                <img src="/assets/img/logo.png" alt="Sigilosas VIP" className="h-16 mx-auto" />
+            </Link>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-secondary">
+            Acesse seu painel
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+            Ou{' '}
+            <Link href="/cadastro" className="font-medium text-primary hover:text-primary-hover">
+                crie uma nova conta
+            </Link>
             </p>
-          </div>
-        )}
+        </div>
 
-        {success && (
-          <div className="w-full mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-center text-lg">
-              {success}
-            </p>
+        <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-lg p-8 space-y-6">
+          {error && (
+            <div className="w-full p-3 bg-red-100 border border-red-300 rounded-lg">
+              <p className="text-red-700 text-center text-sm">{error}</p>
+            </div>
+          )}
+
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email-address" className="sr-only">Email</label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-secondary focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Seu e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password-className="sr-only">Senha</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-secondary focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
           </div>
-        )}
-        
-        <input
-          type="email"
-          name="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoFocus
-          className="w-full mb-4 px-4 py-3 rounded-lg border-[1.5px] border-[#B89A76] text-lg bg-[#f9f9f9] text-[#301732] outline-none transition-colors focus:border-[#301732]"
-        />
-        
-        <input
-          type="password"
-          name="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full mb-4 px-4 py-3 rounded-lg border-[1.5px] border-[#B89A76] text-lg bg-[#f9f9f9] text-[#301732] outline-none transition-colors focus:border-[#301732]"
-        />
-        
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-[#B89A76] text-white border-none rounded-lg font-semibold text-lg tracking-wide cursor-pointer transition-colors hover:bg-[#301732] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-        >
-          {loading ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-hover disabled:opacity-50"
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 } 

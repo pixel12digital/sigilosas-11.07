@@ -1,343 +1,256 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { Acompanhante, Cidade, Configuracao } from '@/lib/supabase';
+import { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AcompanhanteCard from '@/components/AcompanhanteCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { Database } from '@/lib/database.types';
+import Link from 'next/link';
+import { ShieldCheckIcon, ChatBubbleLeftRightIcon, SparklesIcon } from '@heroicons/react/24/outline';
+
+type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
+  fotos: Pick<Database['public']['Tables']['fotos']['Row'], 'url' | 'storage_path' | 'tipo' | 'principal'>[];
+  cidades: Pick<Database['public']['Tables']['cidades']['Row'], 'nome' | 'estado'> | null;
+};
+type Cidade = Database['public']['Tables']['cidades']['Row'];
+
+const features = [
+  {
+    name: 'Suporte 100% Humanizado',
+    description: 'Uma equipe real e dedicada, pronta para ouvir, entender suas necessidades e oferecer o melhor apoio.',
+    icon: ChatBubbleLeftRightIcon,
+  },
+  {
+    name: 'Tecnologia Moderna e Discreta',
+    description: 'Nossa plataforma é construída com as ferramentas mais seguras e fáceis de usar, garantindo sua privacidade e autonomia.',
+    icon: ShieldCheckIcon,
+  },
+  {
+    name: 'Visibilidade e Oportunidades',
+    description: 'Oferecemos visibilidade real e oportunidades justas para quem quer se destacar e crescer com liberdade.',
+    icon: SparklesIcon,
+  },
+]
 
 export default function Home() {
-  const [config, setConfig] = useState<Record<string, string>>({});
   const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
-  const [cidades, setCidades] = useState<Cidade[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState({
-    cidade: '',
-    genero: '',
-  });
-  const [showPopup, setShowPopup] = useState(true);
-  const [cidadeInput, setCidadeInput] = useState('');
-  const [cidadeIdSelecionada, setCidadeIdSelecionada] = useState<number | string | null>(null);
-  const [sugestoesCidades, setSugestoesCidades] = useState<Cidade[]>([]);
-  const sugestoesRef = useRef<HTMLDivElement>(null);
+  const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [generos] = useState(['Feminino', 'Masculino', 'Trans']);
+  const [cidadeId, setCidadeId] = useState('');
+  const [genero, setGenero] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
+  const supabase = createClientComponentClient<Database>();
 
-  useEffect(() => {
-    if (showPopup && typeof window !== 'undefined') {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(() => {}, () => {});
-      }
-    }
-  }, [showPopup]);
-
-  const carregarDados = async () => {
-    try {
-      // Carregar configurações
-      const { data: configData } = await supabase
-        .from('configuracoes')
-        .select('chave, valor');
-
-      const configObj: Record<string, string> = {};
-      configData?.forEach(item => {
-        configObj[item.chave] = item.valor || '';
-      });
-      setConfig(configObj);
-
-      // Carregar cidades
-      const { data: cidadesData } = await supabase
-        .from('cidades')
-        .select('*')
-        .order('nome');
-      setCidades(cidadesData || []);
-
-      // Carregar acompanhantes em destaque
-      await carregarAcompanhantes();
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
+  const getCidadeNome = (acompanhante: Acompanhante): string => {
+    return acompanhante.cidades?.nome || 'Localidade não encontrada';
   };
 
-  const carregarAcompanhantes = async (filtrosAplicados = filtros) => {
-    try {
+  useEffect(() => {
+    const carregarCidades = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('cidades')
+          .select('*')
+          .order('nome', { ascending: true });
+
+        if (error) throw error;
+        setCidades(data || []);
+      } catch (error) {
+        console.error('Erro ao carregar cidades:', error);
+        setError('Não foi possível carregar a lista de cidades.');
+      }
+    };
+    carregarCidades();
+  }, [supabase]);
+
+  useEffect(() => {
+    const carregarAcompanhantes = async () => {
       setLoading(true);
-      
-      let query = supabase
-        .from('acompanhantes')
-        .select(`
-          id, nome, status, idade, etnia, bairro, destaque, verificado, silicone, tatuagens, piercings, cidade_id, valor_padrao,
-          fotos ( url, storage_path, tipo, principal ),
-          videos_verificacao ( url, storage_path ),
-          documentos_acompanhante ( url, storage_path, tipo )
-        `)
-        .eq('status', 'aprovado')
-        .order('destaque', { ascending: false })
-        .order('created_at', { ascending: false });
+      setError(null);
+      try {
+        let query = supabase
+          .from('acompanhantes')
+          .select('*, fotos ( url, storage_path, tipo, principal ), cidades ( nome, estado )')
+          .eq('status', 'aprovado')
+          .order('destaque', { ascending: false })
+          .limit(100, { foreignTable: 'fotos' })
+          .limit(12);
 
-      if (filtrosAplicados.cidade) {
-        query = query.eq('cidade_id', filtrosAplicados.cidade);
+        if (cidadeId) {
+          query = query.eq('cidade_id', cidadeId);
+        }
+        if (genero) {
+          query = query.ilike('genero', `%${genero}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        setAcompanhantes(data.map(a => ({...a, fotos: a.fotos || []})) as Acompanhante[]);
+      } catch (err) {
+        console.error('Erro ao carregar acompanhantes:', err);
+        setError('Ocorreu um erro ao buscar os perfis. Tente novamente mais tarde.');
+      } finally {
+        setLoading(false);
       }
-
-      if (filtrosAplicados.genero) {
-        query = query.eq('genero', filtrosAplicados.genero);
-      }
-
-      const { data, error } = await query.limit(12);
-
-      if (error) throw error;
-      const acompanhantesVisiveis = data?.filter(a => a.status === 'aprovado') || [];
-      setAcompanhantes(acompanhantesVisiveis as any);
-    } catch (error) {
-      console.error('Erro ao carregar acompanhantes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFiltroChange = (campo: string, valor: string) => {
-    const novosFiltros = { ...filtros, [campo]: valor };
-    setFiltros(novosFiltros);
-    carregarAcompanhantes(novosFiltros);
-  };
-
-  const handleBuscaCidade = (event: React.FormEvent) => {
-    event.preventDefault();
-    const inputCidade = document.getElementById('inputBuscaCidade') as HTMLSelectElement;
-    const inputGenero = document.getElementById('inputBuscaGenero') as HTMLSelectElement;
-    
-    const novosFiltros = {
-      cidade: inputCidade.value,
-      genero: inputGenero.value
     };
 
-    setFiltros(novosFiltros);
-    carregarAcompanhantes(novosFiltros).then(() => {
-      setTimeout(() => {
-        const secaoResultados = document.getElementById('secao-acompanhantes');
-        if (secaoResultados) {
-          secaoResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 200);
-    });
-  };
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+    carregarAcompanhantes();
+  }, [cidadeId, genero, supabase]);
 
   return (
-    <div className="min-h-screen bg-[#F8F6F9]">
-      {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-[370px] w-full p-6 border border-[#CFB78B] text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-4xl font-extrabold text-[#4E3950]">18+</span>
-              <div className="text-left">
-                <div className="text-xs font-bold text-[#4E3950] leading-tight">CONTEÚDO</div>
-                <div className="text-base font-bold text-[#4E3950] leading-tight -mt-1">ADULTO</div>
+    <>
+      <Header />
+      <main className="flex-grow">
+        <div className="relative bg-cover bg-center py-20" style={{ backgroundImage: "url('/assets/img/imagem_banner.png')" }}>
+          <div className="absolute inset-0 bg-black opacity-30"></div>
+          <div className="container mx-auto px-4 relative z-10 text-center text-white">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Sua nova referência em acompanhantes no Brasil!</h1>
+            <p className="text-lg md:text-xl mb-8">Sigiloso, seguro e exclusivo.</p>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 -mt-10 relative z-20">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <select
+                value={cidadeId}
+                onChange={(e) => setCidadeId(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+              >
+                <option value="">Todas as cidades</option>
+                {cidades.map(c => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+              <select
+                value={genero}
+                onChange={(e) => setGenero(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+              >
+                <option value="">Todos os gêneros</option>
+                {generos.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+              <button onClick={() => {}} className="w-full bg-secondary text-white p-3 rounded-lg hover:bg-secondary-hover transition-colors flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <section id="acompanhantes" className="py-12 bg-gray-50">
+            <div className="container mx-auto px-4">
+                <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Acompanhantes em Destaque</h2>
+                <div className="relative min-h-[400px]">
+                    {loading && acompanhantes.length === 0 ? (
+                        <div className="flex justify-center items-center h-full">
+                           <LoadingSpinner />
+                        </div>
+                    ) : (
+                      <div className="relative">
+                        {loading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-75 z-10 rounded-lg">
+                            <LoadingSpinner />
+                          </div>
+                        )}
+                        {error ? (
+                          <p className="text-center text-red-500">{error}</p>
+                        ) : acompanhantes.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                              {acompanhantes.map((acompanhante) => (
+                                  <AcompanhanteCard 
+                                    key={acompanhante.id} 
+                                    acompanhante={acompanhante} 
+                                    cidadeNome={getCidadeNome(acompanhante)} />
+                              ))}
+                          </div>
+                        ) : (
+                          <p className="text-center text-gray-500 pt-10">Nenhum perfil encontrado para os filtros selecionados.</p>
+                        )}
+                      </div>
+                    )}
+                </div>
+            </div>
+        </section>
+
+        {/* About Section */}
+        <div className="relative bg-white py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
+            <div className="px-6 lg:col-span-7 lg:px-0 xl:col-span-6 flex flex-col justify-center">
+              <div className="mx-auto max-w-2xl lg:mx-0">
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+                  Feita por quem entende, para quem merece respeito.
+                </h1>
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  A Sigilosas VIP nasceu a partir de uma vivência real no mercado. Estamos há mais de 5 anos no ramo, conhecendo de perto os desafios, necessidades e sonhos de quem trabalha como acompanhante.
+                </p>
+                <p className="mt-4 text-lg leading-8 text-gray-600">
+                  Com toda essa experiência, decidimos criar algo diferente: uma plataforma exclusiva, segura e acolhedora, feita para quem busca mais do que apenas uma vitrine — feita para quem quer ser valorizado, respeitado e crescer com liberdade.
+                </p>
               </div>
             </div>
-            <hr className="my-2 border-[#CFB78B]" />
-            <p className="text-[#4E3950] text-base mb-2">
-              Entendo que o site <span className="font-bold">Sigilosas VIP</span> apresenta <span className="font-bold">conteúdo explícito</span> destinado a adultos.<br />
-              <a href="/termos" className="underline text-[#CFB78B]">Termos de uso</a>
-            </p>
-            <hr className="my-2 border-[#CFB78B]" />
-            <div className="mb-2">
-              <div className="text-xs font-bold text-[#4E3950] mb-1">AVISO DE COOKIES E LOCALIZAÇÃO</div>
-              <p className="text-[#4E3950] text-sm">
-                Usamos cookies, tecnologias semelhantes e localização para melhorar sua experiência em nosso site.
-              </p>
-            </div>
-            <hr className="my-2 border-[#CFB78B]" />
-            <div className="text-xs text-[#4E3950] mb-4">
-              A profissão de acompanhante é legalizada no Brasil e deve ser respeitada. <a href="/saiba-mais" className="underline text-[#CFB78B]">Saiba mais</a>
-            </div>
-            <button
-              className="w-full py-3 bg-[#4E3950] text-white rounded-lg font-semibold text-lg tracking-wide transition-colors hover:bg-[#CFB78B] hover:text-[#4E3950]"
-              onClick={() => setShowPopup(false)}
-            >
-              Concordo
-            </button>
-          </div>
-        </div>
-      )}
-      <Header config={config} />
-      
-      {/* Banner principal */}
-      <section
-        className="w-full flex items-center justify-between gap-6 md:gap-10 px-4 md:px-8 lg:px-20 mx-auto flex-wrap"
-        style={{
-          background: "linear-gradient(90deg, #F8F6F9 0%, #CFB78B 50%, #4E3950 100%)",
-          borderBottom: '1px solid #CFB78B',
-          minHeight: 'unset',
-          paddingTop: 16,
-          paddingBottom: 4,
-        }}
-      >
-        <div className="flex-1 min-w-[320px] max-w-[900px] flex flex-col justify-center h-full px-6 pt-8 md:pl-[60px] md:pt-0 md:px-0">
-          <h1 className="w-full max-w-[900px] text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight md:leading-[1.1] break-words text-[#4E3950] relative animate-fade-in">
-            <span className="reluzente-title">CONECTANDO DESEJOS COM ELEGÂNCIA<br />E PRIVACIDADE!</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-[#4E3950] mb-8 max-w-[600px]">
-            Um espaço seguro, respeitoso e exclusivo
-          </p>
-          <div className="flex gap-6 flex-wrap mb-2">
-            <a href="/cadastro" className="btn-secondary text-base md:text-lg px-6 py-3">
-              Anunciar como acompanhante
-            </a>
-          </div>
-        </div>
-        <div className="flex-1 min-w-[320px] max-w-[700px] flex items-end justify-center mt-[-32px] md:mt-0">
-          <img 
-            src="/assets/img/imagem_banner.png" 
-            alt="Banner principal" 
-            className="w-auto h-[336px] md:h-[416px] lg:h-[480px] object-contain drop-shadow-xl"
-            style={{ background: 'none', maxHeight: '80%', paddingTop: 16, paddingBottom: 4 }}
-          />
-        </div>
-      </section>
-
-      {/* Bloco de destaque */}
-      <section className="max-w-4xl mx-auto mb-8 p-10 md:p-12 bg-white rounded-2xl shadow-lg text-center border border-[#CFB78B] mt-12">
-        <h2 className="text-3xl text-[#4E3950] font-bold mb-6">
-          Sua nova referência em acompanhantes no Brasil!
-        </h2>
-        <form onSubmit={handleBuscaCidade} className="flex flex-col md:flex-row gap-4 justify-center items-center my-8" autoComplete="off">
-          <div className="relative w-full md:flex-1 md:max-w-[340px]">
-             <select 
-              id="inputBuscaCidade"
-              className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-              value={filtros.cidade}
-              onChange={(e) => handleFiltroChange('cidade', e.target.value)}
-            >
-              <option value="">Todas as cidades</option>
-              {cidades.map(cidade => (
-                <option key={cidade.id} value={cidade.id}>
-                  {cidade.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="relative w-full md:flex-1 md:max-w-[240px]">
-             <select 
-              id="inputBuscaGenero"
-              className="w-full px-4 py-3 rounded-lg border border-[#CFB78B] text-lg bg-[#F8F6F9] text-[#4E3950]"
-              value={filtros.genero}
-              onChange={(e) => handleFiltroChange('genero', e.target.value)}
-            >
-              <option value="">Todos os gêneros</option>
-              <option value="F">Feminino</option>
-              <option value="M">Masculino</option>
-              <option value="O">Outro</option>
-            </select>
-          </div>
-          <button 
-            type="submit" 
-            className="bg-[#CFB78B] text-[#4E3950] px-7 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors"
-          >
-            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="7"/>
-              <line x1="16" y1="16" x2="21" y2="21"/>
-            </svg>
-          </button>
-        </form>
-        <p className="text-[#4E3950] text-lg mt-4">Sigiloso, seguro e exclusivo.</p>
-      </section>
-
-      {/* Filtro compacto */}
-      {/*
-      <section className="max-w-2xl mx-auto mb-8 p-6 bg-white rounded-2xl shadow-lg border border-[#CFB78B]">
-        <form className="flex gap-4 flex-wrap items-end justify-center">
-          <div className="flex-1 min-w-[160px]">
-            <label htmlFor="cidadeFiltro" className="font-medium text-[#4E3950] mb-2 block">
-              Cidade
-            </label>
-            <select 
-              id="cidadeFiltro"
-              value={filtros.cidade}
-              onChange={(e) => handleFiltroChange('cidade', e.target.value)}
-              className="w-full border border-[#CFB78B] rounded-lg px-3 py-2 text-base bg-[#F8F6F9] text-[#4E3950]"
-            >
-              <option value="">Todas as cidades</option>
-              {cidades.map(cidade => (
-                <option key={cidade.id} value={cidade.id}>
-                  {cidade.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 min-w-[140px]">
-            <label htmlFor="generoFiltro" className="font-medium text-[#4E3950] mb-2 block">
-              Gênero
-            </label>
-            <select 
-              id="generoFiltro"
-              value={filtros.genero}
-              onChange={(e) => handleFiltroChange('genero', e.target.value)}
-              className="w-full border border-[#CFB78B] rounded-lg px-3 py-2 text-base bg-[#F8F6F9] text-[#4E3950]"
-            >
-              <option value="">Todos</option>
-              <option value="F">Feminino</option>
-              <option value="M">Masculino</option>
-              <option value="O">Outro</option>
-            </select>
-          </div>
-          <button
-            type="button"
-            className="bg-[#CFB78B] text-[#4E3950] px-8 py-3 rounded-lg font-semibold text-lg hover:bg-[#4E3950] hover:text-[#CFB78B] transition-colors mt-4"
-            onClick={() => carregarAcompanhantes()}
-          >
-            Buscar
-          </button>
-        </form>
-      </section>
-      */}
-
-      {/* Cards de acompanhantes */}
-      <section id="secao-acompanhantes" className="container mx-auto py-12 px-4">
-        <h2 className="text-3xl font-bold text-center text-[#4E3950] mb-8">
-          Acompanhantes em Destaque
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {acompanhantes.map(acompanhante => {
-            const cidadeNome = cidades.find(c => c.id === acompanhante.cidade_id)?.nome;
-            return (
-              <AcompanhanteCard
-                key={acompanhante.id}
-                acompanhante={acompanhante}
-                cidadeNome={cidadeNome}
+            <div className="relative lg:col-span-5 mt-10 lg:mt-0">
+              <img
+                className="aspect-[4/3] w-full bg-gray-50 object-contain rounded-xl shadow-xl"
+                src="/assets/img/imagem_banner.png"
+                alt="Mulher sorrindo"
               />
-            );
-          })}
+            </div>
+          </div>
         </div>
-      </section>
 
-      {/* Bloco de verificação, documentos e fotos reais */}
-      {/*
-      <section className="flex gap-8 justify-center mb-10 flex-wrap">
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-search.svg" alt="Verificação facial" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Verificação facial</div>
+        {/* Features Section */}
+        <div className="bg-gray-50 py-24 sm:py-32">
+            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+                <div className="mx-auto max-w-2xl lg:text-center">
+                <h2 className="text-base font-semibold leading-7 text-primary">Nossos Pilares</h2>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                    Tudo o que você precisa para crescer com segurança
+                </p>
+                </div>
+                <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
+                <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-3 lg:gap-y-16">
+                    {features.map((feature) => (
+                    <div key={feature.name} className="relative pl-16">
+                        <dt className="text-base font-semibold leading-7 text-gray-900">
+                        <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                            <feature.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                        </div>
+                        {feature.name}
+                        </dt>
+                        <dd className="mt-2 text-base leading-7 text-gray-600">{feature.description}</dd>
+                    </div>
+                    ))}
+                </dl>
+                </div>
+            </div>
         </div>
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-painel.svg" alt="Documentos validados" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Documentos validados</div>
-        </div>
-        <div className="flex-1 min-w-[180px] max-w-[260px] text-center p-6 border border-[#CFB78B] rounded-2xl bg-white">
-          <img src="/assets/img/icons/icon-menu.svg" alt="Fotos reais" className="h-11 mb-3 mx-auto" />
-          <div className="font-medium text-[#4E3950]">Fotos reais</div>
-        </div>
-      </section>
-      */}
 
+        {/* Mission Section */}
+        <div className="bg-white mx-auto my-20 max-w-7xl text-center px-6 py-24 sm:py-32 rounded-lg shadow-xl">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Nossa Missão é Clara</h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600 max-w-4xl mx-auto">
+            Conectar, empoderar e impulsionar cada profissional com seriedade e respeito. Na Sigilosas VIP, você encontra segurança, privacidade e uma equipe pronta para te apoiar de verdade. Seja você iniciante ou experiente, a Sigilosas VIP é o seu lugar.
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Link href="/cadastro" className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                Faça parte da nossa comunidade
+              </Link>
+              <Link href="/acompanhantes" className="text-sm font-semibold leading-6 text-gray-900">
+                Ver perfis <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+        </div>
+      </main>
       <Footer />
-    </div>
+    </>
   );
 } 

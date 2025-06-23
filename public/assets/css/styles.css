@@ -1,7 +1,7 @@
 :root {
-  --primary-color: #C5A572;
-  --secondary-color: #2D1B2F;
-  --accent-color: #E3C77A;
+  --primary-color: #E6B980;
+  --secondary-color: #4E3950;
+  --accent-color: #CA5272;
   --main-bg: #2E1530;
   --main-dark: #2E1530;
   --text-color: #2D1B2F;
@@ -486,11 +486,11 @@ body {
     transition: all 0.2s;
 }
 .btn-buscar {
-    background: var(--primary-color);
+    background: var(--secondary-color);
     color: #fff;
 }
 .btn-buscar:hover {
-    background: #b38f5f;
+    background: #3a2a3c;
 }
 .btn-limpar {
     background: #f0f0f0;
@@ -1382,7 +1382,7 @@ input, select, textarea {
 .filtro-home-container {
   background: #fff;
   border-radius: 18px;
-  box-shadow: 0 4px 24px #ca527220;
+  box-shadow: 0 4px 24px #e6b98020;
   padding: 32px 24px;
   margin: 32px auto 0 auto;
   max-width: 1100px;
@@ -1407,30 +1407,39 @@ input, select, textarea {
 }
 .filtro-group input,
 .filtro-group select {
-  border: 1px solid #CA5272;
+  width: 100%;
+  padding: 12px;
   border-radius: 8px;
-  padding: 8px 12px;
+  border: 1px solid #E6B980;
+  background: #fff;
   font-size: 1rem;
-  outline: none;
-  transition: border 0.2s;
+  color: #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .filtro-group input:focus,
 .filtro-group select:focus {
-  border-color: #FC307A;
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-color-trans);
 }
 .btn-buscar {
-  background: #CA5272;
-  color: #fff;
+  width: 100%;
+  padding: 12px;
   border: none;
   border-radius: 8px;
-  padding: 12px 28px;
+  background: #E6B980;
+  color: #fff;
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .btn-buscar:hover {
-  background: #FC307A;
+  background: #b38f5f;
 }
 @media (max-width: 900px) {
   .filtro-home-form {
@@ -1446,7 +1455,7 @@ input, select, textarea {
 .filtro-simples-container {
   background: #fff;
   border-radius: 18px;
-  box-shadow: 0 4px 24px #ca527220;
+  box-shadow: 0 4px 24px #e6b98020;
   padding: 24px 18px;
   margin: 32px auto 0 auto;
   max-width: 700px;
@@ -1464,23 +1473,30 @@ input, select, textarea {
   flex: 1;
 }
 .filtro-simples-group label {
-  font-size: 0.95rem;
-  color: #2E1530;
-  margin-bottom: 6px;
+  display: block;
+  margin-bottom: 8px;
   font-weight: 500;
+  color: #555;
 }
 .filtro-simples-group select {
-  border: 1px solid #CA5272;
+  width: 100%;
+  padding: 12px;
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 1rem;
-  outline: none;
-  transition: border 0.2s;
+  border: 1px solid #E6B980;
   background: #fff;
-  color: #2E1530;
+  font-size: 1rem;
+  color: #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
 }
 .filtro-simples-group select:focus {
-  border-color: #FC307A;
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-color-trans);
 }
 @media (max-width: 900px) {
   .filtro-simples-form {

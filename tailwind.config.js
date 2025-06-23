@@ -8,9 +8,22 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#4E3950',
-        secondary: '#CFB78B',
-        accent: '#4E3950',
+        primary: {
+          DEFAULT: '#E6B980',
+          hover: '#d4a86c',
+        },
+        secondary: {
+          DEFAULT: '#4E3950',
+          hover: '#3a2a3c',
+        },
+        accent: {
+          DEFAULT: '#CFB78B',
+          hover: '#bfa67b',
+        },
+        highlight: {
+          DEFAULT: '#CA5272',
+          hover: '#a7425c',
+        },
         background: '#F8F6F9',
       },
       fontFamily: {
@@ -30,7 +43,14 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }; 

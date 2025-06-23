@@ -3,225 +3,112 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Acompanhante } from '@/lib/supabase';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { ShieldCheckIcon, SparklesIcon, FireIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { Database } from '@/lib/database.types';
+
+type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
+  fotos: Pick<Database['public']['Tables']['fotos']['Row'], 'url' | 'storage_path' | 'tipo' | 'principal'>[];
+  cidades: Pick<Database['public']['Tables']['cidades']['Row'], 'nome' | 'estado'> | null;
+};
 
 interface AcompanhanteCardProps {
-  acompanhante: Acompanhante & {
-    cidades?: { nome: string };
-    fotos?: { 
-      id: string;
-      url: string; 
-      storage_path: string;
-      tipo: string;
-      principal: boolean; 
-    }[];
-    videos_verificacao?: { 
-      id: string;
-      url: string; 
-      storage_path: string;
-    }[];
-    documentos_acompanhante?: { 
-      id: string;
-      url: string; 
-      storage_path: string;
-      tipo: string;
-    }[];
-  };
+  acompanhante: Acompanhante;
   cidadeNome?: string;
 }
 
+// Componentes de Ícones
+const AgeIcon = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>;
+const PhotoIcon = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>;
+const PinIcon = () => <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>;
+const PhoneIcon = () => <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>;
+
+// Componente Principal do Card
 export default function AcompanhanteCard({ acompanhante, cidadeNome }: AcompanhanteCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const supabase = createClientComponentClient();
+  const supabase = createClientComponentClient<Database>();
 
-  // Adicionar logs para debug
-  console.log('Dados do acompanhante:', {
-    id: acompanhante.id,
-    nome: acompanhante.nome,
-    fotos: acompanhante.fotos
-  });
+  const getPublicUrl = (path: string) => {
+    if (!path) return '/assets/img/placeholder.svg';
+    const { data } = supabase.storage.from('media').getPublicUrl(path);
+    return data.publicUrl;
+  };
 
-  const fotoCapa = acompanhante.fotos?.find(foto => foto.tipo === 'perfil' && foto.principal)?.url || 
-                   acompanhante.fotos?.find(foto => foto.tipo === 'perfil')?.url || 
-                   acompanhante.fotos?.find(foto => foto.principal)?.url ||
-                   acompanhante.fotos?.[0]?.url ||
-                   '/assets/img/placeholder.jpg';
+  const galleryPhotos = acompanhante.fotos?.filter(foto => foto.tipo === 'galeria') || [];
+  const galleryPhotosCount = galleryPhotos.length;
+
+  const principalPhoto = acompanhante.fotos?.find(foto => foto.principal);
   
-  console.log('Foto selecionada:', fotoCapa);
+  let fotoCapa = '/assets/img/placeholder.svg';
+  if (principalPhoto) {
+    fotoCapa = getPublicUrl(principalPhoto.storage_path);
+  } else if (galleryPhotos.length > 0) {
+    fotoCapa = getPublicUrl(galleryPhotos[0].storage_path);
+  }
 
-  // Função para obter URL pública da foto, corrigida para usar o caminho completo.
-  const getFotoUrl = (fotoPath: string) => {
-    if (!fotoPath) return '';
-    const { data: { publicUrl } } = supabase.storage
-      .from('media') 
-      .getPublicUrl(fotoPath);
-    return publicUrl;
-  };
-
-  const handleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    // TODO: Implementar favoritos no Supabase
-  };
-
-  const formatarValor = (valor?: number) => {
+  const formatarValor = (valor?: number | null) => {
     if (!valor) return 'Sob consulta';
-    return `R$ ${valor.toFixed(2)}`;
-  };
-
-  const formatarIdade = (idade?: number) => {
-    if (!idade) return '';
-    return `${idade} anos`;
+    return `R$ ${valor.toFixed(2).replace('.', ',')}`;
   };
 
   return (
-    <Link href={`/acompanhantes/${acompanhante.id}`} className="block">
-      <div className="card hover:shadow-xl transition-all duration-300 group">
-        {/* Imagem */}
-        <div className="relative mb-4 overflow-hidden rounded-lg">
-          <Image
-            src={imageError ? '/assets/img/placeholder.jpg' : getFotoUrl(fotoCapa) || '/assets/img/placeholder.png'}
-            alt={`Foto de ${acompanhante.nome}`}
-            width={300}
-            height={400}
-            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              console.error('Erro ao carregar imagem:', {
-                src: e.currentTarget.src,
-                error: e
-              });
-              setImageError(true);
-            }}
-          />
-          
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex gap-2">
-            {acompanhante.destaque && (
-              <span className="bg-[#CA5272] text-white text-xs px-2 py-1 rounded-full">
-                Destaque
-              </span>
-            )}
-            {acompanhante.verificado && (
-              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                ✓ Verificada
-              </span>
-            )}
-          </div>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-lg flex flex-col h-full">
+      {/* Carrossel de Imagens */}
+      <div className="relative h-64 w-full">
+         <Image
+          src={imageError ? '/assets/img/placeholder.svg' : fotoCapa}
+          alt={`Foto de ${acompanhante.nome}`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+          onError={() => setImageError(true)}
+        />
+      </div>
 
-          {/* Botão favorito */}
-          <button
-            onClick={handleFavorite}
-            className="absolute top-2 right-2 p-2 bg-white bg-opacity-80 rounded-full hover:bg-opacity-100 transition-all"
-            aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          >
-            <svg 
-              width="20" 
-              height="20" 
-              fill={isFavorite ? '#CA5272' : 'none'} 
-              stroke="#CA5272" 
-              strokeWidth="2" 
-              viewBox="0 0 24 24"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </button>
-        </div>
+      {/* Conteúdo do Card */}
+      <div className="p-4 flex-grow flex flex-col">
+        <h3 className="font-bold text-xl text-gray-800">{acompanhante.nome}</h3>
+        <p className="text-sm text-gray-500 mb-4">{acompanhante.etnia || "Morena perfeita"}</p>
 
-        {/* Informações */}
-        <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-[#2E1530] group-hover:text-[#CA5272] transition-colors">
-            {acompanhante.nome}
-          </h3>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            {cidadeNome && (
-              <>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                <span>{cidadeNome}</span>
-              </>
-            )}
-            {acompanhante.bairro && (
-              <>
-                <span>•</span>
-                <span>{acompanhante.bairro}</span>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 gap-4 flex-grow">
+          {/* Coluna da Esquerda */}
+          <div className="space-y-2 text-sm text-gray-700">
             <div className="flex items-center gap-2">
-              {formatarIdade(acompanhante.idade) && (
-                <span className="text-sm text-gray-600">
-                  {formatarIdade(acompanhante.idade)}
-                </span>
-              )}
-              {acompanhante.etnia && (
-                <>
-                  <span>•</span>
-                  <span className="text-sm text-gray-600">{acompanhante.etnia}</span>
-                </>
-              )}
+              <AgeIcon />
+              <span>{acompanhante.idade} anos</span>
             </div>
-            
-            <div className="text-right">
-              <div className="text-lg font-bold text-[#CA5272]">
-                {formatarValor(acompanhante.valor_padrao)}
-              </div>
+            <div className="flex items-center gap-2">
+              <PhotoIcon />
+              <span>{galleryPhotosCount} fotos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <PinIcon />
+              <span>{acompanhante.bairro || cidadeNome}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              {acompanhante.verificado && <CheckBadgeIcon className="w-5 h-5 text-blue-500" title="Verificado" />}
+              {acompanhante.silicone && <SparklesIcon className="w-5 h-5 text-pink-500" title="Silicone" />}
+              {acompanhante.tatuagens && <FireIcon className="w-5 h-5 text-red-500" title="Tatuagens" />}
+              {acompanhante.piercings && <ShieldCheckIcon className="w-5 h-5 text-gray-500" title="Piercings" />}
             </div>
           </div>
 
-          {/* Características */}
-          <div className="flex flex-wrap gap-1 pt-2">
-            {acompanhante.silicone && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Silicone
-              </span>
-            )}
-            {acompanhante.tatuagens && (
-              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                Tatuagens
-              </span>
-            )}
-            {acompanhante.piercings && (
-              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
-                Piercings
-              </span>
-            )}
-          </div>
-
-          {/* Estatísticas removidas temporariamente para corrigir build */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <svg 
-                  key={star}
-                  width="16" 
-                  height="16" 
-                  fill={star <= 4 ? '#FFD700' : 'none'} 
-                  stroke="#FFD700" 
-                  strokeWidth="2" 
-                  viewBox="0 0 24 24"
-                >
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-              ))}
-            </div>
+          {/* Coluna da Direita */}
+          <div className="text-sm text-gray-600">
+            <p className="line-clamp-6">{acompanhante.descricao}</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end mt-2">
-          <Link href={`/acompanhantes/${acompanhante.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline flex items-center gap-1">
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M5 19l14-14"/></svg>
-            Ver perfil público
+        {/* Botão Ver Perfil */}
+        <div className="mt-4">
+          <Link href={`/acompanhantes/${acompanhante.id}`} className="block w-full text-center py-3 px-4 bg-primary text-white rounded-lg font-semibold transition-colors hover:bg-primary-hover">
+            <div className="flex items-center justify-center gap-2">
+              <PhoneIcon />
+              <span>Ver Perfil Completo</span>
+            </div>
           </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 } 

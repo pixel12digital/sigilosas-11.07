@@ -771,10 +771,6 @@ export default function EditarAcompanhanteAdmin() {
               
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="flex items-center">
-                      <input id="fumante" name="fumante" type="checkbox" checked={form.fumante || false} onChange={handleChange} className={checkboxClass} />
-                      <label htmlFor="fumante" className="text-[#4E3950]">Fumante</label>
-                  </div>
-                  <div className="flex items-center">
                       <input id="silicone" name="silicone" type="checkbox" checked={form.silicone || false} onChange={handleChange} className={checkboxClass} />
                       <label htmlFor="silicone" className="text-[#4E3950]">Silicone</label>
                   </div>
