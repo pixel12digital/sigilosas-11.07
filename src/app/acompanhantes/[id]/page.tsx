@@ -22,6 +22,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
+  tipo_atendimento?: string;
   fotos: Database['public']['Tables']['fotos']['Row'][];
   cidades: Database['public']['Tables']['cidades']['Row'] | null;
 };
