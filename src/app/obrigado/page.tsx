@@ -7,7 +7,7 @@ export default function Obrigado() {
       <p className="text-lg text-[#4E3950] mb-8">Aguarde a aprovação do administrador. Você receberá um e-mail quando seu cadastro for aprovado.</p>
       <div className="flex flex-col gap-4">
         <a
-          href="https://wa.me/SEUNUMERO?text=Olá,%20gostaria%20de%20falar%20com%20a%20equipe%20Sigilosas%20VIP."
+          href="https://wa.me/5547996829294?text=Olá,%20gostaria%20de%20falar%20com%20a%20equipe%20Sigilosas%20VIP."
           target="_blank"
           rel="noopener noreferrer"
           className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition"

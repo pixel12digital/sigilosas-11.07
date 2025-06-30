@@ -49,6 +49,11 @@ export async function POST(request: Request) {
       silicone,
       tatuagens,
       piercings,
+      valor_padrao,
+      valor_observacao,
+      tipo_atendimento,
+      bairro,
+      cep,
     } = body;
 
     // Validação básica para garantir que os campos essenciais não são nulos.
@@ -155,6 +160,8 @@ export async function POST(request: Request) {
         p_piercings: !!piercings,
         p_idiomas: idiomas || null,
         p_endereco: endereco || null,
+        p_bairro: bairro || null,
+        p_cep: cep || null,
         p_atende: atende || null,
         p_horario_expediente: horario_expediente || null,
         p_formas_pagamento: formas_pagamento || null,
@@ -162,7 +169,10 @@ export async function POST(request: Request) {
         p_foto_url: foto || null,
         p_galeria_fotos_urls: galeria_fotos || [],
         p_video_url: video_url || null,
-        p_documentos: documentos || []
+        p_documentos: documentos || [],
+        p_valor_padrao: valor_padrao ? parseFloat(valor_padrao) : null,
+        p_valor_observacao: valor_observacao || null,
+        p_tipo_atendimento: tipo_atendimento || null,
       }
     );
 

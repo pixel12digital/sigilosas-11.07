@@ -36,6 +36,9 @@ interface Acompanhante {
     storage_path: string;
     tipo: string;
   }[];
+  tipo_atendimento: string | null;
+  valor_padrao: string | null;
+  valor_observacao: string | null;
 }
 
 export default function AcompanhantesPage() {
@@ -65,7 +68,10 @@ export default function AcompanhantesPage() {
           cidades ( nome ),
           fotos ( id, url, storage_path, tipo, principal ),
           videos_verificacao ( id, url, storage_path ),
-          documentos_acompanhante ( id, url, storage_path, tipo )
+          documentos_acompanhante ( id, url, storage_path, tipo ),
+          tipo_atendimento,
+          valor_padrao,
+          valor_observacao
         `)
         .order('created_at', { ascending: false });
 
@@ -98,6 +104,9 @@ export default function AcompanhantesPage() {
           fotos: item.fotos || [],
           videos_verificacao: item.videos_verificacao || [],
           documentos_acompanhante: item.documentos_acompanhante || [],
+          tipo_atendimento: item.tipo_atendimento || null,
+          valor_padrao: item.valor_padrao || null,
+          valor_observacao: item.valor_observacao || null,
         };
       });
 

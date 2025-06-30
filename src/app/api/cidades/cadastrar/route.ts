@@ -21,6 +21,20 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
+    // Buscar o id do estado pela sigla (UF)
+    const { data: estadoData, error: estadoError } = await supabase
+      .from('estados')
+      .select('id')
+      .eq('uf', estado)
+      .single();
+
+    if (estadoError || !estadoData) {
+      return NextResponse.json({
+        success: false,
+        error: 'Estado não encontrado'
+      }, { status: 400 });
+    }
+
     // Verificar se a cidade já existe
     const { data: cidadeExistente, error: errorBusca } = await supabase
       .from('cidades')
@@ -38,12 +52,13 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Criar registro para a cidade
+    // Criar registro para a cidade, incluindo estado_id
     const { error } = await supabase
       .from('cidades')
       .insert([{
         nome: cidade,
-        estado: estado
+        estado: estado,
+        estado_id: estadoData.id
       }]);
 
     if (error) throw error;

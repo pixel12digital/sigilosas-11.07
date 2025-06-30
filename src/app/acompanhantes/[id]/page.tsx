@@ -188,15 +188,25 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
                 
                 <p className="text-gray-700 my-4">{acompanhante.sobre_mim}</p>
 
-                <a
-                  href={`https://wa.me/55${acompanhante.whatsapp}?text=Olá, te encontrei no SigilosasVIP!`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-green-500 text-white rounded-lg font-semibold text-lg hover:bg-green-600 transition-colors my-4"
-                >
-                    <PhoneIcon className="w-6 h-6" />
-                    Entrar em Contato por WhatsApp
-                </a>
+                <div className="flex flex-col items-start gap-2 my-4">
+                  {acompanhante.telefone && (
+                    <a
+                      href={`https://wa.me/${acompanhante.telefone.replace(/\D/g, '')}?text=${encodeURIComponent('Olá, vi seu perfil no Sigilosas VIP e gostaria de conversar!')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-medium rounded px-4 py-2 text-sm transition"
+                      style={{ minWidth: 0 }}
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M20.52 3.48A12.07 12.07 0 0012 0C5.37 0 0 5.37 0 12a11.93 11.93 0 001.64 6.06L0 24l6.18-1.62A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22a9.93 9.93 0 01-5.3-1.53l-.38-.23-3.67.97.98-3.58-.25-.37A9.93 9.93 0 012 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.8c-.28-.14-1.65-.81-1.9-.9-.25-.09-.43-.14-.61.14-.18.28-.28.7.9-.86 1.08-.16.18-.32.2-.6.07-.28-.14-1.18-.44-2.25-1.4-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.34.42-.51.14-.17.18-.29.28-.48.09-.19.05-.36-.02-.5-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47-.16-.01-.36-.01-.56-.01-.19 0-.5.07-.76.34-.26.27-1 1-.97 2.43.03 1.43 1.03 2.81 1.18 3.01.15.2 2.03 3.1 4.93 4.23.69.3 1.23.48 1.65.61.69.22 1.32.19 1.81.12.55-.08 1.65-.67 1.89-1.32.23-.65.23-1.2.16-1.32-.07-.12-.25-.19-.53-.33z"/></svg>
+                      WhatsApp
+                    </a>
+                  )}
+                  {acompanhante.valor_padrao && (
+                    <span className="text-2xl font-bold text-green-700 bg-yellow-100 px-4 py-2 rounded shadow inline-block">
+                      Valor do Atendimento: R$ {Number(acompanhante.valor_padrao).toFixed(2)} / hora
+                    </span>
+                  )}
+                </div>
 
                 {acompanhante.descricao && (
                   <div className="mt-6 border-t pt-6">
@@ -212,6 +222,28 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
                     {acompanhante.genero && <div><dt className="font-semibold text-gray-600">Gênero</dt><dd className="text-gray-800">{acompanhante.genero}</dd></div>}
                     {acompanhante.etnia && <div><dt className="font-semibold text-gray-600">Etnia</dt><dd className="text-gray-800">{acompanhante.etnia}</dd></div>}
                     {acompanhante.idiomas && acompanhante.idiomas.length > 0 && <div><dt className="font-semibold text-gray-600">Idiomas</dt><dd className="text-gray-800">{Array.isArray(acompanhante.idiomas) ? acompanhante.idiomas.join(', ') : acompanhante.idiomas}</dd></div>}
+                    {acompanhante.tipo_atendimento && (
+                      <div>
+                        <dt className="font-semibold text-gray-600">Tipo de Atendimento</dt>
+                        <dd className="text-gray-800">
+                          {acompanhante.tipo_atendimento === 'presencial' && <span title="Presencial">🏢 Presencial</span>}
+                          {acompanhante.tipo_atendimento === 'online' && <span title="Online">💻 Online</span>}
+                          {acompanhante.tipo_atendimento === 'ambos' && <span title="Ambos">🌐 Ambos</span>}
+                        </dd>
+                      </div>
+                    )}
+                    {acompanhante.valor_padrao && (
+                      <div>
+                        <dt className="font-semibold text-gray-600">Valor do Atendimento</dt>
+                        <dd className="text-gray-800">R$ {Number(acompanhante.valor_padrao).toFixed(2)}</dd>
+                      </div>
+                    )}
+                    {acompanhante.valor_observacao && (
+                      <div>
+                        <dt className="font-semibold text-gray-600">Observações sobre o valor</dt>
+                        <dd className="text-gray-800">{acompanhante.valor_observacao}</dd>
+                      </div>
+                    )}
 
                     <div className="md:col-span-2"><hr/></div>
                     
@@ -275,6 +307,13 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
                             {acompanhante.site && <a href={acompanhante.site} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Site Pessoal</a>}
                         </dd>
                     </div>}
+
+                    {acompanhante.telefone && (
+                      <div>
+                        <dt className="font-semibold text-gray-600">Telefone (WhatsApp)</dt>
+                        <dd className="text-gray-800">{acompanhante.telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</dd>
+                      </div>
+                    )}
                 </dl>
             </div>
 

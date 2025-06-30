@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY);
+
 export async function GET() {
   try {
     // Criar cliente com service role key
@@ -11,14 +13,17 @@ export async function GET() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Buscar todas as cidades
+    // Buscar todas as cidades (sem .order)
     const { data: cidades, error } = await supabase
       .from('cidades')
-      .select('*')
-      .order('estado', { ascending: true })
-      .order('nome', { ascending: true });
+      .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.log('ERRO SUPABASE:', error);
+      throw error;
+    }
+
+    console.log('CIDADES DO SUPABASE:', cidades);
 
     return NextResponse.json({ 
       success: true, 

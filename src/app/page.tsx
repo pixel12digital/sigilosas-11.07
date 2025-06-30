@@ -10,6 +10,7 @@ import { Database } from '@/lib/database.types';
 import Link from 'next/link';
 import { ShieldCheckIcon, ChatBubbleLeftRightIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { supabase } from '@/lib/supabase';
+import PopupAviso18 from '@/components/PopupAviso18';
 
 type Acompanhante = Database['public']['Tables']['acompanhantes']['Row'] & {
   fotos: Pick<Database['public']['Tables']['fotos']['Row'], 'url' | 'storage_path' | 'tipo' | 'principal'>[];
@@ -129,6 +130,7 @@ export default function Home() {
 
   return (
     <>
+      <PopupAviso18 />
       <Header />
       <main className="flex-grow">
         <div className="relative bg-cover bg-center py-20" style={{ backgroundImage: "url('/assets/img/imagem_banner.png')" }}>

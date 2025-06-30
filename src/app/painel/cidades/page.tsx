@@ -126,6 +126,7 @@ export default function CidadesPage() {
     }
   };
 
+  console.log('CIDADES RETORNADAS:', cidades);
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Cadastro de Cidades</h1>
@@ -197,7 +198,7 @@ export default function CidadesPage() {
           {cidades.length === 0 ? (
             <p className="text-gray-500">Nenhuma cidade cadastrada</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div style={{ maxHeight: 'none', overflow: 'visible' }}>
               <table className="min-w-full bg-white">
                 <thead className="bg-gray-50">
                   <tr>
@@ -207,10 +208,10 @@ export default function CidadesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {cidades.map((cidade) => (
-                    <tr key={cidade.id}>
+                  {cidades.map((cidade, idx) => (
+                    <tr key={cidade.id || idx}>
                       <td className="py-2 px-4 border-b">{cidade.nome}</td>
-                      <td className="py-2 px-4 border-b">{getNomeEstado(cidade.estado)}</td>
+                      <td className="py-2 px-4 border-b">{cidade.estado}</td>
                       <td className="py-2 px-4 border-b text-right">
                         <button
                           onClick={() => handleDelete(cidade.id)}

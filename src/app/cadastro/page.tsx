@@ -73,6 +73,8 @@ export default function CadastroAcompanhante() {
     fumante: "",
     idiomas: "",
     endereco: "",
+    bairro: "",
+    cep: "",
     cidade_id: "",
     estado_id: "",
     horario_expediente: "",
@@ -86,6 +88,9 @@ export default function CadastroAcompanhante() {
     email: "",
     telefone: "",
     senha: "",
+    tipo_atendimento: "presencial",
+    valor_padrao: "",
+    valor_observacao: "",
   });
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string>("");
@@ -405,6 +410,10 @@ export default function CadastroAcompanhante() {
         // Garante que "Outro" seja tratado
         genitalia: form.genitalia === 'Outro' ? form.genitalia_outro : form.genitalia,
         preferencia_sexual: form.preferencia_sexual === 'Outro' ? form.preferencia_sexual_outro : form.preferencia_sexual,
+        tipo_atendimento: form.tipo_atendimento,
+        valor_padrao: form.valor_padrao,
+        valor_observacao: form.valor_observacao,
+        p_altura: form.altura ? parseFloat(form.altura) : null,
       };
 
       // 6. Enviar tudo para a API
@@ -454,6 +463,26 @@ export default function CadastroAcompanhante() {
     }
     if (name === "preferencia_sexual") {
       setShowPrefOutro(value === "Outro");
+    }
+    if (name === "tipo_atendimento") {
+      setForm(prev => ({ ...prev, tipo_atendimento: value }));
+      return;
+    }
+    if (name === "valor_padrao") {
+      setForm(prev => ({ ...prev, valor_padrao: value }));
+      return;
+    }
+    if (name === "valor_observacao") {
+      setForm(prev => ({ ...prev, valor_observacao: value }));
+      return;
+    }
+    if (name === "endereco" || name === "bairro" || name === "cep") {
+      setForm(prev => ({ ...prev, [name]: value }));
+      return;
+    }
+    if (name === "altura") {
+      setForm(prev => ({ ...prev, altura: value }));
+      return;
     }
   };
 
@@ -548,7 +577,17 @@ export default function CadastroAcompanhante() {
               </div>
               <div>
                 <label className={labelClass}>Altura (m)</label>
-                <input type="text" name="altura" className={inputClass} value={form.altura} onChange={handleChange} placeholder="Ex: 1.75" />
+                <input
+                  type="number"
+                  name="altura"
+                  className={inputClass}
+                  value={form.altura || ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="Ex: 1.65"
+                  required
+                />
               </div>
               <div>
                 <label className={labelClass}>Etnia</label>
@@ -606,6 +645,18 @@ export default function CadastroAcompanhante() {
                   {cidadesFiltradas.map((cidade) => (<option key={cidade.id} value={cidade.id}>{cidade.nome}</option>))}
                 </select>
               </div>
+              <div>
+                <label className={labelClass} htmlFor="endereco">Endereço</label>
+                <input type="text" id="endereco" name="endereco" className={inputClass} value={form.endereco} onChange={handleChange} />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="bairro">Bairro</label>
+                <input type="text" id="bairro" name="bairro" className={inputClass} value={form.bairro} onChange={handleChange} />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cep">CEP</label>
+                <input type="text" id="cep" name="cep" className={inputClass} value={form.cep} onChange={handleChange} />
+              </div>
                <div>
                 <label className={labelClass}>Idiomas</label>
                 <input type="text" name="idiomas" className={inputClass} value={form.idiomas} onChange={handleChange} />
@@ -617,6 +668,48 @@ export default function CadastroAcompanhante() {
               <div className="md:col-span-2">
                 <label className={labelClass}>Formas de pagamento</label>
                 <input type="text" name="formas_pagamento" className={inputClass} value={form.formas_pagamento} onChange={handleChange} />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClass}>Tipo de Atendimento *</label>
+                <div className="flex gap-4 mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="tipo_atendimento" value="presencial" checked={form.tipo_atendimento === 'presencial'} onChange={handleChange} required />
+                    <span role="img" aria-label="Presencial">🏢</span> Presencial
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="tipo_atendimento" value="online" checked={form.tipo_atendimento === 'online'} onChange={handleChange} required />
+                    <span role="img" aria-label="Online">💻</span> Online
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="tipo_atendimento" value="ambos" checked={form.tipo_atendimento === 'ambos'} onChange={handleChange} required />
+                    <span role="img" aria-label="Ambos">🌐</span> Ambos
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Valor do Atendimento (R$) * <span className="text-xs text-gray-500">/ hora</span></label>
+                <input
+                  type="number"
+                  name="valor_padrao"
+                  className={inputClass}
+                  value={form.valor_padrao || ""}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="Ex: 200.00"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Observações sobre o valor</label>
+                <textarea
+                  name="valor_observacao"
+                  className={inputClass}
+                  value={form.valor_observacao || ""}
+                  onChange={handleChange}
+                  placeholder="Ex: Valor pode variar para atendimentos especiais, promoções, etc."
+                  rows={2}
+                />
               </div>
             </div>
           </div>

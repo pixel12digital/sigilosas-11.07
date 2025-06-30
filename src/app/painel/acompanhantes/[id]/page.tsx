@@ -80,6 +80,7 @@ export default function EditarAcompanhanteAdmin() {
           ...processedPerfil,
           cidade_id: perfil.cidades?.id || null,
           altura: perfil.altura,
+          tipo_atendimento: perfil.tipo_atendimento || 'presencial',
         });
 
         // 2. Busca as mídias em chamadas separadas e não bloqueantes
@@ -502,6 +503,26 @@ export default function EditarAcompanhanteAdmin() {
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setForm((f: any) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+    if (name === "tipo_atendimento") {
+      setForm(prev => ({ ...prev, tipo_atendimento: value }));
+      return;
+    }
+    if (name === "valor_padrao") {
+      setForm(prev => ({ ...prev, valor_padrao: value }));
+      return;
+    }
+    if (name === "valor_observacao") {
+      setForm(prev => ({ ...prev, valor_observacao: value }));
+      return;
+    }
+    if (name === "endereco" || name === "bairro" || name === "cep") {
+      setForm(prev => ({ ...prev, [name]: value }));
+      return;
+    }
+    if (name === "altura") {
+      setForm(prev => ({ ...prev, altura: value }));
+      return;
+    }
   };
 
   const handleSave = async () => {
@@ -696,7 +717,7 @@ export default function EditarAcompanhanteAdmin() {
                 <input id="idade" name="idade" type="number" value={form.idade || ''} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label htmlFor="telefone" className={labelClass}>Telefone</label>
+                <label className={labelClass}>Telefone (WhatsApp) *</label>
                 <input id="telefone" name="telefone" type="text" value={form.telefone || ''} onChange={handleChange} className={inputClass} />
               </div>
               <div>
@@ -711,8 +732,16 @@ export default function EditarAcompanhanteAdmin() {
                 </select>
               </div>
                <div>
-                <label htmlFor="endereco" className={labelClass}>Endereço (Bairro)</label>
-                <input id="endereco" name="endereco" type="text" value={form.endereco || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Centro" />
+                <label className={labelClass}>Endereço</label>
+                <input type="text" name="endereco" className={inputClass} value={form.endereco || ""} onChange={handleChange} />
+              </div>
+              <div>
+                <label className={labelClass}>Bairro</label>
+                <input type="text" name="bairro" className={inputClass} value={form.bairro || ""} onChange={handleChange} />
+              </div>
+              <div>
+                <label className={labelClass}>CEP</label>
+                <input type="text" name="cep" className={inputClass} value={form.cep || ""} onChange={handleChange} />
               </div>
             </div>
 
@@ -743,7 +772,17 @@ export default function EditarAcompanhanteAdmin() {
                   <input id="peso" name="peso" type="number" value={form.peso || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 65" />
                   
                   <label htmlFor="altura" className={labelClass}>Altura (m)</label>
-                  <input id="altura" name="altura" type="number" step="0.01" value={form.altura || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 1.70" />
+                  <input
+                    type="number"
+                    name="altura"
+                    className={inputClass}
+                    value={form.altura || ""}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Ex: 1.65"
+                    required
+                  />
 
                   <label htmlFor="tamanho_pe" className={labelClass}>Tamanho do Pé</label>
                   <input id="tamanho_pe" name="tamanho_pe" type="number" value={form.tamanho_pe || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 38" />
@@ -800,6 +839,48 @@ export default function EditarAcompanhanteAdmin() {
                  <div>
                   <label htmlFor="formas_pagamento" className={labelClass}>Formas de Pagamento</label>
                   <input id="formas_pagamento" name="formas_pagamento" type="text" value={form.formas_pagamento || ''} onChange={handleChange} className={inputClass} placeholder="Ex: Dinheiro, Pix, Cartão" />
+                </div>
+                <div>
+                  <label className={labelClass}>Tipo de Atendimento *</label>
+                  <div className="flex gap-4 mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="tipo_atendimento" value="presencial" checked={form.tipo_atendimento === 'presencial'} onChange={handleChange} required />
+                      <span role="img" aria-label="Presencial">🏢</span> Presencial
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="tipo_atendimento" value="online" checked={form.tipo_atendimento === 'online'} onChange={handleChange} required />
+                      <span role="img" aria-label="Online">💻</span> Online
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="tipo_atendimento" value="ambos" checked={form.tipo_atendimento === 'ambos'} onChange={handleChange} required />
+                      <span role="img" aria-label="Ambos">🌐</span> Ambos
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Valor do Atendimento (R$) *</label>
+                  <input
+                    type="number"
+                    name="valor_padrao"
+                    className={inputClass}
+                    value={form.valor_padrao || ""}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    required
+                    placeholder="Ex: 200.00"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Observações sobre o valor</label>
+                  <textarea
+                    name="valor_observacao"
+                    className={inputClass}
+                    value={form.valor_observacao || ""}
+                    onChange={handleChange}
+                    placeholder="Ex: Valor pode variar para atendimentos especiais, promoções, etc."
+                    rows={2}
+                  />
                 </div>
               </div>
             </div>

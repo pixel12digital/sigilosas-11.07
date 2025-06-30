@@ -68,6 +68,19 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
       {/* Conteúdo do Card */}
       <div className="p-4 flex-grow flex flex-col">
         <h3 className="font-bold text-xl text-gray-800">{acompanhante.nome}</h3>
+        {acompanhante.valor_padrao ? (
+          <div className="mt-2">
+            <span className="text-lg font-semibold text-green-700 bg-yellow-100 px-2 py-1 rounded shadow inline-block">
+              R$ {Number(acompanhante.valor_padrao).toFixed(2)} / hora
+            </span>
+          </div>
+        ) : (
+          <div className="mt-2">
+            <span className="text-lg font-semibold text-gray-600 bg-yellow-50 px-2 py-1 rounded shadow inline-block">
+              A combinar
+            </span>
+          </div>
+        )}
         <p className="text-sm text-gray-500 mb-4">{acompanhante.etnia || "Morena perfeita"}</p>
 
         <div className="grid grid-cols-2 gap-4 flex-grow">
