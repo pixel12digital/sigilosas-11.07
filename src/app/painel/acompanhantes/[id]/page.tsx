@@ -504,23 +504,23 @@ export default function EditarAcompanhanteAdmin() {
     const { name, value, type, checked } = e.target;
     setForm((prev: any) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (name === "tipo_atendimento") {
-      setForm(prev => ({ ...prev, tipo_atendimento: value }));
+      setForm((prev: any) => ({ ...prev, tipo_atendimento: value }));
       return;
     }
     if (name === "valor_padrao") {
-      setForm(prev => ({ ...prev, valor_padrao: value }));
+      setForm((prev: any) => ({ ...prev, valor_padrao: value }));
       return;
     }
     if (name === "valor_observacao") {
-      setForm(prev => ({ ...prev, valor_observacao: value }));
+      setForm((prev: any) => ({ ...prev, valor_observacao: value }));
       return;
     }
     if (name === "endereco" || name === "bairro" || name === "cep") {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev: any) => ({ ...prev, [name]: value }));
       return;
     }
     if (name === "altura") {
-      setForm(prev => ({ ...prev, altura: value }));
+      setForm((prev: any) => ({ ...prev, altura: value }));
       return;
     }
   };
