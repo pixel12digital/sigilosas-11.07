@@ -76,12 +76,12 @@ export default function EditarAcompanhanteAdmin() {
           }
         }
         
-        setForm({
+        setForm((prev: any) => ({
           ...processedPerfil,
           cidade_id: perfil.cidades?.id || null,
           altura: perfil.altura,
           tipo_atendimento: perfil.tipo_atendimento || 'presencial',
-        });
+        }));
 
         // 2. Busca as mídias em chamadas separadas e não bloqueantes
         const { data: fotos } = await supabase.from('fotos').select('*').eq('acompanhante_id', id);
@@ -502,7 +502,7 @@ export default function EditarAcompanhanteAdmin() {
 
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    setForm((f: any) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+    setForm((prev: any) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (name === "tipo_atendimento") {
       setForm(prev => ({ ...prev, tipo_atendimento: value }));
       return;
@@ -596,8 +596,8 @@ export default function EditarAcompanhanteAdmin() {
     if (!window.confirm('Tem certeza que deseja remover este vídeo?')) return;
 
     // Atualiza o estado
-    setForm((f: any) => ({
-      ...f,
+    setForm((prev: any) => ({
+      ...prev,
       video_verificacao: null
     }));
 
