@@ -239,10 +239,10 @@ export default function AcompanhanteProfile({ params }: { params: { id: string }
                         <dd className="text-gray-800">R$ {Number(acompanhante.valor_padrao).toFixed(2)}</dd>
                       </div>
                     )}
-                    {acompanhante.valor_observacao && (
+                    {(acompanhante as any).valor_observacao && (
                       <div>
                         <dt className="font-semibold text-gray-600">Observações sobre o valor</dt>
-                        <dd className="text-gray-800">{acompanhante.valor_observacao}</dd>
+                        <dd className="text-gray-800">{(acompanhante as any).valor_observacao}</dd>
                       </div>
                     )}
 
