@@ -23,6 +23,15 @@ export const POST = async (request: Request) => {
   try {
     console.log(`Iniciando exclusão do perfil para o usuário: ${userId}`);
 
+    // Etapa 0: Excluir avaliações relacionadas ao acompanhante
+    const { error: deleteAvaliacoesError } = await supabaseAdmin.from('avaliacoes').delete().eq('acompanhante_id', userId);
+    if (deleteAvaliacoesError) {
+      console.error('Erro ao deletar avaliações relacionadas:', deleteAvaliacoesError);
+      // Decide se quer parar ou continuar. Por enquanto, vamos logar e continuar.
+    } else {
+      console.log(`Avaliações do acompanhante ${userId} foram deletadas.`);
+    }
+
     // Etapa 1: Excluir registros de tabelas relacionadas (fotos, documentos, etc.)
     // O ideal é ter 'ON DELETE CASCADE' no banco, mas vamos garantir por aqui.
     const relatedTables = ['fotos', 'documentos_acompanhante', 'videos_verificacao'];
@@ -47,11 +56,14 @@ export const POST = async (request: Request) => {
 
     // Etapa 3: Excluir o usuário da autenticação (auth.users)
     const { data, error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (authError) {
+    if (authError && authError.message !== 'User not found') {
       console.error('Erro ao deletar o usuário da autenticação:', authError);
       throw new Error(`Falha ao deletar usuário da autenticação: ${authError.message}`);
     }
-    console.log(`Usuário ${userId} deletado da autenticação com sucesso.`);
+    if (authError && authError.message === 'User not found') {
+      console.warn('Usuário já não existe na autenticação, prosseguindo com a exclusão.');
+    }
+    console.log(`Usuário ${userId} deletado da autenticação com sucesso ou já não existia.`);
 
     return NextResponse.json({ message: 'Perfil e usuário excluídos com sucesso' });
 

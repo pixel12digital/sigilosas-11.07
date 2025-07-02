@@ -70,13 +70,13 @@ export default function AcompanhanteCard({ acompanhante, cidadeNome }: Acompanha
         <h3 className="font-bold text-xl text-gray-800">{acompanhante.nome}</h3>
         {acompanhante.valor_padrao ? (
           <div className="mt-2">
-            <span className="text-lg font-semibold text-green-700 bg-yellow-100 px-2 py-1 rounded shadow inline-block">
+            <span className="text-base font-bold text-black">
               R$ {Number(acompanhante.valor_padrao).toFixed(2)} / hora
             </span>
           </div>
         ) : (
           <div className="mt-2">
-            <span className="text-lg font-semibold text-gray-600 bg-yellow-50 px-2 py-1 rounded shadow inline-block">
+            <span className="text-base font-bold text-gray-600">
               A combinar
             </span>
           </div>
