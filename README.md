@@ -1,469 +1,612 @@
-# Sigilosas VIP - Migração para Vercel + Supabase
+# Sigilosas VIP - Versão PHP
 
-Este projeto foi migrado de PHP/MySQL para Next.js/Vercel com Supabase como banco de dados.
+Versão PHP completa do projeto Sigilosas VIP, desenvolvida para hospedagem compartilhada Hostinger.
 
-## 🚀 Etapas para Deploy
+## 📋 Características
 
-### 1. Configuração do Supabase
+- ✅ **PHP Puro** - Sem dependências complexas
+- ✅ **MySQL** - Banco de dados relacional
+- ✅ **JWT Authentication** - Sistema de autenticação seguro
+- ✅ **Upload de Arquivos** - Sistema completo de uploads
+- ✅ **Painel Administrativo** - Interface completa de gestão
+- ✅ **Site Público** - Páginas responsivas e modernas
+- ✅ **SEO Otimizado** - Meta tags e estrutura semântica
+- ✅ **Segurança** - Proteções contra ataques comuns
+- ✅ **Responsivo** - Funciona em todos os dispositivos
+- ✅ **Sistema de Moderação** - Fluxo completo de aprovação
+- ✅ **Painel da Acompanhante** - Interface personalizada para usuárias
 
-1. **Criar projeto no Supabase:**
-   - Acesse [supabase.com](https://supabase.com)
-   - Crie um novo projeto
-   - Anote a URL e as chaves de API
+## 🏗️ Estrutura do Projeto
 
-2. **Executar o schema:**
+```
+📁 sigilosas-php/
+├── 📁 config/
+│   ├── database.php          # Configuração MySQL
+│   └── config.php            # Configurações gerais
+├── 📁 core/
+│   ├── Auth.php              # Autenticação e sessões
+│   └── Upload.php            # Upload de arquivos
+├── 📁 admin/                 # Painel administrativo
+│   ├── login.php             # Login admin
+│   ├── dashboard.php         # Dashboard principal
+│   ├── acompanhantes.php     # Gestão de acompanhantes
+│   ├── usuarios.php          # Gestão de usuários
+│   ├── cidades.php           # Gestão de cidades
+│   ├── configuracoes.php     # Configurações
+│   ├── estatisticas.php      # Estatísticas
+│   └── denuncias.php         # Gestão de denúncias
+├── 📁 api/                   # APIs/Backend
+│   ├── login.php             # Autenticação
+│   ├── logout.php            # Logout
+│   ├── acompanhantes.php     # CRUD acompanhantes
+│   └── cidades.php           # CRUD cidades
+├── 📁 includes/              # Arquivos incluídos
+│   ├── header.php            # Cabeçalho público
+│   ├── footer.php            # Rodapé público
+│   ├── admin-header.php      # Cabeçalho admin
+│   └── admin-footer.php      # Rodapé admin
+├── 📁 pages/                 # Páginas públicas
+│   ├── home.php              # Página inicial
+│   ├── login.php             # Login público
+│   ├── cadastro.php          # Cadastro público
+│   ├── acompanhantes.php     # Listagem de acompanhantes
+│   ├── acompanhante.php      # Detalhes de acompanhante
+│   ├── contato.php           # Página de contato
+│   ├── sobre.php             # Página sobre
+│   ├── privacidade.php       # Política de privacidade
+│   ├── termos.php            # Termos de uso
+│   ├── blog.php              # Blog
+│   └── 404.php               # Página de erro
+├── 📁 assets/                # Recursos estáticos
+│   ├── css/
+│   │   └── style.css         # Estilos principais
+│   └── js/
+│       └── main.js           # JavaScript principal
+├── 📁 uploads/               # Arquivos enviados
+│   ├── fotos/                # Fotos de acompanhantes
+│   ├── videos/               # Vídeos
+│   └── documentos/           # Documentos
+├── 📁 logs/                  # Logs do sistema
+├── index.php                 # Ponto de entrada
+├── .htaccess                 # Configuração Apache
+└── README.md                 # Este arquivo
+```
+
+## 🚀 Instalação
+
+### 1. Requisitos do Servidor
+
+- **PHP**: 7.4 ou superior
+- **MySQL**: 5.7 ou superior
+- **Apache**: com mod_rewrite habilitado
+- **Extensões PHP**: PDO, PDO_MySQL, GD, mbstring, json
+
+### 2. Configuração do Banco de Dados
+
+1. Crie um banco MySQL na sua hospedagem
+2. Importe o arquivo `schema-completo.sql`
+3. Configure as credenciais em `config/database.php`
+
+### 3. Upload dos Arquivos
+
+1. Faça upload de todos os arquivos para a raiz do seu domínio
+2. Configure as permissões:
    ```bash
-   # No painel do Supabase, vá em SQL Editor
-   # Cole e execute o conteúdo do arquivo supabase-schema.sql
+   chmod 755 uploads/
+   chmod 755 logs/
+   chmod 644 .htaccess
    ```
 
-3. **Configurar variáveis de ambiente:**
-   ```bash
-   # No painel do Supabase > Settings > API
-   # Copie as seguintes variáveis:
-   NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima
-   SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
-   ```
+### 4. Configuração
 
-### 2. Configuração Local
+1. Edite `config/config.php` com suas configurações
+2. Configure as variáveis de ambiente no painel da hospedagem
+3. Teste o acesso ao site
 
-1. **Instalar dependências:**
-   ```bash
-   npm install
-   ```
+## 🔗 URLs de Acesso
 
-2. **Configurar variáveis de ambiente local:**
-   ```bash
-   # Crie um arquivo .env.local
-   NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima
-   SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
-   ```
-
-3. **Executar migração de dados (opcional):**
-   ```bash
-   # Instalar dependência adicional
-   npm install mysql2
-   
-   # Executar migração
-   node scripts/migrate-data.js
-   ```
-
-4. **Testar localmente:**
-   ```bash
-   npm run dev
-   ```
-
-### 3. Deploy no Vercel
-
-1. **Conectar ao GitHub:**
-   - Faça push do código para um repositório GitHub
-   - Conecte o repositório ao Vercel
-
-2. **Configurar variáveis de ambiente no Vercel:**
-   - Vá em Settings > Environment Variables
-   - Adicione as mesmas variáveis do Supabase
-
-3. **Deploy:**
-   - O Vercel detectará automaticamente que é um projeto Next.js
-   - Clique em "Deploy"
-
-## 📁 Estrutura do Projeto
-
+### 🌐 Site Principal (Público)
 ```
-src/
-├── app/                    # App Router do Next.js 13+
-│   ├── layout.tsx         # Layout principal
-│   ├── page.tsx           # Página inicial
-│   └── globals.css        # Estilos globais
-├── components/            # Componentes React
-│   ├── Header.tsx         # Cabeçalho
-│   ├── Footer.tsx         # Rodapé
-│   ├── AcompanhanteCard.tsx # Card de acompanhante
-│   └── LoadingSpinner.tsx # Spinner de loading
-├── lib/                   # Utilitários
-│   └── supabase.ts        # Configuração do Supabase
-└── types/                 # Tipos TypeScript
+http://localhost/Sigilosas-MySQL/
+http://localhost/Sigilosas-MySQL/?page=home
+http://localhost/Sigilosas-MySQL/?page=acompanhantes
+http://localhost/Sigilosas-MySQL/?page=contato
+http://localhost/Sigilosas-MySQL/?page=sobre
 ```
 
-## 🔄 Principais Mudanças
+### 👑 Painel Administrativo
+```
+Login: http://localhost/Sigilosas-MySQL/admin/login.php
+Dashboard: http://localhost/Sigilosas-MySQL/admin/dashboard.php
+Teste: http://localhost/Sigilosas-MySQL/admin/teste-admin.php
+Logout: http://localhost/Sigilosas-MySQL/admin/logout.php
 
-### PHP → Next.js
-- **Server-side rendering** com Next.js 13+ App Router
-- **TypeScript** para type safety
-- **Tailwind CSS** para estilização
-- **Componentes React** reutilizáveis
-
-### MySQL → Supabase
-- **PostgreSQL** como banco de dados
-- **Row Level Security (RLS)** para segurança
-- **API REST automática** do Supabase
-- **Real-time subscriptions** (opcional)
-
-### Upload de Arquivos
-- **Supabase Storage** para imagens e vídeos
-- **Otimização automática** de imagens
-- **CDN global** para performance
-
-## 🛠️ Funcionalidades Implementadas
-
-- ✅ Página inicial responsiva
-- ✅ Sistema de filtros
-- ✅ Cards de acompanhantes
-- ✅ Configurações dinâmicas
-- ✅ Menu mobile
-- ✅ Loading states
-- ✅ Error handling
-
-## 🚧 Próximos Passos
-
-1. **Implementar autenticação:**
-   - Login/registro com Supabase Auth
-   - Painel administrativo
-   - Perfis de usuário
-
-2. **Páginas adicionais:**
-   - Perfil de acompanhante
-   - Sistema de avaliações
-   - Blog
-   - Páginas estáticas
-
-3. **Funcionalidades avançadas:**
-   - Upload de imagens
-   - Sistema de favoritos
-   - Notificações
-   - Chat
-
-## 🔧 Comandos Úteis
-
-```bash
-# Desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Testar build local
-npm start
-
-# Verificar tipos TypeScript
-npm run type-check
-
-# Lint do código
-npm run lint
+Gerenciamento:
+- Acompanhantes: http://localhost/Sigilosas-MySQL/admin/acompanhantes.php
+- Cidades: http://localhost/Sigilosas-MySQL/admin/cidades.php
+- Denúncias: http://localhost/Sigilosas-MySQL/admin/denuncias.php
+- Configurações: http://localhost/Sigilosas-MySQL/admin/configuracoes.php
+- Estatísticas: http://localhost/Sigilosas-MySQL/admin/estatisticas.php
 ```
 
-## 📝 Notas Importantes
-
-1. **Migração de dados:** O script `migrate-data.js` migra dados do MySQL para Supabase
-2. **Imagens:** As imagens antigas precisam ser re-uploadadas para o Supabase Storage
-3. **URLs:** Atualize as URLs das imagens nas configurações após o upload
-4. **SEO:** O Next.js oferece melhor SEO que PHP tradicional
-5. **Performance:** Vercel + Supabase oferece melhor performance global
-
-## 🆘 Suporte
-
-Para dúvidas ou problemas:
-1. Verifique os logs do Vercel
-2. Consulte a documentação do Supabase
-3. Verifique as variáveis de ambiente
-4. Teste localmente antes do deploy
-
-## 📄 Licença
-
-Este projeto é privado e proprietário.
-
-# Sigilosas VIP - Painel Administrativo
-
-## Configuração Inicial
-
-1. Clone o repositório
-2. Instale as dependências:
-```bash
-npm install
+### 👩‍💼 Painel Acompanhante
+```
+Login: http://localhost/Sigilosas-MySQL/pages/login-acompanhante.php
+Dashboard: http://localhost/Sigilosas-MySQL/acompanhante/index.php
+Perfil: http://localhost/Sigilosas-MySQL/acompanhante/perfil.php
+Mídia: http://localhost/Sigilosas-MySQL/acompanhante/midia.php
+Logout: http://localhost/Sigilosas-MySQL/acompanhante/logout.php
 ```
 
-3. Configure as variáveis de ambiente:
-- Crie um arquivo `.env.local` na raiz do projeto com:
+### 🔧 Ferramentas de Diagnóstico
 ```
-NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_de_servico_do_supabase
-```
-
-4. Execute as migrações do banco de dados:
-```bash
-npx supabase migration up
+Teste de Sessões: http://localhost/Sigilosas-MySQL/teste-sessoes.php
+Reset Admin: http://localhost/Sigilosas-MySQL/reset-admin.php
+Teste Sistema: http://localhost/Sigilosas-MySQL/test-sistema.php
 ```
 
-5. Atualize a senha do admin:
-```bash
-node scripts/update-admin-password.js
-```
+## 🔐 Credenciais de Acesso
 
-6. Execute o projeto:
-```bash
-npm run dev
-```
+### Painel Administrativo
+- **Email:** `admin@sigilosas.com`
+- **Senha:** `admin123`
 
-7. Acesse o painel:
-- URL: http://localhost:3000/login
-- Usuário: admin
-- Senha: admin123
+### Painel Acompanhante
+- As credenciais dependem dos acompanhantes cadastrados no banco de dados
+- Para criar uma conta de acompanhante, use o cadastro público
 
-## Estrutura do Projeto
+## 📋 Estrutura de Sessões
 
-- `/src/app`: Páginas e rotas da aplicação
-- `/src/components`: Componentes reutilizáveis
-- `/src/lib`: Utilitários e configurações
-- `/public`: Arquivos estáticos
-- `/scripts`: Scripts de configuração
-- `/supabase`: Configurações do Supabase
+O sistema utiliza sessões separadas para evitar conflitos:
 
-## Tecnologias
+- **Admin:** `sigilosas_admin_session`
+- **Acompanhante:** `sigilosas_acompanhante_session`
+- **Site Principal:** `sigilosas_session`
 
-- Next.js 13 (App Router)
-- Supabase (Banco de Dados)
-- Tailwind CSS
-- TypeScript 
+Cada painel pode ser acessado simultaneamente sem interferência.
 
-# Sigilosas VIP - Sistema de Cadastro de Acompanhantes
+## ⚙️ Configuração
 
-Sistema completo para cadastro, gerenciamento e exibição de acompanhantes, desenvolvido com Next.js, TypeScript, Tailwind CSS e Supabase.
+### Variáveis de Ambiente
 
-## 🚀 Funcionalidades
+Configure estas variáveis no painel da sua hospedagem:
 
-- **Cadastro de Acompanhantes**: Formulário completo com upload de fotos e vídeos
-- **Painel Administrativo**: Aprovação, rejeição e gerenciamento de perfis
-- **Sistema de Autenticação**: Login seguro com Supabase Auth
-- **Upload de Mídia**: Fotos de perfil, galeria e vídeos de verificação
-- **Gestão de Cidades**: Cadastro e gerenciamento de cidades por estado
-- **Responsivo**: Interface adaptada para desktop e mobile
-
-## 🛠️ Tecnologias
-
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **Deploy**: Vercel
-- **Upload**: Supabase Storage
-- **Autenticação**: Supabase Auth
-
-## 📋 Pré-requisitos
-
-- Node.js 18+
-- Conta no Supabase
-- Conta no Vercel (para deploy)
-
-## 🔧 Instalação
-
-1. **Clone o repositório**
-```bash
-git clone https://github.com/seu-usuario/sigilosas-vercel.git
-cd sigilosas-vercel
-```
-
-2. **Instale as dependências**
-```bash
-npm install
-```
-
-3. **Configure as variáveis de ambiente**
-```bash
-cp .env.example .env.local
-```
-
-Edite o arquivo `.env.local` com suas credenciais do Supabase:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
+DB_HOST=localhost
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_NAME=seu_banco
+JWT_SECRET=chave_secreta_jwt
+SITE_URL=https://seudominio.com
 ```
 
-4. **Configure o banco de dados**
+### Configurações Importantes
+
+1. **JWT_SECRET**: Chave secreta para tokens JWT
+2. **SITE_URL**: URL completa do seu site
+3. **SMTP**: Configurações de email (opcional)
+4. **UPLOAD_MAX_SIZE**: Tamanho máximo de upload (padrão: 10MB)
+
+## 🔐 Segurança
+
+### Recursos de Segurança Implementados
+
+- ✅ **Proteção XSS**: Headers de segurança
+- ✅ **CSRF Protection**: Tokens em formulários
+- ✅ **SQL Injection**: Prepared statements
+- ✅ **File Upload**: Validação de tipos e tamanhos
+- ✅ **Session Security**: Configurações seguras com isolamento
+- ✅ **HTTPS**: Suporte completo
+- ✅ **Rate Limiting**: Proteção contra spam
+- ✅ **Input Sanitization**: Limpeza de dados
+- ✅ **Session Isolation**: Sessões separadas para admin e acompanhantes
+- ✅ **Password Hashing**: Bcrypt com custo configurável
+
+### Recomendações Adicionais
+
+1. **SSL/HTTPS**: Configure certificado SSL
+2. **Backup**: Faça backups regulares
+3. **Updates**: Mantenha PHP atualizado
+4. **Monitoring**: Monitore logs de erro
+
+## 📱 Funcionalidades
+
+### Site Público
+
+- **Página Inicial**: Banner, destaques, estatísticas
+- **Listagem de Acompanhantes**: Filtros, paginação, busca
+- **Perfil de Acompanhante**: Fotos, vídeos, informações
+- **Sistema de Login/Cadastro**: Autenticação segura
+- **Blog**: Artigos e conteúdo
+- **Páginas Estáticas**: Sobre, contato, termos, privacidade
+
+### Painel Administrativo
+
+- **Dashboard**: Estatísticas e gráficos em tempo real
+- **Gestão de Acompanhantes**: CRUD completo com aprovação/rejeição
+- **Gestão de Cidades**: Cadastro de localidades
+- **Configurações**: Configurações do sistema
+- **Estatísticas**: Relatórios detalhados
+- **Denúncias**: Moderação de conteúdo
+- **Sistema de Sessões**: Isolamento completo entre admin e acompanhantes
+
+### Painel Acompanhante
+
+- **Dashboard**: Visão geral do perfil
+- **Perfil**: Edição completa de informações pessoais
+- **Mídia**: Upload e gerenciamento de fotos, vídeos e documentos
+- **Galeria**: Sistema de fotos com preview e exclusão
+- **Verificação**: Upload de documentos e vídeos de verificação
+- **Status**: Acompanhamento de aprovação do perfil
+
+### APIs
+
+- **Autenticação**: Login/logout com JWT
+- **CRUD Acompanhantes**: Gerenciamento via API
+- **CRUD Cidades**: Gestão de localidades
+- **Upload**: Sistema de upload de arquivos
+- **Upload de Mídia**: Fotos, vídeos e documentos
+- **Exclusão de Mídia**: Remoção segura de arquivos
+- **Verificação**: Upload de documentos de identidade
+
+## 🎨 Personalização
+
+### Cores e Estilo
+
+Edite `assets/css/style.css` para personalizar:
+
+```css
+:root {
+    --primary-color: #dc3545;    /* Cor principal */
+    --secondary-color: #6c757d;  /* Cor secundária */
+    --success-color: #28a745;    /* Cor de sucesso */
+    --info-color: #17a2b8;       /* Cor de informação */
+    --warning-color: #ffc107;    /* Cor de aviso */
+    --danger-color: #dc3545;     /* Cor de erro */
+}
+```
+
+### Logo e Branding
+
+1. Substitua `assets/img/logo.png`
+2. Edite `includes/header.php` para o novo logo
+3. Atualize cores no CSS
+
+### Conteúdo
+
+1. **Textos**: Edite os arquivos PHP nas pastas `pages/` e `admin/`
+2. **Imagens**: Substitua arquivos em `assets/img/`
+3. **Configurações**: Edite `config/config.php`
+
+## 📊 Banco de Dados
+
+### Tabelas Principais
+
+- **usuarios**: Usuários do sistema
+- **acompanhantes**: Perfis de acompanhantes
+- **cidades**: Cidades disponíveis
+- **estados**: Estados brasileiros
+- **blog_posts**: Posts do blog
+- **contatos**: Mensagens de contato
+- **denuncias**: Denúncias de usuários
+
+### Backup
+
 ```bash
-# Execute o script de correção da estrutura do banco
-node scripts/fix-database.js
+# Backup manual
+mysqldump -u usuario -p banco > backup.sql
 
-# Teste se tudo está funcionando
-node scripts/test-database.js
+# Restaurar
+mysql -u usuario -p banco < backup.sql
 ```
 
-5. **Execute o projeto**
-```bash
-npm run dev
-```
+## 🔧 Manutenção
 
-## 🗄️ Estrutura do Banco de Dados
+### Logs
 
-### Correções Implementadas
+Os logs são salvos em `logs/`:
+- `error_YYYY-MM-DD.log`: Erros do sistema
+- `access.log`: Acessos (configurado no .htaccess)
 
-O projeto inclui correções automáticas para garantir que a estrutura do banco de dados esteja alinhada com a lógica da aplicação:
+### Monitoramento
 
-#### Problemas Corrigidos:
-- **Inconsistências na tabela `cidades`**: Padronizada para usar `id SERIAL` e `estado_id INTEGER`
-- **Inconsistências na tabela `acompanhantes`**: Padronizada para usar `cidade_id` e `estado_id`
-- **Inconsistências na tabela `fotos`**: Padronizada para usar campo `principal` em vez de `capa`
-- **Função SQL `handle_new_user_signup`**: Corrigida para alinhar com a estrutura das tabelas
+1. **Verificar logs**: Monitore arquivos de log
+2. **Performance**: Use ferramentas como GTmetrix
+3. **Segurança**: Monitore tentativas de acesso
+4. **Backup**: Faça backups regulares
 
-#### Como Executar as Correções:
+### Updates
 
-**Opção 1: Script Automático**
-```bash
-node scripts/fix-database.js
-```
-
-**Opção 2: SQL Manual**
-```bash
-# No Supabase Dashboard > SQL Editor
-# Execute o conteúdo de: scripts/fix-database-structure.sql
-```
-
-**Opção 3: Via psql**
-```bash
-psql -h [HOST] -U [USER] -d [DATABASE] -f scripts/fix-database-structure.sql
-```
-
-#### Verificação Pós-Correção:
-```bash
-node scripts/test-database.js
-```
-
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── app/                    # App Router (Next.js 14)
-│   ├── api/               # API Routes
-│   │   ├── cadastro/      # Endpoint de cadastro
-│   │   ├── cidades/       # Endpoints de cidades
-│   │   └── ...
-│   ├── cadastro/          # Página de cadastro
-│   ├── login/             # Página de login
-│   ├── painel/            # Painel administrativo
-│   └── ...
-├── components/            # Componentes React
-├── lib/                   # Configurações e utilitários
-└── ...
-```
-
-## 🔐 Configuração do Supabase
-
-### 1. Criar Projeto
-- Acesse [supabase.com](https://supabase.com)
-- Crie um novo projeto
-- Anote a URL e as chaves de API
-
-### 2. Configurar Storage
-```sql
--- Criar buckets para mídia
-INSERT INTO storage.buckets (id, name, public) VALUES
-('images', 'images', true),
-('videos', 'videos', true),
-('documents', 'documents', true);
-```
-
-### 3. Configurar Políticas RLS
-As políticas de segurança são aplicadas automaticamente pelo script de correção.
-
-## 🚀 Deploy
-
-### Vercel
-1. Conecte seu repositório ao Vercel
-2. Configure as variáveis de ambiente
-3. Deploy automático a cada push
-
-### Variáveis de Ambiente no Vercel:
-```env
-NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
-```
-
-## 📊 Funcionalidades do Painel
-
-### Administrador
-- **Dashboard**: Visão geral do sistema
-- **Acompanhantes**: Lista, aprovação e rejeição de perfis
-- **Cidades**: Cadastro e gerenciamento de cidades
-- **Usuários**: Gestão de usuários do sistema
-- **Configurações**: Configurações gerais
-
-### Acompanhante
-- **Perfil**: Visualização e edição do perfil
-- **Mídia**: Upload de fotos e vídeos
-- **Status**: Acompanhamento do status de aprovação
-
-## 🔧 Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-npm run dev          # Inicia servidor de desenvolvimento
-npm run build        # Build para produção
-npm run start        # Inicia servidor de produção
-
-# Banco de dados
-node scripts/fix-database.js      # Corrige estrutura do banco
-node scripts/test-database.js     # Testa estrutura do banco
-node scripts/setup-database.js    # Configuração inicial
-node scripts/setup-admin.js       # Cria usuário admin
-
-# Cidades e Estados
-node scripts/setup-estados.js     # Cadastra estados brasileiros
-node scripts/setup-cidade-policies.js  # Configura políticas de cidades
-```
+1. **Backup**: Sempre faça backup antes
+2. **Teste**: Teste em ambiente de desenvolvimento
+3. **Deploy**: Faça deploy em horário de baixo tráfego
+4. **Verificação**: Teste funcionalidades críticas
 
 ## 🐛 Troubleshooting
 
 ### Problemas Comuns
 
-1. **Erro de conexão com Supabase**
-   - Verifique as variáveis de ambiente
-   - Confirme se o projeto está ativo
+1. **Erro 500**: Verifique permissões e logs
+2. **Upload não funciona**: Verifique permissões da pasta uploads/
+3. **Página em branco**: Ative debug em config.php
+4. **Conexão com banco**: Verifique credenciais
 
-2. **Erro na função SQL**
-   - Execute o script de correção: `node scripts/fix-database.js`
-   - Verifique se a função `exec_sql` existe
+### Debug
 
-3. **Upload de arquivos falha**
-   - Verifique se os buckets do Storage foram criados
-   - Confirme as políticas RLS
+Ative o modo debug em `config/config.php`:
 
-4. **Erro de tipos TypeScript**
-   - Execute `npm run build` para verificar tipos
-   - Atualize as definições de tipos se necessário
-
-### Logs e Debug
-```bash
-# Ver logs detalhados
-npm run dev 2>&1 | tee logs.txt
-
-# Testar estrutura do banco
-node scripts/test-database.js
+```php
+define('DEBUG_MODE', true);
 ```
 
-## 📝 Documentação Adicional
+### Logs de Erro
 
-- [MIGRATION_STATUS.md](./MIGRATION_STATUS.md) - Status das migrações e correções
-- [SETUP.md](./SETUP.md) - Guia detalhado de configuração
-- [STORAGE_SETUP.md](./STORAGE_SETUP.md) - Configuração do Storage
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Verifique os logs em:
+- `logs/error_YYYY-MM-DD.log`
+- Logs do servidor web
+- Logs do PHP
 
 ## 📞 Suporte
 
-Para suporte, abra uma issue no GitHub ou entre em contato através do email: suporte@sigilosas.com
+### Contato
+
+- **Email**: contato@sigilosasvip.com
+- **Telefone**: (11) 99999-9999
+- **Horário**: Seg-Sex 9h às 18h
+
+### Documentação
+
+- **Manual do Usuário**: Disponível no painel admin
+- **API Documentation**: Consulte os arquivos em `api/`
+- **FAQ**: Seção de perguntas frequentes
+
+## 📄 Licença
+
+Este projeto é proprietário da Sigilosas VIP. Todos os direitos reservados.
+
+## 🔄 Changelog
+
+### v1.0.0 (2024-12-15)
+- ✅ Versão inicial completa
+- ✅ Painel administrativo
+- ✅ Site público responsivo
+- ✅ Sistema de autenticação
+- ✅ Upload de arquivos
+- ✅ APIs funcionais
+- ✅ SEO otimizado
+- ✅ Segurança implementada
+
+## 🔄 Fluxo Completo do Sistema
+
+### 1. Cadastro Público
+- **Acesso**: `/pages/cadastro.php`
+- **Processo**: 
+  - Usuária preenche dados básicos (nome, email, senha, cidade)
+  - Sistema valida dados e cria conta com status "pendente"
+  - Redireciona para login com mensagem de sucesso
+- **Segurança**: Senha hashada com `password_hash()`
+
+### 2. Login da Acompanhante
+- **Acesso**: `/pages/login.php`
+- **Processo**:
+  - Login com email/senha
+  - Verificação de status da conta
+  - Criação de sessão segura
+  - Redirecionamento para painel da acompanhante
+- **Controle**: Apenas contas aprovadas podem acessar o painel
+- **Recuperação**: Link para recuperação de senha
+
+### 3. Painel da Acompanhante
+- **Acesso**: `/acompanhante/` (após login)
+- **Funcionalidades**:
+  - **Dashboard**: Visão geral do perfil e estatísticas
+  - **Editar Perfil**: Completar informações pessoais e profissionais
+  - **Upload de Mídia**: Fotos, vídeos e documentos
+  - **Visualizar Perfil**: Como aparece no site público
+- **Segurança**: Acesso restrito por sessão e status
+
+### 4. Sistema de Upload de Mídia
+- **Fotos**: `/api/upload-foto.php` - Upload de fotos do perfil
+- **Vídeos**: `/api/upload-video.php` - Upload de vídeos promocionais
+- **Documentos**: `/api/upload-documento.php` - Upload de documentos
+- **Validações**: Tipo, tamanho, segurança
+- **Armazenamento**: Organizado por ID da acompanhante
+
+### 5. Moderação Administrativa
+- **Acesso**: `/admin/` (apenas administradores)
+- **Processo**:
+  - Visualização de perfis pendentes
+  - Aprovação/rejeição de contas
+  - Edição de informações
+  - Gestão de denúncias
+- **Controle**: Sistema de status (pendente, aprovado, rejeitado, bloqueado)
+
+### 6. Exibição Pública
+- **Listagem**: `/pages/acompanhantes.php` - Apenas perfis aprovados
+- **Perfil Individual**: `/pages/acompanhante.php?id=X` - Detalhes completos
+- **Filtros**: Por cidade, serviços, preços
+- **Mídia**: Fotos, vídeos e informações públicas
+
+### 7. Recuperação de Senha
+- **Solicitação**: `/pages/recuperar-senha.php` - Formulário para email
+- **Processo**:
+  - Validação do email cadastrado
+  - Geração de token único e seguro
+  - Envio de email com link de recuperação
+  - Token expira em 1 hora
+- **Redefinição**: `/pages/redefinir-senha.php?token=XXX` - Nova senha
+- **Segurança**: Tokens únicos, expiração, validação de senha
+
+## 👥 Tipos de Usuário
+
+### 1. Público Geral
+- **Acesso**: Site público
+- **Funcionalidades**: Visualizar acompanhantes, contato, blog
+- **Restrições**: Não pode acessar painéis
+
+### 2. Acompanhante
+- **Acesso**: Painel da acompanhante (`/acompanhante/`)
+- **Funcionalidades**: 
+  - Gerenciar perfil pessoal
+  - Upload de mídia
+  - Visualizar estatísticas
+  - Editar informações
+- **Status**: Deve ter conta aprovada
+
+### 3. Administrador
+- **Acesso**: Painel administrativo (`/admin/`)
+- **Funcionalidades**:
+  - Gestão completa de acompanhantes
+  - Moderação de conteúdo
+  - Estatísticas do sistema
+  - Configurações gerais
+- **Privilégios**: Acesso total ao sistema
+
+## 🔐 Sistema de Segurança
+
+### Controle de Acesso
+- **Sessões**: Gerenciamento seguro de sessões
+- **Status**: Controle por status de conta
+- **Middleware**: Verificação de permissões em cada página
+- **Logout**: Destruição segura de sessões
+
+### Validação de Dados
+- **Input Sanitization**: Limpeza de dados de entrada
+- **SQL Injection**: Prepared statements
+- **XSS Protection**: Headers de segurança
+- **File Upload**: Validação rigorosa de arquivos
+
+### Proteção de Arquivos
+- **Uploads**: Validação de tipo, tamanho e conteúdo
+- **Diretórios**: Proteção contra listagem
+- **Execução**: Prevenção de execução de arquivos maliciosos
+
+## 📁 Estrutura de Arquivos Implementada
+
+### Painel da Acompanhante
+```
+📁 acompanhante/
+├── index.php              # Dashboard principal
+├── perfil.php             # Edição de perfil
+├── midia.php              # Upload de mídia
+├── visualizar.php         # Visualizar perfil público
+└── logout.php             # Logout seguro
+```
+
+### APIs de Upload
+```
+📁 api/
+├── upload-foto.php        # Upload de fotos
+├── upload-video.php       # Upload de vídeos
+├── upload-documento.php   # Upload de documentos
+└── get-midias.php         # Buscar mídias da acompanhante
+```
+
+### Sistema de Recuperação de Senha
+```
+📁 pages/
+├── recuperar-senha.php    # Solicitar recuperação
+└── redefinir-senha.php    # Redefinir senha
+📁 core/
+└── Email.php              # Classe para envio de emails
+📁 cron/
+└── limpar-tokens.php      # Limpeza automática de tokens
+```
+
+### Sistema de Autenticação
+```
+📁 core/
+├── Auth.php               # Classe de autenticação
+├── Session.php            # Gerenciamento de sessões
+└── Security.php           # Funções de segurança
+```
+
+## 🎯 Pontos de Entrada
+
+### Para Acompanhantes
+1. **Cadastro**: `http://localhost/Sigilosas-MySQL/pages/cadastro-acompanhante.php`
+2. **Login**: `http://localhost/Sigilosas-MySQL/pages/login-acompanhante.php`
+3. **Painel**: `http://localhost/Sigilosas-MySQL/acompanhante/` (após login)
+
+### Para Administradores
+1. **Login Admin**: `http://localhost/Sigilosas-MySQL/admin/login.php`
+2. **Painel Admin**: `http://localhost/Sigilosas-MySQL/admin/dashboard.php` (após login)
+3. **Teste Admin**: `http://localhost/Sigilosas-MySQL/admin/teste-admin.php`
+
+### Para Público
+1. **Site Principal**: `http://localhost/Sigilosas-MySQL/`
+2. **Listagem**: `http://localhost/Sigilosas-MySQL/?page=acompanhantes`
+3. **Perfil Individual**: `http://localhost/Sigilosas-MySQL/?page=acompanhante&id=X`
+
+## 🔄 Status do Sistema
+
+### Fluxo de Status das Contas
+1. **Pendente**: Conta criada, aguardando aprovação
+2. **Aprovado**: Conta aprovada, pode usar painel
+3. **Rejeitado**: Conta rejeitada, não pode acessar
+4. **Bloqueado**: Conta bloqueada por violação
+
+### Controle de Visibilidade
+- **Site Público**: Apenas contas "aprovadas"
+- **Painel da Acompanhante**: Apenas contas "aprovadas"
+- **Painel Admin**: Apenas administradores
+
+## 📊 Funcionalidades Implementadas
+
+### ✅ Completamente Funcional
+- Cadastro público com validações
+- Sistema de login/logout seguro
+- **Sistema de recuperação de senha** com tokens seguros
+- Painel da acompanhante completo
+- Upload de mídia (fotos, vídeos, documentos)
+- Sistema de moderação administrativa
+- Exibição pública de perfis aprovados
+- Controle de acesso por status
+- Interface responsiva e moderna
+
+### 🔄 Próximos Passos (Opcionais)
+- Sistema de mensagens entre usuários
+- Notificações por email
+- Sistema de avaliações
+- Relatórios avançados
+- Integração com pagamentos
+- App mobile
+
+## 🚨 Troubleshooting
+
+### Problemas Comuns
+
+#### 1. "Sessão Expirada" no Painel Acompanhante
+- **Causa**: Conflito de sessões entre painéis
+- **Solução**: Use abas separadas para admin e acompanhante
+- **Prevenção**: Sessões já estão isoladas (`sigilosas_admin_session` vs `sigilosas_acompanhante_session`)
+
+#### 2. Erro de Conexão com Banco
+- **Causa**: Configuração incorreta ou banco remoto inacessível
+- **Solução**: Verifique `config/database.php`
+- **Teste**: Acesse `http://localhost/Sigilosas-MySQL/admin/teste-admin.php`
+
+#### 3. Upload de Arquivos Falhando
+- **Causa**: Permissões de diretório ou limite de tamanho
+- **Solução**: 
+  ```bash
+  chmod 755 uploads/
+  chmod 755 uploads/galeria/
+  chmod 755 uploads/documentos/
+  chmod 755 uploads/videos/
+  ```
+
+#### 4. Login Admin Não Funciona
+- **Solução**: Execute `http://localhost/Sigilosas-MySQL/reset-admin.php`
+- **Credenciais**: admin@sigilosas.com / admin123
+
+### Ferramentas de Diagnóstico
+
+- **Teste de Sessões**: `http://localhost/Sigilosas-MySQL/teste-sessoes.php`
+- **Teste Admin**: `http://localhost/Sigilosas-MySQL/admin/teste-admin.php`
+- **Teste Sistema**: `http://localhost/Sigilosas-MySQL/test-sistema.php`
+- **Reset Admin**: `http://localhost/Sigilosas-MySQL/reset-admin.php`
 
 ---
 
-**Desenvolvido com ❤️ para o projeto Sigilosas VIP** 
+**Desenvolvido com ❤️ para a Sigilosas VIP** 

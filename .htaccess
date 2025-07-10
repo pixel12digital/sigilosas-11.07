@@ -1,0 +1,201 @@
+# ===== CONFIGURAÇÕES DE SEGURANÇA =====
+
+# Desabilitar listagem de diretórios
+Options -Indexes
+
+# Proteger arquivos sensíveis
+<Files "*.php">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+<Files "*.sql">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+<Files ".env">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Proteger diretórios sensíveis
+<Files "config/*">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+<Files "core/*">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# ===== URL REWRITING =====
+
+RewriteEngine On
+
+# Redirecionar www para non-www (opcional)
+# RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+# RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+# Forçar HTTPS (descomente se tiver SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remover extensão .php
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# URLs amigáveis para páginas públicas
+RewriteRule ^home/?$ index.php?page=home [L,QSA]
+RewriteRule ^login/?$ index.php?page=login [L,QSA]
+RewriteRule ^cadastro/?$ index.php?page=cadastro [L,QSA]
+RewriteRule ^acompanhantes/?$ index.php?page=acompanhantes [L,QSA]
+RewriteRule ^acompanhante/([0-9]+)/?$ index.php?page=acompanhante&id=$1 [L,QSA]
+RewriteRule ^contato/?$ index.php?page=contato [L,QSA]
+RewriteRule ^sobre/?$ index.php?page=sobre [L,QSA]
+RewriteRule ^privacidade/?$ index.php?page=privacidade [L,QSA]
+RewriteRule ^termos/?$ index.php?page=termos [L,QSA]
+RewriteRule ^blog/?$ index.php?page=blog [L,QSA]
+RewriteRule ^post/([0-9]+)/?$ index.php?page=post&id=$1 [L,QSA]
+
+# URLs amigáveis para painel admin
+RewriteRule ^admin/?$ admin/dashboard.php [L,QSA]
+RewriteRule ^admin/login/?$ admin/login.php [L,QSA]
+RewriteRule ^admin/acompanhantes/?$ admin/acompanhantes.php [L,QSA]
+RewriteRule ^admin/acompanhante/([0-9]+)/?$ admin/acompanhante-editar.php?id=$1 [L,QSA]
+RewriteRule ^admin/usuarios/?$ admin/usuarios.php [L,QSA]
+RewriteRule ^admin/cidades/?$ admin/cidades.php [L,QSA]
+RewriteRule ^admin/configuracoes/?$ admin/configuracoes.php [L,QSA]
+RewriteRule ^admin/estatisticas/?$ admin/estatisticas.php [L,QSA]
+RewriteRule ^admin/denuncias/?$ admin/denuncias.php [L,QSA]
+
+# URLs amigáveis para APIs
+RewriteRule ^api/login/?$ api/login.php [L,QSA]
+RewriteRule ^api/logout/?$ api/logout.php [L,QSA]
+RewriteRule ^api/acompanhantes/?$ api/acompanhantes.php [L,QSA]
+RewriteRule ^api/cidades/?$ api/cidades.php [L,QSA]
+
+# ===== HEADERS DE SEGURANÇA =====
+
+# Proteção XSS
+Header always set X-XSS-Protection "1; mode=block"
+
+# Prevenir clickjacking
+Header always set X-Frame-Options "SAMEORIGIN"
+
+# Prevenir MIME type sniffing
+Header always set X-Content-Type-Options "nosniff"
+
+# Referrer Policy
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Content Security Policy (CSP)
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://www.google-analytics.com;"
+
+# ===== COMPRESSÃO =====
+
+# Comprimir arquivos
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# ===== CACHE =====
+
+# Cache para arquivos estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Imagens
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    
+    # CSS e JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    
+    # Fontes
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # HTML
+    ExpiresByType text/html "access plus 1 hour"
+    
+    # Dados
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    ExpiresByType text/xml "access plus 1 hour"
+</IfModule>
+
+# ===== REDIRECIONAMENTOS =====
+
+# Redirecionar erros 404 para página personalizada
+ErrorDocument 404 /index.php?page=404
+
+# Redirecionar erros 500 para página de erro
+ErrorDocument 500 /index.php?page=error
+
+# ===== CONFIGURAÇÕES PHP =====
+
+# Configurações PHP (se permitido pelo servidor)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+    php_value max_input_vars 3000
+    php_value session.gc_maxlifetime 3600
+    php_value session.cookie_lifetime 3600
+</IfModule>
+
+# ===== BLOQUEIO DE BOTS MALICIOSOS =====
+
+# Bloquear user agents suspeitos
+RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+RewriteCond %{HTTP_USER_AGENT} ^(java|curl|wget).* [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^.*(libwww-perl|curl|wget|python|nikto|scan).* [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^.*(winhttp|HTTrack|clshttp|archiver|loader|email|harvest|extract|grab|miner).* [NC]
+RewriteRule .* - [F,L]
+
+# Bloquear IPs suspeitos (adicione conforme necessário)
+# Deny from 192.168.1.100
+# Deny from 10.0.0.50
+
+# ===== LIMITAÇÃO DE TAXA =====
+
+# Limitar requisições por IP (requer mod_ratelimit)
+<IfModule mod_ratelimit.c>
+    <Location />
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 400
+    </Location>
+</IfModule>
+
+# ===== LOGS =====
+
+# (Removido CustomLog e ErrorLog pois não são permitidos em .htaccess)
+
+# ===== FIM DAS CONFIGURAÇÕES ===== 

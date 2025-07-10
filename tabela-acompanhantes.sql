@@ -118,4 +118,15 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_acompanhantes_updated_at
     BEFORE UPDATE ON acompanhantes
     FOR EACH ROW
-    EXECUTE PROCEDURE update_updated_at_column(); 
+    EXECUTE PROCEDURE update_updated_at_column();
+
+-- Tabela de valores por tempo de atendimento
+CREATE TABLE valores_atendimento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    acompanhante_id INT NOT NULL,
+    tempo ENUM('15min','30min','1h','2h','4h','diaria','pernoite','diaria_viagem') NOT NULL,
+    valor DECIMAL(10,2) DEFAULT NULL,
+    disponivel BOOLEAN DEFAULT FALSE,
+    UNIQUE KEY (acompanhante_id, tempo),
+    FOREIGN KEY (acompanhante_id) REFERENCES acompanhantes(id) ON DELETE CASCADE
+); 
