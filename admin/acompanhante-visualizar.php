@@ -42,8 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'status' => 'aprovado',
                         'revisado_por' => $_SESSION['user_id'],
                         'data_revisao' => date('Y-m-d H:i:s'),
-                        'motivo_rejeicao' => null,
-                        'updated_at' => date('Y-m-d H:i:s')
+                        'motivo_rejeicao' => null
                     ], 'id = ?', [$acompanhante_id]);
                     $success = 'Acompanhante aprovada com sucesso!';
                     break;
@@ -57,8 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'status' => 'rejeitado',
                         'revisado_por' => $_SESSION['user_id'],
                         'data_revisao' => date('Y-m-d H:i:s'),
-                        'motivo_rejeicao' => $motivo,
-                        'updated_at' => date('Y-m-d H:i:s')
+                        'motivo_rejeicao' => $motivo
                     ], 'id = ?', [$acompanhante_id]);
                     $success = 'Acompanhante rejeitada com sucesso!';
                     break;
@@ -117,8 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'status' => $_POST['status'],
             'verificado' => isset($_POST['verificado']) ? 1 : 0,
             'destaque' => isset($_POST['destaque']) ? 1 : 0,
-            'cidade_id' => $cidade_id,
-            'updated_at' => date('Y-m-d H:i:s')
+            'cidade_id' => $cidade_id
         ];
         try {
             $db->update('acompanhantes', $data, 'id = ?', [$id]);
@@ -259,6 +256,19 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             <label for="cep" class="form-label">CEP</label>
             <input type="text" class="form-control" id="cep" name="cep" value="<?php echo htmlspecialchars($acompanhante['cep'] ?? ''); ?>">
         </div>
+        <!-- SEÇÃO SOBRE MIM -->
+        <?php if (!empty($acompanhante['sobre_mim'])): ?>
+        <div class="col-12">
+            <label class="form-label" style="font-weight:bold;font-size:1.2em;">Sobre Mim</label>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="mb-0"><?php echo nl2br(htmlspecialchars($acompanhante['sobre_mim'])); ?></p>
+                </div>
+            </div>
+            <div class="form-text">Este texto foi preenchido pela acompanhante e é exibido no perfil público.</div>
+        </div>
+        <?php endif; ?>
+        <!-- FIM SEÇÃO SOBRE MIM -->
         <!-- Aparência -->
         <div class="col-12"><h5 class="mt-4">Aparência</h5></div>
         <div class="row">
@@ -609,6 +619,7 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             </div>
             <input type="hidden" id="status-input" name="status" value="<?php echo htmlspecialchars($acompanhante['status'] ?? 'pendente'); ?>">
         </div>
+        <input type="hidden" name="cidade_id" value="<?php echo htmlspecialchars($acompanhante['cidade_id']); ?>">
         <button type="submit" class="btn btn-primary mt-4">
             <i class="fas fa-save"></i> Salvar Alterações
         </button>

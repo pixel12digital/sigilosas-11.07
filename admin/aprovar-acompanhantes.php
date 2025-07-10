@@ -39,8 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     'status' => 'aprovado',
                     'revisado_por' => $_SESSION['user_id'],
                     'data_revisao' => date('Y-m-d H:i:s'),
-                    'motivo_rejeicao' => null,
-                    'updated_at' => date('Y-m-d H:i:s')
+                    'motivo_rejeicao' => null
                 ], 'id = ?', [$acompanhante_id]);
                 $success = 'Acompanhante aprovada com sucesso!';
                 break;
@@ -54,8 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     'status' => 'rejeitado',
                     'revisado_por' => $_SESSION['user_id'],
                     'data_revisao' => date('Y-m-d H:i:s'),
-                    'motivo_rejeicao' => $motivo,
-                    'updated_at' => date('Y-m-d H:i:s')
+                    'motivo_rejeicao' => $motivo
                 ], 'id = ?', [$acompanhante_id]);
                 $success = 'Acompanhante rejeitada com sucesso!';
                 break;
@@ -70,8 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     'bloqueado' => 1,
                     'motivo_bloqueio' => $motivo,
                     'revisado_por' => $_SESSION['user_id'],
-                    'data_revisao' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
+                    'data_revisao' => date('Y-m-d H:i:s')
                 ], 'id = ?', [$acompanhante_id]);
                 $success = 'Acompanhante bloqueada com sucesso!';
                 break;
@@ -104,7 +101,7 @@ $where = ["a.status = ?"];
 $params = [$status];
 
 if ($search) {
-    $where[] = "(a.nome LIKE ? OR a.email LIKE ? OR a.cidade LIKE ?)";
+    $where[] = "(a.nome LIKE ? OR a.email LIKE ? OR c.nome LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -114,10 +111,15 @@ $whereClause = 'WHERE ' . implode(' AND ', $where);
 
 // Buscar acompanhantes
 $sql = "SELECT a.*, 
+               c.nome as cidade_nome,
+               e.uf as estado_uf,
+               e.nome as estado_nome,
                (SELECT COUNT(*) FROM fotos WHERE acompanhante_id = a.id) as total_fotos,
                (SELECT COUNT(*) FROM videos_verificacao WHERE acompanhante_id = a.id) as total_videos,
                (SELECT COUNT(*) FROM documentos_acompanhante WHERE acompanhante_id = a.id) as total_documentos
         FROM acompanhantes a
+        LEFT JOIN cidades c ON a.cidade_id = c.id
+        LEFT JOIN estados e ON a.estado_id = e.id
         $whereClause
         ORDER BY a.created_at DESC
         LIMIT ? OFFSET ?";
@@ -127,7 +129,10 @@ $params[] = $offset;
 $acompanhantes = $db->fetchAll($sql, $params);
 
 // Contar total
-$countSql = "SELECT COUNT(*) as total FROM acompanhantes a $whereClause";
+$countSql = "SELECT COUNT(*) as total FROM acompanhantes a 
+             LEFT JOIN cidades c ON a.cidade_id = c.id 
+             LEFT JOIN estados e ON a.estado_id = e.id 
+             $whereClause";
 $total = $db->fetch($countSql, array_slice($params, 0, -2));
 $totalPages = ceil($total['total'] / $limit);
 
@@ -300,7 +305,7 @@ $stats = [
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($a['email']); ?></td>
-                                    <td><?php echo htmlspecialchars($a['cidade']); ?><?php if ($a['estado']): ?> - <?php echo $a['estado']; ?><?php endif; ?></td>
+                                    <td><?php echo htmlspecialchars($a['cidade_nome']); ?><?php if ($a['estado_uf']): ?> - <?php echo $a['estado_uf']; ?><?php endif; ?></td>
                                     <td>
                                         <div class="d-flex gap-2">
                                             <span class="badge bg-info" title="Fotos">📷 <?php echo $a['total_fotos']; ?></span>

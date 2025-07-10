@@ -433,12 +433,22 @@ if (!empty($acompanhante['especialidades'])) {
             <?php if (!empty($success)): ?>
                 <div class="alert alert-success"><?php echo $success; ?></div>
             <?php endif; ?>
-            <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
-                <div class="alert alert-warning" style="font-size:13px;">
-                    <b>DEBUG cidade_id enviado:</b> <?php echo htmlspecialchars($_POST['cidade_id'] ?? '(não enviado)'); ?><br>
-                    <b>DEBUG cidade_id salvo:</b> <?php echo htmlspecialchars($formData['cidade_id'] ?? '(não salvo)'); ?><br>
-                    <b>Erros de upload:</b><br>
-                    <pre><?php echo htmlspecialchars($error); ?></pre>
+            <?php 
+            $cidade_id_enviado = $_POST['cidade_id'] ?? '';
+            $cidade_id_salvo = $formData['cidade_id'] ?? '';
+            $erros_upload = $error; // Usar a variável $error para os erros de upload
+            ?>
+            <?php if (!empty($erros_upload) || (isset($cidade_id_enviado) && isset($cidade_id_salvo) && $cidade_id_enviado != $cidade_id_salvo)): ?>
+                <div class="alert alert-warning">
+                    <?php if (isset($cidade_id_enviado) && isset($cidade_id_salvo) && $cidade_id_enviado != $cidade_id_salvo): ?>
+                        <strong>Problema ao salvar cidade!</strong><br>
+                        DEBUG cidade_id enviado: <?php echo htmlspecialchars($cidade_id_enviado); ?><br>
+                        DEBUG cidade_id salvo: <?php echo htmlspecialchars($cidade_id_salvo); ?><br>
+                    <?php endif; ?>
+                    <?php if (!empty($erros_upload)): ?>
+                        <strong>Erros de upload:</strong> <?php echo htmlspecialchars($erros_upload); ?><br>
+                    <?php endif; ?>
+                    Se o problema persistir, por favor, contate o suporte técnico.
                 </div>
             <?php endif; ?>
             <div class="col-12"><h5 class="mt-3">Dados Pessoais</h5></div>
@@ -532,6 +542,14 @@ if (!empty($acompanhante['especialidades'])) {
                 <label for="cep" class="form-label">CEP</label>
                 <input type="text" class="form-control" id="cep" name="cep" value="<?php echo htmlspecialchars($acompanhante['cep'] ?? ''); ?>">
                     </div>
+            <!-- Endereço -->
+            <!-- SEÇÃO SOBRE MIM -->
+            <div class="col-12">
+                <label for="sobre_mim" class="form-label" style="font-weight:bold;font-size:1.2em;">Sobre Mim</label>
+                <textarea class="form-control" id="sobre_mim" name="sobre_mim" rows="4" maxlength="1000" placeholder="Conte um pouco sobre você, sua personalidade, experiências, diferenciais, etc."><?php echo htmlspecialchars($acompanhante['sobre_mim'] ?? ''); ?></textarea>
+                <div class="form-text">Este texto será exibido no seu perfil público. Máximo de 1000 caracteres.</div>
+            </div>
+            <!-- FIM SEÇÃO SOBRE MIM -->
             <!-- Aparência -->
             <div class="col-12"><h5 class="mt-4">Aparência</h5></div>
             <div class="col-md-2">
@@ -836,22 +854,32 @@ if (!empty($acompanhante['especialidades'])) {
 document.addEventListener('DOMContentLoaded', function() {
     const estadoSelect = document.getElementById('estado_id');
     const cidadeSelect = document.getElementById('cidade_id');
-    const cidadeId = "<?php echo htmlspecialchars($acompanhante['cidade_id'] ?? ''); ?>";
+    // Garantir que cidadeId seja string (ou vazio), nunca undefined
+    const cidadeId = String(<?php echo json_encode($acompanhante['cidade_id'] ?? ''); ?>);
 
     function carregarCidades(estadoId, cidadeIdSelecionada) {
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
-        fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + estadoId)
+        fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
             .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                // Corrigido: acessar response.data
+                let cidades = Array.isArray(response.data) ? response.data : [];
+                if (cidades.length === 0) {
+                    cidadeSelect.innerHTML = '<option value="">Nenhuma cidade encontrada</option>';
+                    return;
+                }
                 cidadeSelect.innerHTML = '<option value="">Selecione a cidade</option>';
-                data.forEach(function(cidade) {
-                    let selected = cidadeIdSelecionada == cidade.id ? 'selected' : '';
+                cidades.forEach(function(cidade) {
+                    let selected = String(cidadeIdSelecionada) === String(cidade.id) ? 'selected' : '';
                     cidadeSelect.innerHTML += '<option value="' + cidade.id + '" ' + selected + '>' + cidade.nome + '</option>';
                 });
+            })
+            .catch(() => {
+                cidadeSelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
             });
     }
 
-    // Carregar cidades ao abrir a página, se já houver estado/cidade selecionados
+    // Carregar cidades ao abrir a página, se já houver estado selecionado
     if (estadoSelect.value) {
         carregarCidades(estadoSelect.value, cidadeId);
     }

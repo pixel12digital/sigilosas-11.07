@@ -181,7 +181,13 @@ $error = $_GET['error'] ?? '';
                                     <td>
                                         <a href="acompanhante-visualizar.php?id=<?php echo $a['id']; ?>" class="btn btn-sm btn-outline-primary" title="Visualizar"><i class="fas fa-edit"></i></a>
                                         <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=aprovar" class="btn btn-sm btn-success" title="Aprovar" onclick="return confirmDelete('Aprovar este perfil?');"><i class="fas fa-check"></i></a>
-                                        <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=bloquear" class="btn btn-sm btn-warning" title="Bloquear" onclick="return confirmDelete('Bloquear este perfil?');"><i class="fas fa-ban"></i></a>
+                                        <form method="post" style="display:inline;">
+                                            <input type="hidden" name="action" value="bloquear">
+                                            <input type="hidden" name="acompanhante_id" value="<?php echo $a['id']; ?>">
+                                            <button type="submit" class="btn btn-sm btn-warning" title="Bloquear" onclick="return confirm('Bloquear este perfil?');">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </form>
                                         <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=excluir" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirmDelete('Excluir este perfil? Esta ação não pode ser desfeita.');"><i class="fas fa-trash"></i></a>
                                     </td>
                                 </tr>

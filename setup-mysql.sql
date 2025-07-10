@@ -128,8 +128,8 @@ CREATE TABLE IF NOT EXISTS acompanhantes (
     ultima_atualizacao DATETIME,
     
     -- Chaves estrangeiras
-    FOREIGN KEY (cidade_id) REFERENCES cidades(id) ON DELETE SET NULL,
-    FOREIGN KEY (estado_id) REFERENCES estados(id) ON DELETE SET NULL,
+    FOREIGN KEY (cidade_id) REFERENCES cidades(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (estado_id) REFERENCES estados(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (revisado_por) REFERENCES admin(id) ON DELETE SET NULL,
     
     -- Índices

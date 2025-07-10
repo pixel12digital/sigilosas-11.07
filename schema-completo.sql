@@ -55,8 +55,8 @@ CREATE TABLE acompanhantes (
     preferencia_sexual preferencia_enum,
     
     -- Localização
-    cidade VARCHAR(100) NOT NULL,
-    estado CHAR(2) NOT NULL,
+    cidade_id INTEGER,
+    estado_id INTEGER,
     bairro VARCHAR(100),
     endereco TEXT,
     cep VARCHAR(9),
@@ -124,6 +124,15 @@ CREATE TABLE acompanhantes (
     ultimo_login TIMESTAMP WITH TIME ZONE,
     ultima_atualizacao TIMESTAMP WITH TIME ZONE
 );
+
+-- Adicionar foreign keys para cidade e estado
+ALTER TABLE acompanhantes 
+ADD CONSTRAINT fk_acompanhantes_cidade 
+FOREIGN KEY (cidade_id) REFERENCES cidades(id) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE acompanhantes 
+ADD CONSTRAINT fk_acompanhantes_estado 
+FOREIGN KEY (estado_id) REFERENCES estados(id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- Tabela de fotos
 CREATE TABLE fotos (
@@ -240,6 +249,7 @@ CREATE TRIGGER update_acompanhantes_updated_at
     EXECUTE PROCEDURE update_updated_at_column();
 
 -- Views
+-- View principal do painel de acompanhantes
 CREATE OR REPLACE VIEW vw_painel_acompanhantes AS
 SELECT 
     a.id,
@@ -253,8 +263,8 @@ SELECT
     a.genero,
     a.genitalia,
     a.preferencia_sexual,
-    a.cidade,
-    a.estado,
+    c.nome as cidade,
+    e.uf as estado,
     a.bairro,
     a.endereco,
     a.cep,
@@ -312,6 +322,8 @@ SELECT
         ELSE false
     END as destaque_ativo
 FROM acompanhantes a
+LEFT JOIN cidades c ON a.cidade_id = c.id
+LEFT JOIN estados e ON a.estado_id = e.id
 ORDER BY 
     CASE 
         WHEN a.status = 'pendente' THEN 0
@@ -338,14 +350,16 @@ FROM acompanhantes;
 -- View de estatísticas por cidade
 CREATE OR REPLACE VIEW vw_estatisticas_por_cidade AS
 SELECT
-    cidade,
-    estado,
+    c.nome as cidade,
+    e.uf as estado,
     COUNT(*) as total,
-    COUNT(CASE WHEN status = 'aprovado' THEN 1 END) as aprovados,
-    COUNT(CASE WHEN verificado THEN 1 END) as verificados,
-    COUNT(CASE WHEN destaque AND destaque_ate > NOW() THEN 1 END) as em_destaque
-FROM acompanhantes
-GROUP BY cidade, estado
+    COUNT(CASE WHEN a.status = 'aprovado' THEN 1 END) as aprovados,
+    COUNT(CASE WHEN a.verificado THEN 1 END) as verificados,
+    COUNT(CASE WHEN a.destaque AND a.destaque_ate > NOW() THEN 1 END) as em_destaque
+FROM acompanhantes a
+LEFT JOIN cidades c ON a.cidade_id = c.id
+LEFT JOIN estados e ON a.estado_id = e.id
+GROUP BY c.nome, e.uf
 ORDER BY total DESC;
 
 -- View de log de atividades
@@ -364,8 +378,8 @@ ORDER BY l.created_at DESC;
 
 -- Índices para performance
 CREATE INDEX idx_acompanhantes_status ON acompanhantes(status);
-CREATE INDEX idx_acompanhantes_cidade ON acompanhantes(cidade);
-CREATE INDEX idx_acompanhantes_estado ON acompanhantes(estado);
+CREATE INDEX idx_acompanhantes_cidade ON acompanhantes(cidade_id);
+CREATE INDEX idx_acompanhantes_estado ON acompanhantes(estado_id);
 CREATE INDEX idx_acompanhantes_created ON acompanhantes(created_at);
 CREATE INDEX idx_acompanhantes_destaque ON acompanhantes(destaque, destaque_ate);
 CREATE INDEX idx_acompanhantes_verificado ON acompanhantes(verificado);

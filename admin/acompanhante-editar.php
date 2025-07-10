@@ -55,6 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($id && $action === 'editar') {
         // Atualizar acompanhante existente
+        $cidade_id = $_POST['cidade_id'] ?? ($acompanhante['cidade_id'] ?? null);
+        if (empty($cidade_id) || !is_numeric($cidade_id)) {
+            $cidade_id = $acompanhante['cidade_id'] ?? null;
+        }
         $data = [
             'nome' => trim($_POST['nome']),
             'apelido' => trim($_POST['apelido']),
@@ -71,8 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'status' => $_POST['status'],
             'verificado' => isset($_POST['verificado']) ? 1 : 0,
             'destaque' => isset($_POST['destaque']) ? 1 : 0,
-            'updated_at' => date('Y-m-d H:i:s'),
-            'cidade_id' => $_POST['cidade_id'] ?? null
+            'cidade_id' => $cidade_id
         ];
         $db->update('acompanhantes', $data, 'id = ?', [$id]);
         
@@ -98,6 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } elseif (!$id && $action === 'cadastrar') {
         // Cadastro de nova acompanhante
+        $cidade_id = $_POST['cidade_id'] ?? ($acompanhante['cidade_id'] ?? null);
+        if (empty($cidade_id) || !is_numeric($cidade_id)) {
+            $cidade_id = $acompanhante['cidade_id'] ?? null;
+        }
         $data = [
             'nome' => trim($_POST['nome']),
             'apelido' => trim($_POST['apelido']),
@@ -116,24 +123,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'destaque' => isset($_POST['destaque']) ? 1 : 0,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
-            'cidade_id' => $_POST['cidade_id'] ?? null
+            'cidade_id' => $cidade_id
         ];
         $newId = $db->insert('acompanhantes', $data);
         header('Location: acompanhante-editar.php?id=' . $newId . '&success=Acompanhante cadastrada com sucesso');
         exit;
     } elseif ($id && $action === 'aprovar') {
         // Aprovar acompanhante sem sobrescrever outros campos
-        $db->update('acompanhantes', ['status' => 'aprovado', 'updated_at' => date('Y-m-d H:i:s')], 'id = ?', [$id]);
+        $db->update('acompanhantes', ['status' => 'aprovado'], 'id = ?', [$id]);
         header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante aprovada com sucesso');
         exit;
     } elseif ($id && $action === 'bloquear') {
         // Bloquear acompanhante sem sobrescrever outros campos
-        $db->update('acompanhantes', ['status' => 'bloqueado', 'updated_at' => date('Y-m-d H:i:s')], 'id = ?', [$id]);
+        $db->update('acompanhantes', ['status' => 'bloqueado'], 'id = ?', [$id]);
         header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante bloqueada com sucesso');
         exit;
     } elseif ($id && $action === 'rejeitar') {
         // Rejeitar acompanhante sem sobrescrever outros campos
-        $db->update('acompanhantes', ['status' => 'rejeitado', 'updated_at' => date('Y-m-d H:i:s')], 'id = ?', [$id]);
+        $db->update('acompanhantes', ['status' => 'rejeitado'], 'id = ?', [$id]);
         header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante reprovada com sucesso');
         exit;
     }

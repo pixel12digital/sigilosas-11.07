@@ -20,7 +20,7 @@ $acompanhante = $db->fetch("
     FROM acompanhantes a
     LEFT JOIN cidades c ON a.cidade_id = c.id
     LEFT JOIN estados e ON c.estado_id = e.id
-    WHERE a.id = ? AND a.aprovada = 1 AND a.bloqueada = 0
+    WHERE a.id = ? AND a.status = 'aprovado' AND a.bloqueada = 0
 ", [$acompanhante_id]);
 
 if (!$acompanhante) {
@@ -32,15 +32,18 @@ if (!$acompanhante) {
 $fotos = $db->fetchAll("
     SELECT * FROM fotos 
     WHERE acompanhante_id = ? AND tipo = 'foto'
-    ORDER BY ordem ASC, id ASC
+    ORDER BY id ASC
 ", [$acompanhante_id]);
 
 // Buscar vídeos da acompanhante
 $videos = $db->fetchAll("
     SELECT * FROM videos 
     WHERE acompanhante_id = ? AND tipo = 'video'
-    ORDER BY ordem ASC, id ASC
+    ORDER BY id ASC
 ", [$acompanhante_id]);
+
+// Buscar fotos da galeria da acompanhante
+$fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AND tipo = 'galeria' ORDER BY id ASC", [$acompanhante_id]);
 
 // Processar formulário de contato
 $success_message = '';
@@ -100,208 +103,352 @@ include '../includes/header.php';
     </div>
 </nav>
 
-<!-- Perfil da Acompanhante -->
-<section class="profile-section py-5">
-    <div class="container">
-        <div class="row">
-            <!-- Galeria de Fotos -->
-            <div class="col-lg-8 mb-4">
-                <div class="card">
-                    <div class="card-body p-0">
-                        <?php if (!empty($fotos)): ?>
-                            <!-- Carousel de Fotos -->
-                            <div id="fotoCarousel" class="carousel slide" data-bs-ride="carousel">
-                                <div class="carousel-indicators">
-                                    <?php foreach ($fotos as $index => $foto): ?>
-                                        <button type="button" data-bs-target="#fotoCarousel" 
-                                                data-bs-slide-to="<?php echo $index; ?>" 
-                                                <?php if ($index === 0) echo 'class="active"'; ?>>
-                                        </button>
-                                    <?php endforeach; ?>
-                                </div>
-                                
-                                <div class="carousel-inner">
-                                    <?php foreach ($fotos as $index => $foto): ?>
-                                        <div class="carousel-item <?php if ($index === 0) echo 'active'; ?>">
-                                            <img src="../uploads/<?php echo $foto['arquivo']; ?>" 
-                                                 class="d-block w-100" 
-                                                 style="height: 500px; object-fit: cover;"
-                                                 alt="<?php echo htmlspecialchars($acompanhante['nome']); ?>">
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                
-                                <?php if (count($fotos) > 1): ?>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#fotoCarousel" data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon"></span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#fotoCarousel" data-bs-slide="next">
-                                        <span class="carousel-control-next-icon"></span>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <!-- Thumbnails -->
-                            <div class="p-3">
-                                <div class="row">
-                                    <?php foreach ($fotos as $index => $foto): ?>
-                                        <div class="col-2 mb-2">
-                                            <img src="../uploads/<?php echo $foto['arquivo']; ?>" 
-                                                 class="img-thumbnail cursor-pointer" 
-                                                 style="height: 80px; object-fit: cover;"
-                                                 onclick="goToSlide(<?php echo $index; ?>)"
-                                                 alt="Foto <?php echo $index + 1; ?>">
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php else: ?>
-                            <!-- Foto padrão -->
-                            <div class="bg-secondary d-flex align-items-center justify-content-center" 
-                                 style="height: 500px;">
-                                <i class="fas fa-user fa-5x text-white"></i>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- Vídeos -->
-                <?php if (!empty($videos)): ?>
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="fas fa-video"></i> Vídeos
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <?php foreach ($videos as $video): ?>
-                                    <div class="col-md-6 mb-3">
-                                        <video controls class="w-100" style="max-height: 300px;">
-                                            <source src="../uploads/<?php echo $video['arquivo']; ?>" type="video/mp4">
-                                            Seu navegador não suporta vídeos.
-                                        </video>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
-            
-            <!-- Informações da Acompanhante -->
-            <div class="col-lg-4">
-                <!-- Card Principal -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <h2 class="card-title mb-0"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></h2>
-                            <?php if ($acompanhante['verificado']): ?>
-                                <span class="badge bg-success ms-2">
-                                    <i class="fas fa-check-circle"></i> Verificada
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">
-                                <i class="fas fa-map-marker-alt"></i> 
-                                <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?>, <?php echo $acompanhante['estado_uf']; ?>
-                            </p>
-                            
-                            <?php if ($acompanhante['idade']): ?>
-                                <p class="text-muted mb-2">
-                                    <i class="fas fa-birthday-cake"></i> <?php echo $acompanhante['idade']; ?> anos
-                                </p>
-                            <?php endif; ?>
-                            
-                            <?php if ($acompanhante['tipo_servico']): ?>
-                                <p class="mb-2">
-                                    <span class="badge bg-primary">
-                                        <i class="fas fa-tag"></i> 
-                                        <?php
-                                        $tipos = [
-                                            'massagem' => 'Massagem',
-                                            'acompanhante' => 'Acompanhante',
-                                            'ambos' => 'Massagem & Acompanhante'
-                                        ];
-                                        echo $tipos[$acompanhante['tipo_servico']] ?? 'Serviços Diversos';
-                                        ?>
-                                    </span>
-                                </p>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <?php if ($acompanhante['descricao']): ?>
-                            <div class="mb-3">
-                                <h6>Descrição</h6>
-                                <p class="text-muted"><?php echo nl2br(htmlspecialchars($acompanhante['descricao'])); ?></p>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($acompanhante['telefone']): ?>
-                            <div class="mb-3">
-                                <h6>Telefone</h6>
-                                <p class="text-muted">
-                                    <i class="fas fa-phone"></i> 
-                                    <a href="tel:<?php echo $acompanhante['telefone']; ?>" class="text-decoration-none">
-                                        <?php echo htmlspecialchars($acompanhante['telefone']); ?>
-                                    </a>
-                                </p>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($acompanhante['email']): ?>
-                            <div class="mb-3">
-                                <h6>Email</h6>
-                                <p class="text-muted">
-                                    <i class="fas fa-envelope"></i> 
-                                    <a href="mailto:<?php echo $acompanhante['email']; ?>" class="text-decoration-none">
-                                        <?php echo htmlspecialchars($acompanhante['email']); ?>
-                                    </a>
-                                </p>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contatoModal">
-                                <i class="fas fa-envelope"></i> Enviar Mensagem
-                            </button>
-                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#denunciaModal">
-                                <i class="fas fa-flag"></i> Reportar Perfil
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Estatísticas -->
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-bar"></i> Estatísticas
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <div class="stat-item">
-                                    <h4 class="text-primary"><?php echo count($fotos); ?></h4>
-                                    <small class="text-muted">Fotos</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-item">
-                                    <h4 class="text-primary"><?php echo count($videos); ?></h4>
-                                    <small class="text-muted">Vídeos</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Banner/topo visual -->
+<div class="profile-banner" style="background: linear-gradient(120deg,#e83e8c 0,#6f42c1 100%); height:180px; position:relative;"></div>
+
+<!-- Foto de perfil, nome, dados principais -->
+<div class="container position-relative" style="margin-top:-90px; z-index:2;">
+  <div class="d-flex flex-column align-items-center">
+    <?php
+    $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$acompanhante_id]);
+    $foto_perfil_url = !empty($foto_perfil['url']) ? '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : 'https://ui-avatars.com/api/?name=' . urlencode($acompanhante['apelido'] ?? $acompanhante['nome']) . '&size=256&background=6f42c1&color=fff';
+    ?>
+    <img src="<?php echo $foto_perfil_url; ?>" class="rounded-circle shadow" style="width:160px;height:160px;object-fit:cover;border:6px solid #fff; margin-top:-80px; background:#eee;">
+    <h2 class="mt-3 mb-1 fw-bold text-center"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></h2>
+    <div class="mb-2 text-muted text-center">
+      <?php if (!empty($acompanhante['idade'])): ?><?php echo $acompanhante['idade']; ?> anos · <?php endif; ?>
+      <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?>
     </div>
-</section>
+    <?php if (!empty($acompanhante['verificado'])): ?><span class="badge bg-success mb-2"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
+    <div class="d-flex gap-2 mb-3">
+      <?php if (!empty($acompanhante['telefone'])): ?>
+        <a href="tel:<?php echo $acompanhante['telefone']; ?>" class="btn btn-success"><i class="fas fa-phone"></i> Ver telefone</a>
+      <?php endif; ?>
+      <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#denunciaModal"><i class="fas fa-flag"></i> Denunciar</button>
+      <?php if (!empty($acompanhante['instagram'])): ?><a href="<?php echo htmlspecialchars($acompanhante['instagram']); ?>" class="btn btn-outline-secondary" target="_blank"><i class="fab fa-instagram"></i></a><?php endif; ?>
+      <?php if (!empty($acompanhante['tiktok'])): ?><a href="<?php echo htmlspecialchars($acompanhante['tiktok']); ?>" class="btn btn-outline-secondary" target="_blank"><i class="fab fa-tiktok"></i></a><?php endif; ?>
+    </div>
+
+    <!-- Galeria de imagens (apenas tipo galeria) -->
+    <?php if (!empty($fotos_galeria)): ?>
+      <!-- CSS da galeria (adicione no <head> ou aqui mesmo) -->
+      <style>
+      .gallery-thumb-link {
+        display: inline-block;
+        cursor: pointer;
+        position: relative;
+        z-index: 10;
+      }
+      .gallery-thumb {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+        cursor: pointer;
+        transition: box-shadow .2s, border-color .2s, transform .2s;
+        pointer-events: auto;
+        user-select: none;
+      }
+      .gallery-thumb-link:hover .gallery-thumb {
+        transform: scale(1.05);
+      }
+      .gallery-thumb-link:active .gallery-thumb {
+        transform: scale(0.95);
+      }
+
+      /* Garante que o X do modal só aparece quando o modal está aberto */
+      #galeriaModal:not(.show) .btn-close {
+        display: none !important;
+      }
+      </style>
+
+      <!-- Miniaturas da galeria (HTML limpo) -->
+      <div class="gallery-thumbs row row-cols-auto g-3 justify-content-center mb-4 flex-nowrap flex-md-wrap overflow-auto pb-2" style="scrollbar-width:thin;">
+        <?php foreach ($fotos_galeria as $index => $foto): ?>
+          <div class="col-auto">
+            <div class="gallery-thumb-link" data-index="<?php echo $index; ?>">
+              <img src="../uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>" class="img-thumbnail gallery-thumb" alt="Miniatura <?php echo $index+1; ?>">
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <div class="text-center mb-3">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btnTestarGaleria">
+          <i class="fas fa-camera"></i> Testar Galeria (Foto 1)
+        </button>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <div class="row g-4">
+    <!-- Card Valores -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="fw-bold mb-2 text-danger"><i class="fas fa-dollar-sign"></i> Valores</div>
+          <?php
+          $valores = $db->fetchAll("SELECT tempo, valor FROM valores_atendimento WHERE acompanhante_id = ? AND disponivel = 1 ORDER BY valor ASC", [$acompanhante_id]);
+          ?>
+          <?php if (!empty($valores)): ?>
+            <table class="table table-sm mb-0">
+              <tbody>
+                <?php foreach ($valores as $v): ?>
+                  <tr><td><?php echo htmlspecialchars($v['tempo']); ?></td><td>R$ <?php echo number_format($v['valor'],2,',','.'); ?></td></tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          <?php else: ?>
+            <div class="text-muted">Valores não informados.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <!-- Card Localização -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="fw-bold mb-2 text-primary"><i class="fas fa-map-marker-alt"></i> Localização</div>
+          <div><?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?></div>
+          <?php if (!empty($acompanhante['local_atendimento'])): ?>
+            <div class="text-muted small mt-1"><i class="fas fa-home"></i> <?php echo htmlspecialchars($acompanhante['local_atendimento']); ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sobre Mim / Descrição -->
+  <?php if (!empty($acompanhante['sobre_mim'])): ?>
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="fw-bold mb-2"><i class="fas fa-user"></i> Sobre Mim</div>
+        <div class="text-muted"><?php echo nl2br(htmlspecialchars($acompanhante['sobre_mim'])); ?></div>
+      </div>
+    </div>
+  <?php endif; ?>
+
+  <!-- Aparência Física -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="fw-bold mb-2 text-info"><i class="fas fa-heart"></i> Aparência Física</div>
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled mb-0">
+            <li><b>Altura:</b> <?php echo htmlspecialchars($acompanhante['altura'] ?? ''); ?> cm</li>
+            <li><b>Peso:</b> <?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?> kg</li>
+            <li><b>Manequim:</b> <?php echo htmlspecialchars($acompanhante['manequim'] ?? ''); ?></li>
+            <li><b>Busto:</b> <?php echo htmlspecialchars($acompanhante['busto'] ?? ''); ?></li>
+            <li><b>Cintura:</b> <?php echo htmlspecialchars($acompanhante['cintura'] ?? ''); ?></li>
+            <li><b>Quadril:</b> <?php echo htmlspecialchars($acompanhante['quadril'] ?? ''); ?></li>
+            <li><b>Etnia:</b> <?php echo htmlspecialchars($acompanhante['etnia'] ?? ''); ?></li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-unstyled mb-0">
+            <li><b>Cor dos Olhos:</b> <?php echo htmlspecialchars($acompanhante['cor_olhos'] ?? ''); ?></li>
+            <li><b>Cor do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['cor_cabelo'] ?? ''); ?></li>
+            <li><b>Estilo do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['estilo_cabelo'] ?? ''); ?></li>
+            <li><b>Tamanho do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['tamanho_cabelo'] ?? ''); ?></li>
+            <li><b>Silicone:</b> <?php echo htmlspecialchars($acompanhante['silicone'] ?? ''); ?></li>
+            <li><b>Tatuagens:</b> <?php echo htmlspecialchars($acompanhante['tatuagens'] ?? ''); ?></li>
+            <li><b>Piercings:</b> <?php echo htmlspecialchars($acompanhante['piercings'] ?? ''); ?></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferências e Serviços -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="fw-bold mb-2 text-secondary"><i class="fas fa-cogs"></i> Preferências e Serviços</div>
+      <ul class="list-unstyled mb-0">
+        <li><b>Especialidades:</b> <?php echo htmlspecialchars($acompanhante['especialidades'] ?? ''); ?></li>
+        <li><b>Idiomas:</b> <?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Horário de Atendimento -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="fw-bold mb-2 text-primary"><i class="fas fa-clock"></i> Horário de Atendimento</div>
+      <?php
+      $dias_semana = [
+        1 => 'Segunda-feira',
+        2 => 'Terça-feira',
+        3 => 'Quarta-feira',
+        4 => 'Quinta-feira',
+        5 => 'Sexta-feira',
+        6 => 'Sábado',
+        7 => 'Domingo'
+      ];
+      $horarios = $db->fetchAll("SELECT * FROM horarios_atendimento WHERE acompanhante_id = ?", [$acompanhante_id]);
+      $horarios_map = [];
+      foreach ($horarios as $h) {
+        $horarios_map[$h['dia_semana']] = $h;
+      }
+      ?>
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Dia</th><th>Início</th><th>Fim</th><th>Atende?</th></tr></thead>
+        <tbody>
+          <?php foreach ($dias_semana as $num => $nome): 
+            $atende = isset($horarios_map[$num]);
+            $inicio = $atende ? htmlspecialchars($horarios_map[$num]['hora_inicio']) : '—';
+            $fim = $atende ? htmlspecialchars($horarios_map[$num]['hora_fim']) : '—';
+          ?>
+          <tr>
+            <td><?php echo $nome; ?></td>
+            <td><?php echo $inicio; ?></td>
+            <td><?php echo $fim; ?></td>
+            <td><?php echo $atende ? 'Sim' : 'Não'; ?></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Avaliações -->
+  <?php
+  $avaliacoes = $db->fetchAll("SELECT nota, comentario, nome, created_at FROM avaliacoes WHERE acompanhante_id = ? AND aprovado = 1 ORDER BY created_at DESC LIMIT 5", [$acompanhante_id]);
+  $media = $db->fetch("SELECT AVG(nota) as media, COUNT(*) as total FROM avaliacoes WHERE acompanhante_id = ? AND aprovado = 1", [$acompanhante_id]);
+  ?>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="fw-bold mb-2 text-warning"><i class="fas fa-star"></i> Avaliações</div>
+      <?php if (!empty($media['total'])): ?>
+        <div class="mb-2">Média: <span class="text-warning fw-bold"><?php echo number_format($media['media'],1,',','.'); ?> ★</span> (<?php echo $media['total']; ?> avaliações)</div>
+      <?php endif; ?>
+      <?php if (!empty($avaliacoes)): ?>
+        <ul class="list-unstyled mb-0">
+          <?php foreach ($avaliacoes as $av): ?>
+            <li class="mb-2"><span class="text-warning">★ <?php echo $av['nota']; ?></span> - <span class="text-muted small"><?php echo date('d/m/Y', strtotime($av['created_at'])); ?></span><?php if (!empty($av['nome'])) echo ' - <b>' . htmlspecialchars($av['nome']) . '</b>'; ?><br><span><?php echo htmlspecialchars($av['comentario']); ?></span></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php else: ?>
+        <div class="text-muted small">Nenhuma avaliação ainda.</div>
+      <?php endif; ?>
+
+      <!-- Formulário de Avaliação (usuário público) -->
+      <hr>
+      <div class="mt-3">
+        <form method="post" id="formAvaliacao" autocomplete="off">
+          <input type="hidden" name="action" value="avaliacao">
+          <div class="mb-2">
+            <label for="nomeAvaliador" class="form-label">Seu nome (opcional)</label>
+            <input type="text" class="form-control" id="nomeAvaliador" name="nomeAvaliador" maxlength="40">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Nota *</label><br>
+            <div id="estrelasAvaliacao" style="font-size:1.5rem; color:#e83e8c;">
+              <?php for ($i=1; $i<=5; $i++): ?>
+                <input type="radio" name="notaAvaliacao" id="estrela<?php echo $i; ?>" value="<?php echo $i; ?>" style="display:none;">
+                <label for="estrela<?php echo $i; ?>" style="cursor:pointer;">&#9733;</label>
+              <?php endfor; ?>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label for="comentarioAvaliacao" class="form-label">Comentário *</label>
+            <textarea class="form-control" id="comentarioAvaliacao" name="comentarioAvaliacao" rows="3" maxlength="500" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-warning"><i class="fas fa-star"></i> Enviar Avaliação</button>
+        </form>
+        <?php if (isset($_POST['action']) && $_POST['action'] === 'avaliacao'): ?>
+          <?php if (!empty($success_message)): ?>
+            <div class="alert alert-success mt-3">Sua avaliação foi enviada e aguarda aprovação do administrador.</div>
+          <?php elseif (!empty($error_message)): ?>
+            <div class="alert alert-danger mt-3"><?php echo htmlspecialchars($error_message); ?></div>
+          <?php endif; ?>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+<?php
+// Processar avaliação enviada
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'avaliacao') {
+  $nome = trim($_POST['nomeAvaliador'] ?? '');
+  $nota = (int)($_POST['notaAvaliacao'] ?? 0);
+  $comentario = trim($_POST['comentarioAvaliacao'] ?? '');
+  if ($nota < 1 || $nota > 5) {
+    $error_message = 'Selecione uma nota de 1 a 5 estrelas.';
+  } elseif (empty($comentario) || mb_strlen($comentario) < 5) {
+    $error_message = 'O comentário deve ter pelo menos 5 caracteres.';
+  } else {
+    $db->insert('avaliacoes', [
+      'acompanhante_id' => $acompanhante_id,
+      'nota' => $nota,
+      'comentario' => $comentario,
+      'nome' => $nome,
+      'aprovado' => 0,
+      'created_at' => date('Y-m-d H:i:s')
+    ]);
+    $success_message = 'Sua avaliação foi enviada e aguarda aprovação do administrador.';
+  }
+}
+?>
+
+<script>
+// JS para destacar estrelas ao passar/clicar
+const estrelas = document.querySelectorAll('#estrelasAvaliacao label');
+estrelas.forEach((estrela, idx) => {
+  estrela.addEventListener('mouseenter', function() {
+    for (let i = 0; i <= idx; i++) estrelas[i].style.color = '#ffc107';
+    for (let i = idx+1; i < estrelas.length; i++) estrelas[i].style.color = '#e83e8c';
+  });
+  estrela.addEventListener('mouseleave', function() {
+    const checked = document.querySelector('#estrelasAvaliacao input:checked');
+    const val = checked ? parseInt(checked.value) : 0;
+    for (let i = 0; i < estrelas.length; i++) estrelas[i].style.color = (i < val) ? '#ffc107' : '#e83e8c';
+  });
+  estrela.addEventListener('click', function() {
+    document.getElementById('estrela'+(idx+1)).checked = true;
+    for (let i = 0; i <= idx; i++) estrelas[i].style.color = '#ffc107';
+    for (let i = idx+1; i < estrelas.length; i++) estrelas[i].style.color = '#e83e8c';
+  });
+});
+// Inicializar cor das estrelas
+(function(){
+  const checked = document.querySelector('#estrelasAvaliacao input:checked');
+  const val = checked ? parseInt(checked.value) : 0;
+  for (let i = 0; i < estrelas.length; i++) estrelas[i].style.color = (i < val) ? '#ffc107' : '#e83e8c';
+})();
+</script>
+
+  <!-- Segurança -->
+  <div class="alert alert-info mt-4 mb-5">
+    <i class="fas fa-shield-alt"></i> Este perfil foi verificado e segue as diretrizes de segurança da plataforma. Denúncias são analisadas pela equipe Sigilosas VIP.
+  </div>
+</div>
+
+<!-- Modal Galeria de Fotos -->
+<?php if (!empty($fotos_galeria)): ?>
+<div class="modal fade" id="galeriaModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:90vw;">
+    <div class="modal-content bg-dark text-white position-relative" style="border-radius:18px;">
+      <div class="modal-body p-0 position-relative" style="min-height:350px; background:rgba(0,0,0,0.95); border-radius:18px;">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" tabindex="-1"></button>
+        <div class="d-flex justify-content-center align-items-center" style="min-height:60vh;">
+          <a id="galeriaImgLink" href="#" target="_blank" style="display:block;">
+            <img id="galeriaImg" src="" class="gallery-main-img shadow-lg" style="max-width:90vw; max-height:80vh; object-fit:contain; border-radius:12px; background:#222; display:block; margin:auto; transition:opacity .3s; cursor: zoom-in;">
+          </a>
+        </div>
+        <div class="d-flex justify-content-between align-items-center px-4 pb-3 pt-2">
+          <div id="galeriaContador" class="rounded-pill bg-dark bg-opacity-75 text-white small px-3 py-1" style="font-weight:500;"></div>
+          <a id="galeriaOriginal" href="javascript:void(0)" class="btn btn-pink btn-lg ms-2" style="font-weight:600;">
+            <i class="fas fa-external-link-alt"></i> Ver em tamanho original
+          </a>
+        </div>
+        <button type="button" class="btn btn-light gallery-arrow position-absolute top-50 start-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%;" onclick="navegarGaleria(-1)" tabindex="0"><i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="btn btn-light gallery-arrow position-absolute top-50 end-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%;" onclick="navegarGaleria(1)" tabindex="0"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- Modal de Contato -->
 <div class="modal fade" id="contatoModal" tabindex="-1">
@@ -404,40 +551,170 @@ include '../includes/header.php';
     </div>
 <?php endif; ?>
 
+<?php include '../includes/footer.php'; ?>
+
+<!-- JS final da galeria -->
 <script>
-function goToSlide(index) {
-    const carousel = new bootstrap.Carousel(document.getElementById('fotoCarousel'));
-    carousel.to(index);
+const fotosGaleria = <?php echo json_encode(isset($fotos_galeria) ? array_column($fotos_galeria, 'url') : []); ?>;
+let galeriaIndex = 0;
+
+function abrirGaleria(index) {
+  galeriaIndex = index;
+  const img = document.getElementById('galeriaImg');
+  const contador = document.getElementById('galeriaContador');
+  const link = document.getElementById('galeriaImgLink');
+  const original = document.getElementById('galeriaOriginal');
+  if (img) {
+    img.src = '../uploads/galeria/' + fotosGaleria[index];
+  }
+  if (contador) {
+    contador.textContent = `Foto ${index + 1} de ${fotosGaleria.length}`;
+  }
+  if (link && original) {
+    const url = '../uploads/galeria/' + fotosGaleria[index];
+    link.href = url;
+    original.href = url;
+  }
+  document.querySelectorAll('.gallery-thumb').forEach((el, i) => {
+    el.style.borderColor = (i === galeriaIndex) ? '#e83e8c' : '#fff';
+    el.style.boxShadow = (i === galeriaIndex) ? '0 0 0 4px #e83e8c55' : '0 4px 16px rgba(0,0,0,0.10)';
+    el.style.transform = (i === galeriaIndex) ? 'scale(1.08)' : 'scale(1)';
+  });
+  const modal = document.getElementById('galeriaModal');
+  if (modal && typeof bootstrap !== 'undefined') {
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+  }
 }
 
-// Auto-hide alerts after 5 seconds
-setTimeout(function() {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        const bsAlert = new bootstrap.Alert(alert);
-        bsAlert.close();
-    });
-}, 5000);
+function navegarGaleria(delta) {
+  let novoIndex = galeriaIndex + delta;
+  if (novoIndex < 0) novoIndex = fotosGaleria.length - 1;
+  if (novoIndex >= fotosGaleria.length) novoIndex = 0;
+  abrirGaleria(novoIndex);
+}
+
+document.querySelectorAll('.gallery-thumb-link').forEach(function(miniatura, index) {
+  miniatura.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    abrirGaleria(index);
+  };
+});
+
+var btnTestarGaleria = document.getElementById('btnTestarGaleria');
+if (btnTestarGaleria) {
+  btnTestarGaleria.addEventListener('click', function() {
+    abrirGaleria(0);
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  const modal = document.getElementById('galeriaModal');
+  if (modal && modal.classList.contains('show')) {
+    if (e.key === 'ArrowLeft') navegarGaleria(-1);
+    if (e.key === 'ArrowRight') navegarGaleria(1);
+    if (e.key === 'Escape') {
+      const bsModal = bootstrap.Modal.getInstance(modal);
+      if (bsModal) bsModal.hide();
+    }
+  }
+});
+
+window.abrirGaleria = abrirGaleria;
+window.navegarGaleria = navegarGaleria;
 </script>
 
-<style>
-.cursor-pointer {
-    cursor: pointer;
-}
-
-.stat-item h4 {
-    margin-bottom: 0.25rem;
-}
-
-.carousel-item img {
-    border-radius: 0.375rem 0.375rem 0 0;
-}
-
-@media (max-width: 768px) {
-    .carousel-item img {
-        height: 300px !important;
-    }
-}
-</style>
-
-<?php include '../includes/footer.php'; ?> 
+<!-- Exibir imagem em tamanho original dentro do modal, com X grande para fechar -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const btnVerOriginal = document.getElementById('galeriaOriginal');
+  if (btnVerOriginal) {
+    btnVerOriginal.removeAttribute('target');
+    btnVerOriginal.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Fecha o modal da galeria
+      const galeriaModal = document.getElementById('galeriaModal');
+      if (galeriaModal && typeof bootstrap !== 'undefined') {
+        const bsModal = bootstrap.Modal.getInstance(galeriaModal);
+        if (bsModal) bsModal.hide();
+      }
+      // Cria overlay
+      const url = '../uploads/galeria/' + fotosGaleria[galeriaIndex];
+      let old = document.getElementById('overlay-original-galeria');
+      if (old) old.remove();
+      let overlay = document.createElement('div');
+      overlay.id = 'overlay-original-galeria';
+      overlay.style.position = 'fixed';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = '100vw';
+      overlay.style.height = '100vh';
+      overlay.style.background = 'rgba(0,0,0,0.98)';
+      overlay.style.zIndex = 999999;
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.overflow = 'auto';
+      overlay.innerHTML = `
+        <img src="${url}" style="display:block;margin:auto;">
+        <button id="fecharOriginalGaleria" style="
+          position:fixed;
+          top:32px;
+          right:40px;
+          font-size:3rem;
+          background:rgba(255,255,255,0.95);
+          color:#e83e8c;
+          border:none;
+          border-radius:50%;
+          width:64px;
+          height:64px;
+          box-shadow:0 2px 12px #0003;
+          cursor:pointer;
+          z-index:100000;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transition:background .2s;
+        " aria-label="Fechar imagem em tamanho original">&times;</button>
+      `;
+      document.body.appendChild(overlay);
+      overlay.tabIndex = 0;
+      overlay.focus();
+      document.getElementById('fecharOriginalGaleria').onclick = function() {
+        overlay.remove();
+        setTimeout(function() {
+          if (galeriaModal && typeof bootstrap !== 'undefined') {
+            const bsModal = new bootstrap.Modal(galeriaModal);
+            bsModal.show();
+          }
+        }, 10);
+      };
+      overlay.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Escape') {
+          overlay.remove();
+          setTimeout(function() {
+            if (galeriaModal && typeof bootstrap !== 'undefined') {
+              const bsModal = new bootstrap.Modal(galeriaModal);
+              bsModal.show();
+            }
+          }, 10);
+        }
+      });
+      overlay.addEventListener('click', function(ev) {
+        if (ev.target === overlay) {
+          overlay.remove();
+          setTimeout(function() {
+            if (galeriaModal && typeof bootstrap !== 'undefined') {
+              const bsModal = new bootstrap.Modal(galeriaModal);
+              bsModal.show();
+            }
+          }, 10);
+        }
+      });
+    });
+  }
+});
+</script>
+</body>
+</html> 

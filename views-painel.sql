@@ -12,8 +12,8 @@ SELECT
     a.genero,
     a.genitalia,
     a.preferencia_sexual,
-    a.cidade,
-    a.estado,
+    c.nome as cidade,
+    e.uf as estado,
     a.bairro,
     a.endereco,
     a.cep,
@@ -71,6 +71,8 @@ SELECT
         ELSE false
     END as destaque_ativo
 FROM acompanhantes a
+LEFT JOIN cidades c ON a.cidade_id = c.id
+LEFT JOIN estados e ON a.estado_id = e.id
 LEFT JOIN (
     SELECT acompanhante_id, COUNT(*) as total_fotos 
     FROM fotos 
@@ -112,14 +114,16 @@ FROM acompanhantes;
 -- View de estatísticas por cidade
 CREATE OR REPLACE VIEW vw_estatisticas_por_cidade AS
 SELECT
-    cidade,
-    estado,
+    c.nome as cidade,
+    e.uf as estado,
     COUNT(*) as total,
-    COUNT(CASE WHEN status = 'aprovado' THEN 1 END) as aprovados,
-    COUNT(CASE WHEN verificado THEN 1 END) as verificados,
-    COUNT(CASE WHEN destaque AND destaque_ate > NOW() THEN 1 END) as em_destaque
-FROM acompanhantes
-GROUP BY cidade, estado
+    COUNT(CASE WHEN a.status = 'aprovado' THEN 1 END) as aprovados,
+    COUNT(CASE WHEN a.verificado THEN 1 END) as verificados,
+    COUNT(CASE WHEN a.destaque AND a.destaque_ate > NOW() THEN 1 END) as em_destaque
+FROM acompanhantes a
+LEFT JOIN cidades c ON a.cidade_id = c.id
+LEFT JOIN estados e ON a.estado_id = e.id
+GROUP BY c.nome, e.uf
 ORDER BY total DESC;
 
 -- View de log de atividades
