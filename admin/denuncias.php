@@ -4,10 +4,14 @@
  * Arquivo: admin/denuncias.php
  */
 
-require_once __DIR__ . '/../config/database.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('sigilosas_admin_session');
+    session_start();
+}
+require_once '../config/database.php';
 
 $pageTitle = 'Denúncias';
-include '../includes/admin-header.php';
+require_once '../includes/admin-header.php';
 
 $db = getDB();
 
@@ -108,7 +112,7 @@ if ($tipo) {
 $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Buscar denúncias
-$sql = "SELECT d.*, a.nome as acompanhante_nome, a.foto as acompanhante_foto,
+$sql = "SELECT d.*, a.nome as acompanhante_nome,
                c.nome as cidade_nome, e.nome as estado_nome, e.uf as estado_uf
         FROM denuncias d
         LEFT JOIN acompanhantes a ON d.acompanhante_id = a.id

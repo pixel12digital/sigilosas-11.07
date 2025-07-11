@@ -23,17 +23,17 @@ $currentUser = $auth->getCurrentUser();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
+            --primary-color: #3D263F;
+            --secondary-color: #F3EAC2;
             --sidebar-width: 250px;
         }
         body {
-            background-color: #f8f9fa;
+            background-color: #fff;
         }
         .admin-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 1rem 0;
+            padding: 0.5rem 0;
+            background: var(--primary-color);
+            color: var(--secondary-color);
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
             z-index: 900;
@@ -64,8 +64,8 @@ $currentUser = $auth->getCurrentUser();
             position: relative;
         }
         .sidebar-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
+            background: var(--primary-color);
+            color: var(--secondary-color);
             padding: 1.5rem;
             text-align: center;
         }
@@ -73,14 +73,14 @@ $currentUser = $auth->getCurrentUser();
             padding: 1rem 0;
         }
         .sidebar-menu .nav-link {
-            color: #6c757d;
+            color: var(--primary-color);
             padding: 0.75rem 1.5rem;
             border: none;
             transition: all 0.3s ease;
         }
         .sidebar-menu .nav-link:hover,
         .sidebar-menu .nav-link.active {
-            background-color: #f8f9fa;
+            background-color: var(--secondary-color);
             color: var(--primary-color);
             border-left: 3px solid var(--primary-color);
         }
@@ -99,18 +99,15 @@ $currentUser = $auth->getCurrentUser();
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            border: none;
-        }
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: var(--primary-color);
+            color: var(--secondary-color);
             border: none;
             border-radius: 10px;
         }
         .btn-primary:hover {
+            background: var(--secondary-color);
+            color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
@@ -119,8 +116,8 @@ $currentUser = $auth->getCurrentUser();
             overflow: hidden;
         }
         .table thead th {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
+            background: var(--primary-color);
+            color: var(--secondary-color);
             border: none;
         }
         .alert {
@@ -183,7 +180,7 @@ $currentUser = $auth->getCurrentUser();
                 <li class="nav-item">
                     <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'cidades-com-acompanhantes.php' ? 'active' : ''; ?>" 
                        href="cidades-com-acompanhantes.php">
-                        <i class="fas fa-map-marked-alt"></i> Cidades com Acompanhantes
+                        <i class="fas fa-map-marker-alt"></i> Cidades com Acompanhantes
                     </a>
                 </li>
                 <li class="nav-item">

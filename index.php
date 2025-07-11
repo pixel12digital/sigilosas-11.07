@@ -26,6 +26,7 @@ $public_pages = [
     'privacidade' => 'pages/privacidade.php',
     'termos' => 'pages/termos.php',
     'blog' => 'pages/blog.php',
+    'post' => 'pages/post.php',
     'perfil' => 'pages/perfil.php'
 ];
 

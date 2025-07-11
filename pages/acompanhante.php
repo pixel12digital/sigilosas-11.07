@@ -96,15 +96,14 @@ include '../includes/header.php';
 <nav aria-label="breadcrumb" class="bg-light py-2">
     <div class="container">
         <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="home.php">Início</a></li>
-            <li class="breadcrumb-item"><a href="acompanhantes.php">Acompanhantes</a></li>
+            <li class="breadcrumb-item"><a href="http://localhost/Sigilosas-MySQL/">Início</a></li>
             <li class="breadcrumb-item active"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></li>
         </ol>
     </div>
 </nav>
 
 <!-- Banner/topo visual -->
-<div class="profile-banner" style="background: linear-gradient(120deg,#e83e8c 0,#6f42c1 100%); height:180px; position:relative;"></div>
+<div class="profile-banner" style="background: #3D263F; height:180px; position:relative;"></div>
 
 <!-- Foto de perfil, nome, dados principais -->
 <div class="container position-relative" style="margin-top:-90px; z-index:2;">
@@ -113,20 +112,20 @@ include '../includes/header.php';
     $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$acompanhante_id]);
     $foto_perfil_url = !empty($foto_perfil['url']) ? '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : 'https://ui-avatars.com/api/?name=' . urlencode($acompanhante['apelido'] ?? $acompanhante['nome']) . '&size=256&background=6f42c1&color=fff';
     ?>
-    <img src="<?php echo $foto_perfil_url; ?>" class="rounded-circle shadow" style="width:160px;height:160px;object-fit:cover;border:6px solid #fff; margin-top:-80px; background:#eee;">
-    <h2 class="mt-3 mb-1 fw-bold text-center"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></h2>
-    <div class="mb-2 text-muted text-center">
+    <img src="<?php echo $foto_perfil_url; ?>" class="rounded-circle shadow" style="width:160px;height:160px;object-fit:cover;border:6px solid #F3EAC2; margin-top:-80px; background:#eee;">
+    <h2 class="mt-3 mb-1 fw-bold text-center" style="color:#3D263F;"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></h2>
+    <div class="mb-2 text-muted text-center" style="color:#3D263F;opacity:0.8;">
       <?php if (!empty($acompanhante['idade'])): ?><?php echo $acompanhante['idade']; ?> anos · <?php endif; ?>
       <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?>
     </div>
-    <?php if (!empty($acompanhante['verificado'])): ?><span class="badge bg-success mb-2"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
+    <?php if (!empty($acompanhante['verificado'])): ?><span class="badge mb-2" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
     <div class="d-flex gap-2 mb-3">
       <?php if (!empty($acompanhante['telefone'])): ?>
-        <a href="tel:<?php echo $acompanhante['telefone']; ?>" class="btn btn-success"><i class="fas fa-phone"></i> Ver telefone</a>
+        <a href="tel:<?php echo $acompanhante['telefone']; ?>" class="btn" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-phone"></i> Ver telefone</a>
       <?php endif; ?>
-      <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#denunciaModal"><i class="fas fa-flag"></i> Denunciar</button>
-      <?php if (!empty($acompanhante['instagram'])): ?><a href="<?php echo htmlspecialchars($acompanhante['instagram']); ?>" class="btn btn-outline-secondary" target="_blank"><i class="fab fa-instagram"></i></a><?php endif; ?>
-      <?php if (!empty($acompanhante['tiktok'])): ?><a href="<?php echo htmlspecialchars($acompanhante['tiktok']); ?>" class="btn btn-outline-secondary" target="_blank"><i class="fab fa-tiktok"></i></a><?php endif; ?>
+      <button class="btn" style="background:#F3EAC2;color:#3D263F;border:1.5px solid #3D263F;" data-bs-toggle="modal" data-bs-target="#denunciaModal"><i class="fas fa-flag"></i> Denunciar</button>
+      <?php if (!empty($acompanhante['instagram'])): ?><a href="<?php echo htmlspecialchars($acompanhante['instagram']); ?>" class="btn" style="background:#F3EAC2;color:#3D263F;border:1.5px solid #3D263F;" target="_blank"><i class="fab fa-instagram"></i></a><?php endif; ?>
+      <?php if (!empty($acompanhante['tiktok'])): ?><a href="<?php echo htmlspecialchars($acompanhante['tiktok']); ?>" class="btn" style="background:#F3EAC2;color:#3D263F;border:1.5px solid #3D263F;" target="_blank"><i class="fab fa-tiktok"></i></a><?php endif; ?>
     </div>
 
     <!-- Galeria de imagens (apenas tipo galeria) -->
@@ -185,9 +184,9 @@ include '../includes/header.php';
   <div class="row g-4">
     <!-- Card Valores -->
     <div class="col-md-6">
-      <div class="card shadow-sm mb-3">
+      <div class="card shadow-sm mb-3" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
         <div class="card-body">
-          <div class="fw-bold mb-2 text-danger"><i class="fas fa-dollar-sign"></i> Valores</div>
+          <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-dollar-sign"></i> Valores</div>
           <?php
           $valores = $db->fetchAll("SELECT tempo, valor FROM valores_atendimento WHERE acompanhante_id = ? AND disponivel = 1 ORDER BY valor ASC", [$acompanhante_id]);
           ?>
@@ -207,9 +206,9 @@ include '../includes/header.php';
     </div>
     <!-- Card Localização -->
     <div class="col-md-6">
-      <div class="card shadow-sm mb-3">
+      <div class="card shadow-sm mb-3" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
         <div class="card-body">
-          <div class="fw-bold mb-2 text-primary"><i class="fas fa-map-marker-alt"></i> Localização</div>
+          <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-map-marker-alt"></i> Localização</div>
           <div><?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?></div>
           <?php if (!empty($acompanhante['local_atendimento'])): ?>
             <div class="text-muted small mt-1"><i class="fas fa-home"></i> <?php echo htmlspecialchars($acompanhante['local_atendimento']); ?></div>
@@ -221,18 +220,18 @@ include '../includes/header.php';
 
   <!-- Sobre Mim / Descrição -->
   <?php if (!empty($acompanhante['sobre_mim'])): ?>
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
       <div class="card-body">
-        <div class="fw-bold mb-2"><i class="fas fa-user"></i> Sobre Mim</div>
+        <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-user"></i> Sobre Mim</div>
         <div class="text-muted"><?php echo nl2br(htmlspecialchars($acompanhante['sobre_mim'])); ?></div>
       </div>
     </div>
   <?php endif; ?>
 
   <!-- Aparência Física -->
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
     <div class="card-body">
-      <div class="fw-bold mb-2 text-info"><i class="fas fa-heart"></i> Aparência Física</div>
+      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-heart"></i> Aparência Física</div>
       <div class="row">
         <div class="col-md-6">
           <ul class="list-unstyled mb-0">
@@ -261,9 +260,9 @@ include '../includes/header.php';
   </div>
 
   <!-- Preferências e Serviços -->
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
     <div class="card-body">
-      <div class="fw-bold mb-2 text-secondary"><i class="fas fa-cogs"></i> Preferências e Serviços</div>
+      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-cogs"></i> Preferências e Serviços</div>
       <ul class="list-unstyled mb-0">
         <li><b>Especialidades:</b> <?php echo htmlspecialchars($acompanhante['especialidades'] ?? ''); ?></li>
         <li><b>Idiomas:</b> <?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?></li>
@@ -272,9 +271,9 @@ include '../includes/header.php';
   </div>
 
   <!-- Horário de Atendimento -->
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
     <div class="card-body">
-      <div class="fw-bold mb-2 text-primary"><i class="fas fa-clock"></i> Horário de Atendimento</div>
+      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-clock"></i> Horário de Atendimento</div>
       <?php
       $dias_semana = [
         1 => 'Segunda-feira',
@@ -316,9 +315,9 @@ include '../includes/header.php';
   $avaliacoes = $db->fetchAll("SELECT nota, comentario, nome, created_at FROM avaliacoes WHERE acompanhante_id = ? AND aprovado = 1 ORDER BY created_at DESC LIMIT 5", [$acompanhante_id]);
   $media = $db->fetch("SELECT AVG(nota) as media, COUNT(*) as total FROM avaliacoes WHERE acompanhante_id = ? AND aprovado = 1", [$acompanhante_id]);
   ?>
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
     <div class="card-body">
-      <div class="fw-bold mb-2 text-warning"><i class="fas fa-star"></i> Avaliações</div>
+      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-star"></i> Avaliações</div>
       <?php if (!empty($media['total'])): ?>
         <div class="mb-2">Média: <span class="text-warning fw-bold"><?php echo number_format($media['media'],1,',','.'); ?> ★</span> (<?php echo $media['total']; ?> avaliações)</div>
       <?php endif; ?>
@@ -354,7 +353,7 @@ include '../includes/header.php';
             <label for="comentarioAvaliacao" class="form-label">Comentário *</label>
             <textarea class="form-control" id="comentarioAvaliacao" name="comentarioAvaliacao" rows="3" maxlength="500" required></textarea>
           </div>
-          <button type="submit" class="btn btn-warning"><i class="fas fa-star"></i> Enviar Avaliação</button>
+          <button type="submit" class="btn" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-star"></i> Enviar Avaliação</button>
         </form>
         <?php if (isset($_POST['action']) && $_POST['action'] === 'avaliacao'): ?>
           <?php if (!empty($success_message)): ?>
@@ -419,7 +418,7 @@ estrelas.forEach((estrela, idx) => {
 </script>
 
   <!-- Segurança -->
-  <div class="alert alert-info mt-4 mb-5">
+  <div class="alert mt-4 mb-5" style="background:#3D263F;color:#F3EAC2;">
     <i class="fas fa-shield-alt"></i> Este perfil foi verificado e segue as diretrizes de segurança da plataforma. Denúncias são analisadas pela equipe Sigilosas VIP.
   </div>
 </div>
@@ -428,22 +427,20 @@ estrelas.forEach((estrela, idx) => {
 <?php if (!empty($fotos_galeria)): ?>
 <div class="modal fade" id="galeriaModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered" style="max-width:90vw;">
-    <div class="modal-content bg-dark text-white position-relative" style="border-radius:18px;">
-      <div class="modal-body p-0 position-relative" style="min-height:350px; background:rgba(0,0,0,0.95); border-radius:18px;">
-        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" tabindex="-1"></button>
+    <div class="modal-content" style="background:#3D263F !important; color:#F3EAC2 !important; border-radius:18px;">
+      <div class="modal-body p-0 position-relative" style="min-height:350px; background:#3D263F; border-radius:18px;">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" tabindex="-1" style="filter: invert(0.8);"></button>
         <div class="d-flex justify-content-center align-items-center" style="min-height:60vh;">
           <a id="galeriaImgLink" href="#" target="_blank" style="display:block;">
             <img id="galeriaImg" src="" class="gallery-main-img shadow-lg" style="max-width:90vw; max-height:80vh; object-fit:contain; border-radius:12px; background:#222; display:block; margin:auto; transition:opacity .3s; cursor: zoom-in;">
           </a>
         </div>
         <div class="d-flex justify-content-between align-items-center px-4 pb-3 pt-2">
-          <div id="galeriaContador" class="rounded-pill bg-dark bg-opacity-75 text-white small px-3 py-1" style="font-weight:500;"></div>
-          <a id="galeriaOriginal" href="javascript:void(0)" class="btn btn-pink btn-lg ms-2" style="font-weight:600;">
-            <i class="fas fa-external-link-alt"></i> Ver em tamanho original
-          </a>
+          <div id="galeriaContador" class="rounded-pill" style="background:#F3EAC2;color:#3D263F;font-weight:500;" ></div>
+          <a id="galeriaOriginal" href="javascript:void(0)" class="btn" style="background:#F3EAC2;color:#3D263F;font-weight:600; border:1.5px solid #3D263F;"><i class="fas fa-external-link-alt"></i> Ver em tamanho original</a>
         </div>
-        <button type="button" class="btn btn-light gallery-arrow position-absolute top-50 start-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%;" onclick="navegarGaleria(-1)" tabindex="0"><i class="fas fa-chevron-left"></i></button>
-        <button type="button" class="btn btn-light gallery-arrow position-absolute top-50 end-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%;" onclick="navegarGaleria(1)" tabindex="0"><i class="fas fa-chevron-right"></i></button>
+        <button type="button" class="btn gallery-arrow position-absolute top-50 start-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%; background:#F3EAC2;color:#3D263F; border:1.5px solid #3D263F;" onclick="navegarGaleria(-1)" tabindex="0"><i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="btn gallery-arrow position-absolute top-50 end-0 translate-middle-y" style="z-index:2; font-size:2.5rem; padding:0.5rem 1.2rem; opacity:0.90; border-radius:50%; background:#F3EAC2;color:#3D263F; border:1.5px solid #3D263F;" onclick="navegarGaleria(1)" tabindex="0"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
   </div>
@@ -453,12 +450,12 @@ estrelas.forEach((estrela, idx) => {
 <!-- Modal de Contato -->
 <div class="modal fade" id="contatoModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content" style="background:#3D263F;color:#F3EAC2;">
+            <div class="modal-header" style="background:#3D263F;color:#F3EAC2;">
                 <h5 class="modal-title">
                     <i class="fas fa-envelope"></i> Enviar Mensagem
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(0.8);"></button>
             </div>
             <form method="post">
                 <input type="hidden" name="action" value="contato">
@@ -481,9 +478,9 @@ estrelas.forEach((estrela, idx) => {
                                   placeholder="Digite sua mensagem..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
+                <div class="modal-footer" style="background:#F3EAC2;">
+                    <button type="button" class="btn" style="background:#3D263F;color:#F3EAC2;" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn" style="background:#3D263F;color:#F3EAC2;">
                         <i class="fas fa-paper-plane"></i> Enviar Mensagem
                     </button>
                 </div>
@@ -495,17 +492,17 @@ estrelas.forEach((estrela, idx) => {
 <!-- Modal de Denúncia -->
 <div class="modal fade" id="denunciaModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content" style="background:#3D263F;color:#F3EAC2;">
+            <div class="modal-header" style="background:#3D263F;color:#F3EAC2;">
                 <h5 class="modal-title">
                     <i class="fas fa-flag"></i> Reportar Perfil
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(0.8);"></button>
             </div>
             <form method="post">
                 <input type="hidden" name="action" value="denuncia">
                 <div class="modal-body">
-                    <div class="alert alert-info">
+                    <div class="alert" style="background:#F3EAC2;color:#3D263F;">
                         <i class="fas fa-info-circle"></i>
                         Ajude-nos a manter a qualidade dos perfis. Sua denúncia será analisada pela nossa equipe.
                     </div>
@@ -525,9 +522,9 @@ estrelas.forEach((estrela, idx) => {
                                   placeholder="Descreva o motivo da denúncia..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning">
+                <div class="modal-footer" style="background:#F3EAC2;">
+                    <button type="button" class="btn" style="background:#3D263F;color:#F3EAC2;" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn" style="background:#3D263F;color:#F3EAC2;">
                         <i class="fas fa-flag"></i> Enviar Denúncia
                     </button>
                 </div>
@@ -552,6 +549,53 @@ estrelas.forEach((estrela, idx) => {
 <?php endif; ?>
 
 <?php include '../includes/footer.php'; ?>
+
+<!-- Botão flutuante do WhatsApp Suporte -->
+<style>
+#whatsapp-suporte {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  background: #25D366;
+  color: #fff;
+  border-radius: 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 10px 18px 10px 12px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+#whatsapp-suporte:hover {
+  background: #1ebe5d;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  text-decoration: none;
+}
+#whatsapp-suporte .wa-icon {
+  font-size: 1.7rem;
+  margin-right: 8px;
+}
+@media (max-width: 600px) {
+  #whatsapp-suporte {
+    bottom: 16px;
+    right: 16px;
+    font-size: 1rem;
+    padding: 8px 14px 8px 10px;
+  }
+  #whatsapp-suporte .wa-icon {
+    font-size: 1.3rem;
+    margin-right: 6px;
+  }
+}
+</style>
+<a href="https://wa.me/5547996829294?text=Olá! Preciso de suporte no site Sigilosas." id="whatsapp-suporte" target="_blank" rel="noopener">
+  <span class="wa-icon"><i class="fab fa-whatsapp"></i></span> Suporte
+</a>
+<!-- Certifique-se de que o FontAwesome está carregado para o ícone do WhatsApp -->
 
 <!-- JS final da galeria -->
 <script>

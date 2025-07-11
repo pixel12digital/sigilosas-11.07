@@ -170,7 +170,7 @@ include '../includes/header.php';
 ?>
 
 <!-- Header da Página -->
-<section class="page-header py-5 bg-primary text-white">
+<section class="page-header py-5" style="background: #3D263F; color: #F3EAC2;">
     <div class="container">
         <div class="row">
             <div class="col-12 text-center">
@@ -187,7 +187,7 @@ include '../includes/header.php';
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header" style="background: #3D263F; color: #F3EAC2;">
                         <h4 class="mb-0">
                             <i class="fas fa-user-plus"></i> Dados Pessoais
                         </h4>

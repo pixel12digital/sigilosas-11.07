@@ -44,49 +44,33 @@ $estados = $db->fetchAll("
 
 <!-- Banner Principal -->
 <section class="hero-section position-relative">
-    <div class="hero-bg" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('../assets/img/imagem_banner.png') center/cover;">
+    <div class="hero-bg" style="background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('/Sigilosas-MySQL/assets/img/Imagem-banner01.png') center/cover;">
         <div class="container">
             <div class="row min-vh-75 align-items-center">
                 <div class="col-lg-8 col-md-10 mx-auto text-center text-white">
-                    <h1 class="display-4 fw-bold mb-4">
-                        Encontre Acompanhantes de Luxo
-                    </h1>
-                    <p class="lead mb-5">
-                        Perfis verificados e seguros em sua cidade. 
-                        Encontre a companhia perfeita para momentos especiais.
-                    </p>
+                    <p class="lead mb-5"></p>
                     
                     <!-- Formulário de Busca -->
-                    <div class="search-form bg-white bg-opacity-90 p-4 rounded-3">
-                        <form id="filtro-form" class="row g-3">
-                            <div class="col-md-4">
-                                <select name="estado" class="form-select" id="estado" required>
+                    <div class="search-form-wrapper mx-auto">
+                        <div class="search-form bg-white bg-opacity-90 p-4 rounded-3">
+                            <form id="filtro-form" class="search-flex-form align-items-center">
+                                <select name="estado" class="form-select" id="estado" required aria-label="Selecione o Estado">
                                     <option value="">Selecione o Estado</option>
                                     <?php foreach ($estados as $estado): ?>
                                         <option value="<?php echo $estado['id']; ?>">
-                                            <?php echo htmlspecialchars($estado['nome']); ?> (<?php echo $estado['uf']; ?>) 
-                                            - <?php echo $estado['total_acompanhantes']; ?> perfis
+                                            <?php echo htmlspecialchars($estado['nome']); ?> (<?php echo $estado['uf']; ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
-                            <div class="col-md-4">
-                                <select name="cidade" class="form-select" id="cidade-select" required>
+                                <select name="cidade" class="form-select" id="cidade-select" required aria-label="Selecione a Cidade">
                                     <option value="">Selecione a Cidade</option>
                                 </select>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <button type="submit" class="btn btn-primary w-100" aria-label="Buscar acompanhantes">
                                     <span class="spinner-border spinner-busca" style="display:none;width:1.5em;height:1.5em;vertical-align:middle;"></span>
                                     <i class="fas fa-search"></i> Buscar
                                 </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Resultados -->
-                    <div class="container mt-4">
-                        <div id="acompanhantes-result" class="row g-4"></div>
+                            </form>
+                        </div>
                     </div>
 
                 </div>
@@ -95,133 +79,188 @@ $estados = $db->fetchAll("
     </div>
 </section>
 
-<!-- Estatísticas -->
-<section class="stats-section py-5 bg-light">
+<!-- Resultados da busca de acompanhantes -->
+<section id="resultados-busca-section" class="py-4 bg-white">
     <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="stat-item">
-                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                    <h3 class="fw-bold"><?php echo number_format($stats['total_acompanhantes']); ?></h3>
-                    <p class="text-muted">Acompanhantes Verificadas</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="stat-item">
-                    <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
-                    <h3 class="fw-bold"><?php echo number_format($stats['total_cidades']); ?></h3>
-                    <p class="text-muted">Cidades Atendidas</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="stat-item">
-                    <i class="fas fa-star fa-3x text-primary mb-3"></i>
-                    <h3 class="fw-bold"><?php echo number_format($stats['total_estados']); ?></h3>
-                    <p class="text-muted">Estados Brasileiros</p>
-                </div>
-            </div>
-        </div>
+        <div id="acompanhantes-result" class="row g-4"></div>
     </div>
 </section>
 
-<!-- Acompanhantes em Destaque -->
-<section class="featured-section py-5">
+<?php
+// Buscar as 3 últimas acompanhantes aprovadas
+$ultimas_acompanhantes = $db->fetchAll("SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf FROM acompanhantes a LEFT JOIN cidades c ON a.cidade_id = c.id LEFT JOIN estados e ON c.estado_id = e.id WHERE a.status = 'aprovado' ORDER BY a.created_at DESC LIMIT 3");
+
+// Buscar os 3 posts mais recentes do blog
+$posts_recentes = $db->fetchAll("
+    SELECT id, titulo, resumo, imagem, data_publicacao, autor, visualizacoes
+    FROM blog_posts 
+    WHERE status = 'publicado' 
+    ORDER BY data_publicacao DESC 
+    LIMIT 3
+");
+?>
+
+<!-- Últimas Acompanhantes -->
+<section class="ultimas-acompanhantes-section py-4 bg-white">
+  <div class="container">
+    <div class="row mb-3">
+      <div class="col-12 text-center">
+        <h3 class="section-title" style="font-size:1.5rem;">Últimas Acompanhantes</h3>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <?php foreach ($ultimas_acompanhantes as $a): ?>
+        <?php
+          // Buscar foto de perfil igual ao resultado dos filtros
+          $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$a['id']]);
+          $foto_perfil_url = !empty($foto_perfil['url']) ? '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
+        ?>
+        <div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
+          <div class='card shadow-sm h-100 acompanhante-card w-100'>
+            <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
+              <?php if ($foto_perfil_url): ?>
+                <img src="<?php echo $foto_perfil_url; ?>" class="card-img-top rounded-3" alt="<?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?>" style="height: 210px; object-fit: cover; width:100%;">
+              <?php else: ?>
+                <div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>
+              <?php endif; ?>
+            </div>
+            <div class="flex-grow-1 w-100 px-2 pt-2 pb-0 d-flex flex-column" style="min-height:140px;">
+              <h5 class="card-title mb-1 text-center"><?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?></h5>
+              <div class="text-muted small mb-1 text-center">a partir de</div>
+              <?php
+                // Buscar menor valor e tempo de atendimento
+                $valores = $db->fetchAll("SELECT * FROM valores_atendimento WHERE acompanhante_id = ? ORDER BY valor ASC LIMIT 1", [$a['id']]);
+                if (!empty($valores)) {
+                  $v = $valores[0];
+                  echo "<div class='d-flex align-items-center mb-2 justify-content-center'><span class='fw-bold'>R$ ".number_format($v['valor'],2,',','.')."</span> <span class='text-muted'>- ".$v['tempo']."</span></div>";
+                } else {
+                  echo "<div class='mb-2 text-muted text-center'>Não informado</div>";
+                }
+              ?>
+              <?php if (!empty($a['idade'])): ?>
+                <div class='mb-1 text-center'><i class='fas fa-birthday-cake'></i> <?php echo $a['idade']; ?> anos</div>
+              <?php endif; ?>
+              <div class="mb-1 text-center">
+                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($a['cidade_nome']); ?>, <?php echo htmlspecialchars($a['estado_uf']); ?>
+              </div>
+              <?php if (!empty($a['local_atendimento'])): ?>
+                <?php
+                  $locais = @json_decode($a['local_atendimento'], true);
+                  if (is_array($locais) && count($locais) > 0) {
+                    echo "<div class='mb-1 text-center'><i class='fas fa-home'></i> ".implode(', ', array_map(function($l){return ucfirst(str_replace('_',' ',$l));}, $locais))."</div>";
+                  }
+                ?>
+              <?php endif; ?>
+              <?php if (!empty($a['sobre_mim'])): ?>
+                <div class='fw-bold mb-1 mt-2'>Sobre Mim</div>
+                <div class='text-muted small mb-2 px-2'><?php echo mb_strimwidth(strip_tags($a['sobre_mim']),0,180,'...'); ?></div>
+              <?php endif; ?>
+            </div>
+            <div class="px-3 pb-3 pt-2 w-100">
+              <a href="acompanhante.php?id=<?php echo $a['id']; ?>" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<!-- Seção de Artigos do Blog -->
+<?php if (!empty($posts_recentes)): ?>
+<section class="blog-section py-5 bg-light">
     <div class="container">
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <h2 class="section-title">Acompanhantes em Destaque</h2>
-                <p class="text-muted">Perfis verificados e selecionados especialmente para você</p>
+                <h2 class="section-title" style="color: #3D263F;">
+                    <i class="fas fa-blog me-2"></i>Últimos Artigos do Blog
+                </h2>
+                <p class="text-muted">Dicas, tendências e novidades sobre o mundo das acompanhantes de luxo</p>
             </div>
         </div>
         
         <div class="row">
-            <?php if (empty($acompanhantes_destaque)): ?>
-                <div class="col-12 text-center">
-                    <p class="text-muted">Nenhuma acompanhante disponível no momento.</p>
-                </div>
-            <?php else: ?>
-                <?php foreach ($acompanhantes_destaque as $acompanhante): ?>
-                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                        <div class="card acompanhante-card h-100 shadow-sm">
-                            <div class="card-img-top position-relative">
-                                <?php if ($acompanhante['foto']): ?>
-                                    <img src="../uploads/<?php echo $acompanhante['foto']; ?>" 
-                                         class="card-img-top" alt="<?php echo htmlspecialchars($acompanhante['nome']); ?>"
-                                         style="height: 250px; object-fit: cover;">
-                                <?php else: ?>
-                                    <div class="bg-secondary d-flex align-items-center justify-content-center" 
-                                         style="height: 250px;">
-                                        <i class="fas fa-user fa-3x text-white"></i>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <!-- Badges -->
-                                <div class="position-absolute top-0 start-0 p-2">
-                                    <?php if ($acompanhante['verificado']): ?>
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check-circle"></i> Verificada
-                                        </span>
-                                    <?php endif; ?>
+            <?php foreach ($posts_recentes as $post): ?>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100 blog-card">
+                        <!-- Imagem do post -->
+                        <div class="position-relative">
+                            <?php if ($post['imagem']): ?>
+                                <img src="uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
+                                     class="card-img-top" 
+                                     alt="<?php echo htmlspecialchars($post['titulo']); ?>"
+                                     style="height: 200px; object-fit: cover;">
+                            <?php else: ?>
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="fas fa-newspaper fa-3x text-muted"></i>
                                 </div>
-                                
-                                <?php if ($acompanhante['total_fotos'] > 0): ?>
-                                    <div class="position-absolute top-0 end-0 p-2">
-                                        <span class="badge bg-info">
-                                            <i class="fas fa-images"></i> <?php echo $acompanhante['total_fotos']; ?>
-                                        </span>
-                                    </div>
-                                <?php endif; ?>
+                            <?php endif; ?>
+                            
+                            <!-- Badge de categoria -->
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <span class="badge" style="background-color: #3D263F; color: #F3EAC2;">Blog</span>
                             </div>
                             
-                            <div class="card-body">
-                                <h5 class="card-title mb-1"><?php echo htmlspecialchars($acompanhante['nome']); ?></h5>
-                                <p class="card-text text-muted small mb-2">
-                                    <i class="fas fa-map-marker-alt"></i> 
-                                    <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?>, <?php echo $acompanhante['estado_uf']; ?>
-                                </p>
-                                
-                                <?php if ($acompanhante['idade']): ?>
-                                    <p class="card-text small mb-2">
-                                        <i class="fas fa-birthday-cake"></i> <?php echo $acompanhante['idade']; ?> anos
-                                    </p>
-                                <?php endif; ?>
-                                
-                                <?php if ($acompanhante['tipo_servico']): ?>
-                                    <p class="card-text small mb-3">
-                                        <i class="fas fa-tag"></i> 
-                                        <?php
-                                        $tipos = [
-                                            'massagem' => 'Massagem',
-                                            'acompanhante' => 'Acompanhante',
-                                            'ambos' => 'Massagem & Acompanhante'
-                                        ];
-                                        echo $tipos[$acompanhante['tipo_servico']] ?? 'Serviços Diversos';
-                                        ?>
-                                    </p>
-                                <?php endif; ?>
+                            <!-- Visualizações -->
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-dark">
+                                    <i class="fas fa-eye"></i> <?php echo number_format($post['visualizacoes']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <!-- Data e autor -->
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> 
+                                    <?php echo date('d/m/Y', strtotime($post['data_publicacao'])); ?>
+                                </small>
+                                <span class="mx-2">•</span>
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i> 
+                                    <?php echo htmlspecialchars($post['autor']); ?>
+                                </small>
                             </div>
                             
-                            <div class="card-footer bg-transparent border-0">
-                                <a href="acompanhante.php?id=<?php echo $acompanhante['id']; ?>" 
-                                   class="btn btn-primary btn-sm w-100">
-                                    <i class="fas fa-eye"></i> Ver Perfil
+                            <!-- Título -->
+                            <h5 class="card-title">
+                                <a href="index.php?page=post&id=<?php echo $post['id']; ?>" 
+                                   class="text-decoration-none" style="color: #3D263F;">
+                                    <?php echo htmlspecialchars($post['titulo']); ?>
+                                </a>
+                            </h5>
+                            
+                            <!-- Resumo -->
+                            <p class="card-text text-muted flex-grow-1">
+                                <?php echo htmlspecialchars(substr($post['resumo'], 0, 120)) . '...'; ?>
+                            </p>
+                            
+                            <!-- Botão ler mais -->
+                            <div class="mt-auto">
+                                <a href="index.php?page=post&id=<?php echo $post['id']; ?>" 
+                                   class="btn btn-outline-primary btn-sm" style="border-color: #3D263F; color: #3D263F;">
+                                    <i class="fas fa-arrow-right"></i> Ler mais
                                 </a>
                             </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
         </div>
         
+        <!-- Botão ver todos os artigos -->
         <div class="row mt-4">
             <div class="col-12 text-center">
-                <a href="acompanhantes.php" class="btn btn-outline-primary btn-lg">
-                    <i class="fas fa-list"></i> Ver Todas as Acompanhantes
+                <a href="index.php?page=blog" class="btn btn-primary" style="background-color: #3D263F; border-color: #3D263F;">
+                    <i class="fas fa-newspaper"></i> Ver Todos os Artigos
                 </a>
             </div>
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- Seção de Benefícios -->
 <section class="benefits-section py-5 bg-light">
@@ -282,16 +321,58 @@ $estados = $db->fetchAll("
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <h3 class="mb-3">Pronto para encontrar sua acompanhante ideal?</h3>
-                <p class="mb-0">Cadastre-se gratuitamente e tenha acesso a perfis exclusivos</p>
+                <h3 class="mb-3">Pronta para se destacar? Cadastre seu perfil agora!</h3>
+                <p class="mb-0">Cadastre-se gratuitamente e conquiste novos clientes com um perfil exclusivo e seguro.</p>
             </div>
             <div class="col-lg-4 text-lg-end">
-                <a href="cadastro.php" class="btn btn-light btn-lg">
-                    <i class="fas fa-user-plus"></i> Cadastrar-se
+                <a href="/Sigilosas-MySQL/pages/cadastro-acompanhante.php" class="btn btn-light btn-lg d-flex align-items-center gap-2">
+                    <i class="fas fa-user-plus" style="color:#3D263F;"></i> <span style="color:#3D263F;">Cadastrar Perfil</span>
                 </a>
             </div>
         </div>
     </div>
+</section>
+
+<!-- Seção Institucional Sigilosas VIP -->
+<section class="institucional-section py-5" style="background: #fff;">
+  <div class="container">
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-8 text-center">
+        <h2 class="fw-bold mb-3" style="color:#3D263F;"><i class="fas fa-gem me-2"></i>Sobre a Sigilosas VIP</h2>
+        <p class="lead" style="color:#3D263F;">A Sigilosas VIP nasceu a partir de uma vivência real no mercado. Estamos há mais de 5 anos no ramo, conhecendo de perto os desafios, necessidades e sonhos de quem trabalha como acompanhante.</p>
+        <p style="color:#3D263F;">Com toda essa experiência, decidimos criar algo diferente: uma plataforma exclusiva, segura e acolhedora, feita para quem busca mais do que apenas uma vitrine — feita para quem quer ser valorizado, respeitado e crescer com liberdade.</p>
+      </div>
+    </div>
+    <div class="row g-4 justify-content-center mb-4">
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center py-4" style="background:#F3EAC2;">
+          <div class="mb-3"><i class="fas fa-headset fa-2x" style="color:#3D263F;"></i></div>
+          <h5 class="fw-bold mb-2" style="color:#3D263F;">Suporte 100% humanizado</h5>
+          <p class="mb-0" style="color:#3D263F;">Nossa equipe está sempre pronta para te apoiar de verdade, com atendimento acolhedor e ágil.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center py-4" style="background:#F3EAC2;">
+          <div class="mb-3"><i class="fas fa-laptop-code fa-2x" style="color:#3D263F;"></i></div>
+          <h5 class="fw-bold mb-2" style="color:#3D263F;">Tecnologia moderna e discreta</h5>
+          <p class="mb-0" style="color:#3D263F;">Plataforma fácil de usar, com privacidade e segurança para você se destacar com tranquilidade.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0 text-center py-4" style="background:#F3EAC2;">
+          <div class="mb-3"><i class="fas fa-bullhorn fa-2x" style="color:#3D263F;"></i></div>
+          <h5 class="fw-bold mb-2" style="color:#3D263F;">Visibilidade real e oportunidades</h5>
+          <p class="mb-0" style="color:#3D263F;">Aqui você é vista de verdade, com oportunidades para crescer e conquistar novos clientes.</p>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-10 text-center">
+        <p class="mb-2" style="color:#3D263F;font-size:1.1em;">Na Sigilosas VIP, você encontra segurança, privacidade e uma equipe pronta para te apoiar de verdade. Nossa missão é clara: conectar, empoderar e impulsionar cada profissional com seriedade e respeito.</p>
+        <p class="mb-0 fw-bold" style="color:#3D263F;font-size:1.15em;">Seja você iniciante ou experiente, a Sigilosas VIP é o seu lugar.</p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <script>
@@ -408,8 +489,8 @@ form.addEventListener('submit', function(e) {
                     } catch(e) {}
                 }
                 // Card layout (tudo em uma coluna, sem barra)
-                html += `<div class="col-lg-6 col-md-6 mb-4 d-flex">
-                    <div class="card shadow-sm h-100 flex-grow-1 d-flex flex-column p-0" style="min-height:340px;">
+                html += `<div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
+                    <div class='card shadow-sm h-100 acompanhante-card w-100'>
                         <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
                             ${a.foto ? `<img id="${imgId}" src="/Sigilosas-MySQL/uploads/perfil/${a.foto}" class="card-img-top rounded-3" alt="${a.apelido||a.nome}" style="height: 210px; object-fit: cover; width:100%;">` : `<div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>`}
                         </div>
@@ -427,7 +508,7 @@ form.addEventListener('submit', function(e) {
                             ${sobreMim}
                         </div>
                         <div class="px-3 pb-3 pt-2 w-100">
-                            <a href="/Sigilosas-MySQL/pages/acompanhante.php?id=${a.id}" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px;'><i class='fas fa-phone'></i> Ver telefone</a>
+                            <a href="/Sigilosas-MySQL/pages/acompanhante.php?id=${a.id}" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
                         </div>
                     </div>
                 </div>`;
@@ -499,6 +580,7 @@ document.head.appendChild(style);
     min-height: 75vh;
     display: flex;
     align-items: center;
+    /* background-color removido para não sobrescrever a imagem */
 }
 
 .min-vh-75 {
@@ -544,6 +626,60 @@ document.head.appendChild(style);
     pointer-events: none;
 }
 
+.search-form-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+@media (max-width: 1200px) {
+  .search-form-wrapper {
+    max-width: 98vw;
+  }
+}
+
+.search-form {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.search-form .row {
+  width: 100%;
+  margin: 0;
+}
+@media (min-width: 992px) {
+  .search-flex-form {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+  }
+  .search-flex-form .form-select {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 1.1em;
+    height: 56px;
+    padding: 0.75rem 1.25rem;
+  }
+  .search-flex-form button {
+    flex: 0 0 140px;
+    height: 56px;
+    font-size: 1.1em;
+    padding: 0.75rem 1.25rem;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .search-flex-form {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .search-flex-form .form-select,
+  .search-flex-form button {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
 @media (max-width: 768px) {
     .hero-bg {
         min-height: 60vh;
@@ -553,6 +689,56 @@ document.head.appendChild(style);
         margin: 0 1rem;
     }
 }
-</style>
 
-<?php include_once '../includes/footer.php'; ?> 
+/* Estilos para a seção de blog */
+.blog-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(61, 38, 63, 0.15) !important;
+}
+
+.blog-card .card-title a:hover {
+    color: #F3EAC2 !important;
+}
+
+.blog-card .btn-outline-primary:hover {
+    background-color: #3D263F !important;
+    border-color: #3D263F !important;
+    color: #F3EAC2 !important;
+}
+
+.blog-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.blog-section .section-title {
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.blog-card .card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.blog-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+.btn-ver-telefone-paleta {
+  background: #3D263F !important;
+  border-color: #3D263F !important;
+  color: #F3EAC2 !important;
+  font-weight: 500;
+  font-size: 1.1em;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-ver-telefone-paleta:hover, .btn-ver-telefone-paleta:focus {
+  background: #F3EAC2 !important;
+  color: #3D263F !important;
+  border-color: #3D263F !important;
+}
+</style> 

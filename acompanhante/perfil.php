@@ -33,11 +33,11 @@ if ($foto_perfil_url !== 'assets/img/default-avatar.svg') {
 // Bloco de upload de foto de perfil movido para o início da página
 ?>
 <div class="col-12 mt-5 mb-4 text-center">
-    <h5>Foto de Perfil</h5>
+    <h5 style="color: #3D263F;">Foto de Perfil</h5>
     <img id="fotoPerfilMiniatura"
          src="<?php echo $miniatura_path; ?>"
          alt="Foto de Perfil"
-         style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:2px solid #ccc;">
+         style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:2px solid #3D263F;">
     <form id="formUploadPerfil" enctype="multipart/form-data" style="display:inline-block; margin-top:10px;">
         <input type="file" id="inputFotoPerfil" name="foto" accept="image/*" style="max-width:200px; display:inline-block;">
         <button type="submit" class="btn btn-sm btn-primary">Enviar Nova Foto</button>
@@ -423,9 +423,37 @@ if (!empty($acompanhante['especialidades'])) {
 }
 ?>
 
+<!-- MENU RESPONSIVO DA ACOMPANHANTE -->
+<!-- (Removido bloco duplicado) -->
+<!-- FIM MENU RESPONSIVO -->
+
+<!-- ACESSOS RÁPIDOS DA ACOMPANHANTE -->
+<div class="container py-2">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2" style="background:#3D263F;border-radius:12px;padding:12px 18px;">
+    <div class="d-flex align-items-center gap-2">
+      <img src="<?php echo $miniatura_path; ?>" alt="Avatar" style="width:44px;height:44px;object-fit:cover;border-radius:50%;border:2px solid #F3EAC2;">
+      <div class="d-flex flex-column">
+        <span style="color:#F3EAC2;font-weight:bold;font-size:1.1em;">
+          <?php echo htmlspecialchars($_SESSION['acompanhante_apelido'] ?? $_SESSION['acompanhante_nome'] ?? 'Minha Conta'); ?>
+        </span>
+        <span class="badge ms-1" style="background:<?php echo ($_SESSION['acompanhante_aprovada']??0)?'#28a745':'#ffc107'; ?>;color:#3D263F;font-weight:600;">
+          <?php echo ($_SESSION['acompanhante_aprovada']??0)?'Aprovada':'Pendente'; ?>
+        </span>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/Sigilosas-MySQL/pages/acompanhante.php?id=<?php echo $_SESSION['acompanhante_id']; ?>" target="_blank" class="btn btn-outline-primary" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:140px;"><i class="fas fa-eye"></i> Ver Perfil Público</a>
+      <a href="/Sigilosas-MySQL/" class="btn btn-outline-primary text-danger" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:100px;"><i class="fas fa-sign-out-alt"></i> Sair</a>
+    </div>
+  </div>
+</div>
+<!-- FIM ACESSOS RÁPIDOS -->
+
 <main class="main-content">
     <div class="container py-4">
-        <h2 class="mb-4"><i class="fas fa-user-edit"></i> Editar Perfil</h2>
+        <div class="card-header" style="background: #3D263F; color: #F3EAC2;">
+            <h4 class="mb-0">Editar Perfil</h4>
+        </div>
         <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
@@ -549,7 +577,12 @@ if (!empty($acompanhante['especialidades'])) {
                 <textarea class="form-control" id="sobre_mim" name="sobre_mim" rows="4" maxlength="1000" placeholder="Conte um pouco sobre você, sua personalidade, experiências, diferenciais, etc."><?php echo htmlspecialchars($acompanhante['sobre_mim'] ?? ''); ?></textarea>
                 <div class="form-text">Este texto será exibido no seu perfil público. Máximo de 1000 caracteres.</div>
             </div>
-            <!-- FIM SEÇÃO SOBRE MIM -->
+            <!-- Campo Idiomas -->
+            <div class="col-md-4 mt-2">
+                <label for="idiomas" class="form-label">Idiomas</label>
+                <input type="text" class="form-control" id="idiomas" name="idiomas" value="<?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?>" placeholder="Ex: Português, Inglês, Espanhol">
+                <div class="form-text">Digite os idiomas separados por vírgula.</div>
+            </div>
             <!-- Aparência -->
             <div class="col-12"><h5 class="mt-4">Aparência</h5></div>
             <div class="col-md-2">
@@ -665,20 +698,7 @@ if (!empty($acompanhante['especialidades'])) {
                 </div>
                 <div class="form-text">Selecione um ou mais locais de atendimento.</div>
             </div>
-            <div class="col-md-2">
-                <label for="valor_padrao" class="form-label">Preço Padrão (R$)</label>
-                <input type="number" class="form-control" id="valor_padrao" name="valor_padrao" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_padrao'] ?? ''); ?>">
-            </div>
-            <div class="col-md-2">
-                <label for="valor_promocional" class="form-label">Preço Promocional (R$)</label>
-                <input type="number" class="form-control" id="valor_promocional" name="valor_promocional" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_promocional'] ?? ''); ?>">
-        </div>
-                <div class="col-md-4">
-                <label for="idiomas" class="form-label">Idiomas</label>
-                <input type="text" class="form-control" id="idiomas" name="idiomas" value="<?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?>" placeholder="Ex: Português, Inglês, Espanhol">
-                <div class="form-text">Digite os idiomas separados por vírgula.</div>
-                </div>
-                <div class="col-md-4">
+            <div class="col-md-8">
                 <label class="form-label">Especialidades</label>
                 <div class="form-check">
                     <?php foreach ($especialidades_disponiveis as $key => $label): ?>
@@ -689,6 +709,45 @@ if (!empty($acompanhante['especialidades'])) {
                     <?php endforeach; ?>
                 </div>
                 <div class="form-text">Selecione uma ou mais especialidades.</div>
+            </div>
+            <!-- Seção de Valores -->
+            <div class="col-12 mt-4">
+                <h5 class="mb-3"><i class="fas fa-dollar-sign"></i> Valores</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="valor_padrao" class="form-label">Preço Padrão (R$)</label>
+                        <input type="number" class="form-control" id="valor_padrao" name="valor_padrao" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_padrao'] ?? ''); ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="valor_promocional" class="form-label">Preço Promocional (R$)</label>
+                        <input type="number" class="form-control" id="valor_promocional" name="valor_promocional" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_promocional'] ?? ''); ?>">
+                    </div>
+                </div>
+                <div class="row">
+                    <?php
+                    $tempos = [
+                        '15min' => '15 minutos',
+                        '30min' => '30 minutos',
+                        '1h' => '1 hora',
+                        '2h' => '2 horas',
+                        '4h' => '4 horas',
+                        'diaria' => 'Diária',
+                        'pernoite' => 'Pernoite',
+                        'diaria_viagem' => 'Diária de viagem'
+                    ];
+                    foreach ($tempos as $key => $label): ?>
+                        <div class="col-md-3 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input valor-tempo-check" type="checkbox" id="tempo_<?php echo $key; ?>" name="valores[<?php echo $key; ?>][disponivel]" value="1"
+                                    <?php if(!empty($valores_atendimento[$key]['disponivel'])) echo 'checked'; ?>>
+                                <label class="form-check-label" for="tempo_<?php echo $key; ?>"><?php echo $label; ?></label>
+                            </div>
+                            <input type="number" step="0.01" class="form-control mt-1 valor-tempo-input" name="valores[<?php echo $key; ?>][valor]"
+                                placeholder="Valor (R$)" value="<?php echo htmlspecialchars($valores_atendimento[$key]['valor'] ?? ''); ?>"
+                                <?php if(empty($valores_atendimento[$key]['disponivel'])) echo 'disabled'; ?>>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
             <!-- Redes Sociais -->
             <div class="col-12"><h5 class="mt-4">Redes Sociais</h5></div>
@@ -761,6 +820,7 @@ if (!empty($acompanhante['especialidades'])) {
                 </div>
                 <div class="form-text text-center mt-2">Desmarque os dias que não atende. A disponibilidade do anunciante não é garantida pelo seu horário de atendimento.</div>
             </div>
+            <!-- BLOCO VALORES POR TEMPO DE SERVIÇO -->
             <!-- SEÇÃO DE DOCUMENTOS DE IDENTIDADE (antes da galeria) -->
             <div class="col-12 mt-5 text-center" id="secao-documentos">
                 <h5 class="mb-3"><i class="fas fa-id-card"></i> Documento de Identidade (RG ou CNH)</h5>
@@ -840,9 +900,10 @@ if (!empty($acompanhante['especialidades'])) {
                 <div id="previewGaleria" class="d-flex justify-content-center gap-3 flex-wrap mt-2 mb-2"></div>
             </div>
 
-            <!-- Botão Salvar Alterações -->
-            <div class="col-12 text-center mt-4 mb-5">
+            <!-- Botão Salvar Alterações e Sair sem salvar -->
+            <div class="col-12 text-center mt-4 mb-5 d-flex flex-wrap justify-content-center gap-3">
                 <button type="submit" class="btn btn-primary px-4 py-2">Salvar Alterações</button>
+                <a href="/Sigilosas-MySQL/acompanhante/" class="btn btn-outline-primary px-4 py-2">Sair sem salvar</a>
             </div>
             <div style="height:40px;"></div>
         </form>
@@ -861,10 +922,8 @@ document.addEventListener('DOMContentLoaded', function() {
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
         fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
             .then(response => response.json())
-            .then(response => {
-                // Corrigido: acessar response.data
-                let cidades = Array.isArray(response.data) ? response.data : [];
-                if (cidades.length === 0) {
+            .then(cidades => {
+                if (!Array.isArray(cidades) || cidades.length === 0) {
                     cidadeSelect.innerHTML = '<option value="">Nenhuma cidade encontrada</option>';
                     return;
                 }

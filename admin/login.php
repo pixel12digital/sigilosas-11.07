@@ -63,8 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #3D263F;
+            --secondary-color: #F3EAC2;
+        }
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #fff;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -73,19 +77,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-card {
             background: white;
             border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(61,38,63,0.2);
             overflow: hidden;
-            max-width: 400px;
+            max-width: 350px;
             width: 100%;
         }
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 1.2rem 1rem 1rem 1rem;
             text-align: center;
         }
         .login-body {
-            padding: 2rem;
+            padding: 1.2rem 1rem 1.5rem 1rem;
         }
         .form-control {
             border-radius: 10px;
@@ -94,11 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: all 0.3s ease;
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(61,38,63,0.25);
         }
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-color);
+            color: var(--secondary-color);
             border: none;
             border-radius: 10px;
             padding: 12px;
@@ -106,12 +111,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: all 0.3s ease;
         }
         .btn-login:hover {
+            background: var(--secondary-color);
+            color: var(--primary-color);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(61,38,63,0.3);
         }
         .alert {
             border-radius: 10px;
             border: none;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .text-muted {
+            color: var(--primary-color) !important;
+        }
+        .bg-light {
+            background-color: rgba(243,234,194,0.3) !important;
+        }
+        @media (max-width: 500px) {
+            .login-card {
+                max-width: 98vw;
+            }
+            .login-header, .login-body {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -173,14 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
             </div>
             
-            <!-- Informações de debug (remover em produção) -->
-            <div class="mt-3 p-2 bg-light rounded">
-                <small class="text-muted">
-                    <strong>Credenciais padrão:</strong><br>
-                    Email: admin@sigilosas.com<br>
-                    Senha: admin123
-                </small>
-            </div>
         </div>
     </div>
 

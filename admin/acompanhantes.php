@@ -1,23 +1,11 @@
 <?php
-/**
- * Gestão de Acompanhantes - Painel Admin
- * Arquivo: admin/acompanhantes.php
- */
-
-require_once __DIR__ . '/../config/database.php';
-
-// Proteção de sessão admin
 if (session_status() === PHP_SESSION_NONE) {
     session_name('sigilosas_admin_session');
     session_start();
 }
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['logged_in']) || !$_SESSION['logged_in'] || !isset($_SESSION['user_nivel']) || $_SESSION['user_nivel'] !== 'admin') {
-    header('Location: login.php');
-    exit;
-}
-
+require_once '../config/database.php';
 $pageTitle = 'Acompanhantes';
-include '../includes/admin-header.php';
+require_once '../includes/admin-header.php';
 
 $db = getDB();
 

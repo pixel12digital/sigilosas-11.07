@@ -63,11 +63,11 @@
     </div>
 
     <!-- Header -->
-    <header class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <header class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand fw-bold" href="index.php">
-                <i class="fas fa-heart text-danger"></i> Sigilosas VIP
+                <img src="/Sigilosas-MySQL/assets/img/logo.png" alt="Sigilosas VIP" height="40">
             </a>
             
             <!-- Botão mobile -->
@@ -79,15 +79,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.php">
-                            <i class="fas fa-home"></i> Home
-                        </a>
+                        <a class="nav-link" href="/Sigilosas-MySQL/"><i class="fas fa-home"></i> Home</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php?page=acompanhantes">
-                            <i class="fas fa-users"></i> Acompanhantes
-                        </a>
-                    </li>
+                    <!-- Item 'Acompanhantes' removido -->
                     <li class="nav-item">
                         <a class="nav-link" href="index.php?page=blog">
                             <i class="fas fa-blog"></i> Blog

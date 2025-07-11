@@ -1,5 +1,12 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+// Iniciar sessão admin padronizada
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('sigilosas_admin_session');
+    session_start();
+}
+require_once '../config/database.php';
+$pageTitle = 'Cidades com Acompanhantes';
+require_once '../includes/admin-header.php';
 
 $db = getDB();
 
@@ -12,9 +19,6 @@ $cidades = $db->fetchAll('
     GROUP BY c.id, c.nome, e.nome, e.uf
     ORDER BY total_acompanhantes DESC, c.nome ASC
 ');
-
-$pageTitle = 'Cidades com Acompanhantes';
-include '../includes/admin-header.php';
 ?>
 <div class="container py-4">
     <h2 class="mb-4"><i class="fas fa-map-marker-alt"></i> Cidades com Acompanhantes</h2>
