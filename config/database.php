@@ -12,7 +12,12 @@ define('DB_PASS', 'Los@ngo_081081');                // Senha do banco na Hosting
 define('DB_CHARSET', 'utf8mb4');                    // Charset
 
 // Configurações da aplicação
-define('SITE_URL', 'http://localhost/Sigilosas-MySQL');   // URL do site local
+if (!defined('SITE_URL')) {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $base = '';
+    define('SITE_URL', "$protocol://$host$base");
+}
 define('SITE_NAME', 'Sigilosas');         // Nome do site
 define('ADMIN_EMAIL', 'admin@sigilosas.com'); // Email do admin
 

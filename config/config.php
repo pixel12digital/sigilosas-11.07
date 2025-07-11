@@ -6,7 +6,12 @@ if (!defined('SIGILOSAS_CONFIG_LOADED')) {
 
     // Configurações do site
     if (!defined('SITE_NAME')) define('SITE_NAME', 'Sigilosas VIP');
-    if (!defined('SITE_URL')) define('SITE_URL', 'http://localhost/Sigilosas-MySQL');
+    if (!defined('SITE_URL')) {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $base = '';
+        define('SITE_URL', "$protocol://$host$base");
+    }
     if (!defined('SITE_EMAIL')) define('SITE_EMAIL', 'contato@sigilosasvip.com');
     if (!defined('SITE_PHONE')) define('SITE_PHONE', '(11) 99999-9999');
 

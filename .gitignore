@@ -1,111 +1,35 @@
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Ignorar uploads e arquivos de usuário
+/uploads/
 
-# Next.js
-.next/
-out/
-build/
-dist/
-
-# Environment variables
+# Ignorar arquivos de configuração sensíveis
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+config/database.php
+config/config.php
 
-# Logs
-logs
+# Ignorar arquivos temporários e de log
 *.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# Temporary folders
-tmp/
-temp/
-
-# IDE
-.vscode/
-.idea/
+*.tmp
+*.bak
 *.swp
-*.swo
 
-# OS
+# Ignorar dependências de composer (caso use futuramente)
+vendor/
+
+# Ignorar arquivos do sistema
 .DS_Store
 Thumbs.db
 
-# Uploads
-public/uploads/
-uploads/
-
-# Database
-*.sqlite
-*.db
-
-# Backup files
-backups/
-*.backup
-
-# SSL certificates
-*.pem
-*.key
-*.crt
+# Ignorar arquivos de teste e reset
+reset-admin.php
+test_admin.php
+test-cadastro.php
+test-email.php
+test-final.php
+test-redirect.php
+test-sistema.php
+testa_sessao.php
+teste_sessao.php
+teste-aprovacao.php
+teste-dropdown.html
+teste-sessoes.php
+teste-update-timestamp.php
