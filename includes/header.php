@@ -7,12 +7,12 @@
     <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'Encontre as melhores acompanhantes de luxo do Brasil. Perfis verificados e seguros.'; ?>">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/Sigilosas-MySQL/assets/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
     
     <!-- CSS -->
-    <link href="/Sigilosas-MySQL/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="/Sigilosas-MySQL/assets/css/style.css" rel="stylesheet">
+    <link href="/assets/css/style.css" rel="stylesheet">
     <style>
         /* Garantir que o dropdown apareça */
         .dropdown-menu {
@@ -67,7 +67,7 @@
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand fw-bold" href="index.php">
-                <img src="/Sigilosas-MySQL/assets/img/logo.png" alt="Sigilosas VIP" height="40">
+                <img src="/assets/img/logo.png" alt="Sigilosas VIP" height="40">
             </a>
             
             <!-- Botão mobile -->
@@ -165,7 +165,7 @@
     </main>
 
     <!-- JavaScript -->
-    <script src="/Sigilosas-MySQL/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
     <script>
         // Inicialização manual dos dropdowns do Bootstrap
         document.addEventListener('DOMContentLoaded', function() {
