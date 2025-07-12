@@ -58,12 +58,12 @@ if ($acompanhante_data) {
     <meta name="description" content="Painel administrativo da acompanhante - Sigilosas VIP">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?php echo SITE_URL; ?>/assets/img/favicon.ico">
     
     <!-- CSS -->
-    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/style.css" rel="stylesheet">
 </head>
 <body>
                 <!-- Mensagens de alerta -->
@@ -101,6 +101,6 @@ if ($acompanhante_data) {
     </div>
 
     <!-- JavaScript -->
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

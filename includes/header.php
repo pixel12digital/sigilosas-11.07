@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/../config/config.php';
+echo '<!-- SITE_URL: ' . SITE_URL . ' -->'; ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,12 +10,12 @@
     <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'Encontre as melhores acompanhantes de luxo do Brasil. Perfis verificados e seguros.'; ?>">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?php echo SITE_URL; ?>/assets/img/favicon.ico">
     
     <!-- CSS -->
-    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/style.css" rel="stylesheet">
     <style>
         /* Garantir que o dropdown apareça */
         .dropdown-menu {
@@ -67,7 +70,7 @@
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand fw-bold" href="index.php">
-                <img src="/assets/img/logo.png" alt="Sigilosas VIP" height="40">
+                <img src="<?php echo SITE_URL; ?>/assets/img/logo.png" alt="Sigilosas VIP" height="40">
             </a>
             
             <!-- Botão mobile -->
@@ -79,7 +82,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/Sigilosas-MySQL/"><i class="fas fa-home"></i> Home</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/" ><i class="fas fa-home"></i> Home</a>
                     </li>
                     <!-- Item 'Acompanhantes' removido -->
                     <li class="nav-item">
@@ -103,7 +106,7 @@
                             </button>
                             <ul class="dropdown-menu">
                                 <?php if (isset($_SESSION['acompanhante_id'])): ?>
-                                    <li><a class="dropdown-item" href="/Sigilosas-MySQL/acompanhante/index.php"><i class="fas fa-user-friends"></i> Painel Acompanhante</a></li>
+                                    <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/acompanhante/index.php"><i class="fas fa-user-friends"></i> Painel Acompanhante</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item" href="index.php?page=perfil"><i class="fas fa-user-edit"></i> Meu Perfil</a></li>
@@ -112,12 +115,12 @@
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="/Sigilosas-MySQL/pages/login-acompanhante.php">
+                            <a class="nav-link" href="<?php echo SITE_URL; ?>/pages/login-acompanhante.php">
                                 <i class="fas fa-sign-in-alt"></i> Login
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-primary btn-sm ms-2" href="/Sigilosas-MySQL/pages/cadastro-acompanhante.php">
+                            <a class="nav-link btn btn-primary btn-sm ms-2" href="<?php echo SITE_URL; ?>/pages/cadastro-acompanhante.php">
                                 <i class="fas fa-user-plus"></i> Cadastrar
                             </a>
                         </li>
@@ -165,7 +168,8 @@
     </main>
 
     <!-- JavaScript -->
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
     <script>
         // Inicialização manual dos dropdowns do Bootstrap
         document.addEventListener('DOMContentLoaded', function() {

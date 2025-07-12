@@ -13,12 +13,12 @@ if (
     isset($_SESSION['user_id']) &&
     isset($_SESSION['logged_in']) && $_SESSION['logged_in']
 ) {
-    header('Location: /Sigilosas-MySQL/admin/');
+    header('Location: ' . SITE_URL . '/admin/');
     exit;
 }
 // Se já está logado como acompanhante, redirecionar para painel acompanhante
 if (isset($_SESSION['acompanhante_id'])) {
-    header('Location: /Sigilosas-MySQL/acompanhante/');
+    header('Location: ' . SITE_URL . '/acompanhante/');
     exit;
 }
 
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['logged_in'] = true;
                 $_SESSION['login_time'] = time();
                 $_SESSION['success'] = "Login realizado com sucesso!";
-                header('Location: /Sigilosas-MySQL/admin/');
+                header('Location: ' . SITE_URL . '/admin/');
                 exit;
             }
             // 2. Tentar acompanhante
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Atualizar último login
                     $stmt = $pdo->prepare("UPDATE acompanhantes SET ultimo_login = ? WHERE id = ?");
                     $stmt->execute([date('Y-m-d H:i:s'), $acompanhante['id']]);
-                    header('Location: /Sigilosas-MySQL/acompanhante/');
+                    header('Location: ' . SITE_URL . '/acompanhante/');
                     exit;
                 }
             }
@@ -156,7 +156,7 @@ include __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                         <div class="text-end mb-3">
-                            <a href="/Sigilosas-MySQL/pages/recuperar-senha.php" class="link-secondary">
+                            <a href="<?php echo SITE_URL; ?>/pages/recuperar-senha.php" class="link-secondary">
                                 Esqueceu a senha?
                             </a>
                         </div>

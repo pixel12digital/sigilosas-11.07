@@ -571,11 +571,11 @@ $error = $_GET['error'] ?? '';
         <h5>Foto de Perfil</h5>
         <?php
         $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND principal = 1 ORDER BY created_at DESC LIMIT 1", [$id]);
-        $foto_perfil_url = $foto_perfil['url'] ?? 'assets/img/default-avatar.svg';
-        if ($foto_perfil_url !== 'assets/img/default-avatar.svg') {
-            $miniatura_path = '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil_url);
+        $foto_perfil_url = $foto_perfil['url'] ?? 'default-avatar.svg';
+        if ($foto_perfil_url !== 'default-avatar.svg') {
+            $miniatura_path = SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil_url);
         } else {
-            $miniatura_path = '/Sigilosas-MySQL/' . $foto_perfil_url;
+            $miniatura_path = SITE_URL . '/assets/img/default-avatar.svg';
         }
         ?>
         <img id="fotoPerfilMiniatura"
@@ -606,7 +606,7 @@ $error = $_GET['error'] ?? '';
                 <input type="file" name="documento_frente" accept="image/*" style="max-width:200px; display:inline-block;">
                 <?php if ($doc_frente): ?>
                     <div class="mt-2 d-inline-block" style="display:inline-block;">
-                        <img src="/Sigilosas-MySQL/uploads/documentos/<?php echo htmlspecialchars($doc_frente['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
+                        <img src="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo htmlspecialchars($doc_frente['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
                     </div>
                 <?php endif; ?>
             </div>
@@ -615,7 +615,7 @@ $error = $_GET['error'] ?? '';
                 <input type="file" name="documento_verso" accept="image/*" style="max-width:200px; display:inline-block;">
                 <?php if ($doc_verso): ?>
                     <div class="mt-2 d-inline-block" style="display:inline-block;">
-                        <img src="/Sigilosas-MySQL/uploads/documentos/<?php echo htmlspecialchars($doc_verso['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
+                        <img src="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo htmlspecialchars($doc_verso['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
                     </div>
                 <?php endif; ?>
             </div>
@@ -631,7 +631,7 @@ $error = $_GET['error'] ?? '';
         <?php if ($video): ?>
             <div class="mt-2">
                 <video controls style="width:200px;max-height:150px;">
-                    <source src="/Sigilosas-MySQL/uploads/videos/<?php echo htmlspecialchars($video['url']); ?>" type="video/mp4">
+                    <source src="<?php echo SITE_URL; ?>/uploads/videos/<?php echo htmlspecialchars($video['url']); ?>" type="video/mp4">
                     Seu navegador não suporta vídeos.
                 </video>
             </div>
@@ -650,7 +650,7 @@ $error = $_GET['error'] ?? '';
             <div class="row justify-content-center">
                 <?php foreach ($fotos_galeria as $foto): ?>
                     <div class="col-2 mb-2">
-                        <img src="/Sigilosas-MySQL/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>" class="img-fluid rounded" alt="Foto">
+                        <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>" class="img-fluid rounded" alt="Foto">
                     </div>
                 <?php endforeach; ?>
             </div>

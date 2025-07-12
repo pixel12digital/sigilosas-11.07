@@ -12,12 +12,7 @@ define('DB_PASS', 'Los@ngo_081081');                // Senha do banco na Hosting
 define('DB_CHARSET', 'utf8mb4');                    // Charset
 
 // Configurações da aplicação
-if (!defined('SITE_URL')) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
-    $base = '';
-    define('SITE_URL', "$protocol://$host$base");
-}
+// REMOVIDO define('SITE_URL', ...) para evitar conflito
 define('SITE_NAME', 'Sigilosas');         // Nome do site
 define('ADMIN_EMAIL', 'admin@sigilosas.com'); // Email do admin
 

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
 /**
  * Upload de Mídia da Acompanhante
  * Arquivo: acompanhante/midia.php
@@ -6,7 +7,12 @@
 
 $page_title = 'Fotos e Vídeos';
 $page_description = 'Gerencie suas fotos, vídeos e documentos';
-include 'includes/header.php';
+include __DIR__ . '/../includes/header.php';
+
+if (!isset($db)) {
+    require_once __DIR__ . '/../config/database.php';
+    $db = getDB();
+}
 
 // Buscar mídia existente
 $fotos = $db->fetchAll("
@@ -451,4 +457,4 @@ document.getElementById('documento').addEventListener('change', function(e) {
 });
 </script>
 
-<?php include 'includes/footer.php'; ?> 
+<?php include __DIR__ . '/includes/footer.php'; ?> 

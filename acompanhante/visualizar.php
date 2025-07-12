@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
 /**
  * Visualização do Perfil da Acompanhante
  * Arquivo: acompanhante/visualizar.php
@@ -6,7 +7,12 @@
 
 $page_title = 'Ver Perfil';
 $page_description = 'Visualize como seu perfil aparece para o público';
-include 'includes/header.php';
+include __DIR__ . '/../includes/header.php';
+
+if (!isset($db)) {
+    require_once __DIR__ . '/../config/database.php';
+    $db = getDB();
+}
 
 // Buscar mídia
 $fotos = $db->fetchAll("
@@ -508,4 +514,4 @@ function copiarLink() {
 }
 </script>
 
-<?php include 'includes/footer.php'; ?> 
+<?php include __DIR__ . '/includes/footer.php'; ?> 

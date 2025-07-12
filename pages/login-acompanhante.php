@@ -4,6 +4,8 @@
  * Arquivo: pages/login-acompanhante.php
  */
 
+require_once __DIR__ . '/../config/config.php';
+
 // Iniciar sessão ANTES de qualquer saída
 if (session_status() === PHP_SESSION_NONE) {
     session_name('sigilosas_acompanhante_session');
@@ -65,13 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log("Login acompanhante - Aprovada: " . $_SESSION['acompanhante_aprovada']);
 
                 // Debug: verificar se o redirecionamento está sendo executado
-                error_log("Login acompanhante - Tentando redirecionar para: /Sigilosas-MySQL/acompanhante/perfil.php");
+                error_log("Login acompanhante - Tentando redirecionar para: " . SITE_URL . "/acompanhante/perfil.php");
 
                 // Redirecionar para painel
-                header('Location: /Sigilosas-MySQL/acompanhante/perfil.php');
+                header('Location: ' . SITE_URL . '/acompanhante/perfil.php');
                 exit;
                 // Fallback visual caso header não funcione
-                echo '<script>window.location.href="/Sigilosas-MySQL/acompanhante/perfil.php";</script>';
+                echo '<script>window.location.href="' . SITE_URL . '/acompanhante/perfil.php";</script>';
                 exit;
             }
         } else {

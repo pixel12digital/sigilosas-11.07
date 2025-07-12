@@ -5,7 +5,7 @@
         <div class="container">
             <div class="row align-items-center justify-content-between gy-3">
                 <div class="col-md-3 text-md-start mb-3 mb-md-0">
-                    <img src="/assets/img/logo.png" alt="Sigilosas VIP" style="max-width: 140px; height: auto;">
+                    <img src="<?php echo SITE_URL; ?>/assets/img/logo.png" alt="Sigilosas VIP" style="max-width: 140px; height: auto;">
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <div class="fw-bold mb-2" style="color:#3D263F;">Contato</div>
@@ -15,19 +15,19 @@
                 <div class="col-md-3 mb-3 mb-md-0">
                     <div class="fw-bold mb-2" style="color:#3D263F;">Institucional</div>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="/pages/sobre.php" style="color:#3D263F; text-decoration:underline;">Sobre Nós</a></li>
-                        <li><a href="/pages/contato.php" style="color:#3D263F; text-decoration:underline;">Contato</a></li>
-                        <li><a href="/pages/politica-privacidade.php" style="color:#3D263F; text-decoration:underline;">Política de Privacidade</a></li>
-                        <li><a href="/pages/termos-uso.php" style="color:#3D263F; text-decoration:underline;">Termos de Uso</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/sobre.php" style="color:#3D263F; text-decoration:underline;">Sobre Nós</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/contato.php" style="color:#3D263F; text-decoration:underline;">Contato</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/politica-privacidade.php" style="color:#3D263F; text-decoration:underline;">Política de Privacidade</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/termos-uso.php" style="color:#3D263F; text-decoration:underline;">Termos de Uso</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-3 mb-md-0">
                     <div class="fw-bold mb-2" style="color:#3D263F;">Acesso Rápido</div>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="/" style="color:#3D263F; text-decoration:underline;">Home</a></li>
-                        <li><a href="/pages/blog.php" style="color:#3D263F; text-decoration:underline;">Blog</a></li>
-                        <li><a href="/pages/login-acompanhante.php" style="color:#3D263F; text-decoration:underline;">Área do Acompanhante</a></li>
-                        <li><a href="/admin/login.php" style="color:#3D263F; text-decoration:underline;">Admin</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/" style="color:#3D263F; text-decoration:underline;">Home</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/blog.php" style="color:#3D263F; text-decoration:underline;">Blog</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/pages/login-acompanhante.php" style="color:#3D263F; text-decoration:underline;">Área do Acompanhante</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/admin/login.php" style="color:#3D263F; text-decoration:underline;">Admin</a></li>
                     </ul>
                 </div>
             </div>
@@ -44,9 +44,9 @@
     </style>
 
     <!-- Scripts -->
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="/assets/js/main.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
     
     <!-- Script para aviso +18 -->
     <script>

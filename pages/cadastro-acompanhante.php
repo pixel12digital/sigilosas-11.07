@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ../acompanhante/?welcome=1');
                 exit;
                 // Fallback visual caso header não funcione
-                echo '<script>setTimeout(function(){ window.location.href = "/Sigilosas-MySQL/acompanhante/?welcome=1"; }, 1500);</script>';
+                echo '<script>setTimeout(function(){ window.location.href = "' . SITE_URL . '/acompanhante/?welcome=1"; }, 1500);</script>';
                 exit;
             } else {
                 $error = 'Erro ao cadastrar. Tente novamente.';
@@ -409,7 +409,7 @@ estadoSelect.addEventListener('change', function() {
         cidadeSelect.innerHTML = '<option value="">Selecione o estado primeiro</option>';
         return;
     }
-    fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + estadoId)
+            fetch('<?php echo SITE_URL; ?>/api/cidades.php?estado_id=' + estadoId)
         .then(response => response.json())
         .then(data => {
             cidadeSelect.innerHTML = '<option value="">Selecione a cidade</option>';

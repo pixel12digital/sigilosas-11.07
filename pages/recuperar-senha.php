@@ -57,66 +57,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Definir variáveis da página
+$pageTitle = 'Recuperar Senha - Sigilosas VIP';
+$pageDescription = 'Recupere sua senha de forma segura.';
+
+// Incluir o header global
+include '../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Senha - Sigilosas VIP</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
+<main class="container">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h1><i class="fas fa-key"></i> Recuperar Senha</h1>
+                <p>Digite seu email para receber o link de recuperação</p>
+            </div>
 
-    <main class="container">
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-header">
-                    <h1><i class="fas fa-key"></i> Recuperar Senha</h1>
-                    <p>Digite seu email para receber o link de recuperação</p>
+            <?php if ($mensagem): ?>
+                <div class="alert alert-<?php echo $tipo_mensagem; ?>">
+                    <?php echo $mensagem; ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" class="auth-form">
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        placeholder="Digite seu email cadastrado"
+                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
+                    >
                 </div>
 
-                <?php if ($mensagem): ?>
-                    <div class="alert alert-<?php echo $tipo_mensagem; ?>">
-                        <?php echo $mensagem; ?>
-                    </div>
-                <?php endif; ?>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-paper-plane"></i> Enviar Email de Recuperação
+                </button>
+            </form>
 
-                <form method="POST" class="auth-form">
-                    <div class="form-group">
-                        <label for="email">
-                            <i class="fas fa-envelope"></i> Email
-                        </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            required 
-                            placeholder="Digite seu email cadastrado"
-                            value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
-                        >
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-paper-plane"></i> Enviar Email de Recuperação
-                    </button>
-                </form>
-
-                <div class="auth-links">
-                    <a href="login.php" class="link-secondary">
-                        <i class="fas fa-arrow-left"></i> Voltar ao Login
-                    </a>
-                    <a href="cadastro.php" class="link-secondary">
-                        <i class="fas fa-user-plus"></i> Criar Conta
-                    </a>
-                </div>
+            <div class="auth-links">
+                <a href="login.php" class="link-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Login
+                </a>
+                <a href="cadastro.php" class="link-secondary">
+                    <i class="fas fa-user-plus"></i> Criar Conta
+                </a>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <?php include '../includes/footer.php'; ?>
-</body>
-</html> 
+<?php include '../includes/footer.php'; ?> 

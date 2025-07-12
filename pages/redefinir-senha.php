@@ -83,87 +83,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $token_valido) {
         }
     }
 }
+
+// Definir variáveis da página
+$pageTitle = 'Redefinir Senha - Sigilosas VIP';
+$pageDescription = 'Redefina sua senha de forma segura.';
+
+// Incluir o header global
+include '../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redefinir Senha - Sigilosas VIP</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
-
-    <main class="container">
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-header">
-                    <h1><i class="fas fa-lock"></i> Redefinir Senha</h1>
-                    <?php if ($token_valido): ?>
-                        <p>Digite sua nova senha</p>
-                    <?php else: ?>
-                        <p>Link de recuperação</p>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($mensagem): ?>
-                    <div class="alert alert-<?php echo $tipo_mensagem; ?>">
-                        <?php echo $mensagem; ?>
-                    </div>
-                <?php endif; ?>
-
+<main class="container">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h1><i class="fas fa-lock"></i> Redefinir Senha</h1>
                 <?php if ($token_valido): ?>
-                    <form method="POST" class="auth-form">
-                        <div class="form-group">
-                            <label for="senha">
-                                <i class="fas fa-lock"></i> Nova Senha
-                            </label>
-                            <input 
-                                type="password" 
-                                id="senha" 
-                                name="senha" 
-                                required 
-                                placeholder="Digite sua nova senha"
-                                minlength="6"
-                            >
-                            <small class="form-text">Mínimo 6 caracteres</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="confirmar_senha">
-                                <i class="fas fa-lock"></i> Confirmar Nova Senha
-                            </label>
-                            <input 
-                                type="password" 
-                                id="confirmar_senha" 
-                                name="confirmar_senha" 
-                                required 
-                                placeholder="Confirme sua nova senha"
-                                minlength="6"
-                            >
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-save"></i> Alterar Senha
-                        </button>
-                    </form>
+                    <p>Digite sua nova senha</p>
+                <?php else: ?>
+                    <p>Link de recuperação</p>
                 <?php endif; ?>
+            </div>
 
-                <div class="auth-links">
-                    <a href="login.php" class="link-secondary">
-                        <i class="fas fa-sign-in-alt"></i> Fazer Login
-                    </a>
-                    <a href="recuperar-senha.php" class="link-secondary">
-                        <i class="fas fa-key"></i> Solicitar Novo Link
-                    </a>
+            <?php if ($mensagem): ?>
+                <div class="alert alert-<?php echo $tipo_mensagem; ?>">
+                    <?php echo $mensagem; ?>
                 </div>
+            <?php endif; ?>
+
+            <?php if ($token_valido): ?>
+                <form method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label for="senha">
+                            <i class="fas fa-lock"></i> Nova Senha
+                        </label>
+                        <input 
+                            type="password" 
+                            id="senha" 
+                            name="senha" 
+                            required 
+                            placeholder="Digite sua nova senha"
+                            minlength="6"
+                        >
+                        <small class="form-text">Mínimo 6 caracteres</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmar_senha">
+                            <i class="fas fa-lock"></i> Confirmar Nova Senha
+                        </label>
+                        <input 
+                            type="password" 
+                            id="confirmar_senha" 
+                            name="confirmar_senha" 
+                            required 
+                            placeholder="Confirme sua nova senha"
+                            minlength="6"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-save"></i> Alterar Senha
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <div class="auth-links">
+                <a href="login.php" class="link-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Fazer Login
+                </a>
+                <a href="recuperar-senha.php" class="link-secondary">
+                    <i class="fas fa-key"></i> Solicitar Novo Link
+                </a>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <?php include '../includes/footer.php'; ?>
-</body>
-</html> 
+<?php include '../includes/footer.php'; ?> 

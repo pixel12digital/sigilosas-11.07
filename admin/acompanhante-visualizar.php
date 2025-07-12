@@ -550,9 +550,9 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                         <div class="d-inline-block position-relative" style="display:inline-block;">
                             <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 doc-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir documento" onclick="excluirDocumento(<?php echo $doc['id']; ?>, this)">×</button>
                             <?php if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $doc['url'])): ?>
-                                <img src="/Sigilosas-MySQL/uploads/documentos/<?php echo htmlspecialchars($doc['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
+                                <img src="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo htmlspecialchars($doc['url']); ?>" style="width:100px; height:70px; object-fit:cover; border:1px solid #ccc; border-radius:6px;">
                             <?php elseif (preg_match('/\.pdf$/i', $doc['url'])): ?>
-                                <a href="/Sigilosas-MySQL/uploads/documentos/<?php echo htmlspecialchars($doc['url']); ?>" target="_blank">Ver PDF</a>
+                                <a href="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo htmlspecialchars($doc['url']); ?>" target="_blank">Ver PDF</a>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -573,7 +573,7 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                     <div class="d-inline-block position-relative" style="display:inline-block;">
                         <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(<?php echo $videos_verificacao[0]['id']; ?>, this)">×</button>
                         <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
-                            <source src="/Sigilosas-MySQL/uploads/verificacao/<?php echo htmlspecialchars($videos_verificacao[0]['url']); ?>" type="video/mp4">
+                            <source src="<?php echo SITE_URL; ?>/uploads/verificacao/<?php echo htmlspecialchars($videos_verificacao[0]['url']); ?>" type="video/mp4">
                             Seu navegador não suporta vídeo.
                         </video>
                     </div>
@@ -592,7 +592,7 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                     <?php foreach ($fotos_galeria as $foto): ?>
                         <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="<?php echo $foto['id']; ?>">
                             <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" title="Excluir foto" onclick="excluirFotoGaleria(<?php echo $foto['id']; ?>, this)">×</button>
-                            <img src="/Sigilosas-MySQL/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>"
+                            <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>"
                                  alt="Foto Galeria"
                                  style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
                         </div>
@@ -682,7 +682,7 @@ document.getElementById('btnUploadVideo').addEventListener('click', function() {
                     <div class="d-inline-block position-relative" style="display:inline-block;">
                         <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(${data.video_id}, this)">×</button>
                         <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
-                            <source src="/Sigilosas-MySQL/uploads/verificacao/${data.filename}" type="video/mp4">
+                            <source src="<?php echo SITE_URL; ?>/uploads/verificacao/${data.filename}" type="video/mp4">
                             Seu navegador não suporta vídeo.
                         </video>
                     </div>

@@ -44,7 +44,7 @@ $estados = $db->fetchAll("
 
 <!-- Banner Principal -->
 <section class="hero-section position-relative">
-    <div class="hero-bg" style="background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('/Sigilosas-MySQL/assets/img/Imagem-banner01.png') center/cover;">
+    <div class="hero-bg" style="background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('<?php echo SITE_URL; ?>/assets/img/Imagem-banner01.png') center/cover;">
         <div class="container">
             <div class="row min-vh-75 align-items-center">
                 <div class="col-lg-8 col-md-10 mx-auto text-center text-white">
@@ -113,7 +113,7 @@ $posts_recentes = $db->fetchAll("
         <?php
           // Buscar foto de perfil igual ao resultado dos filtros
           $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$a['id']]);
-          $foto_perfil_url = !empty($foto_perfil['url']) ? '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
+          $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
         ?>
         <div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
           <div class='card shadow-sm h-100 acompanhante-card w-100'>
@@ -325,7 +325,7 @@ $posts_recentes = $db->fetchAll("
                 <p class="mb-0">Cadastre-se gratuitamente e conquiste novos clientes com um perfil exclusivo e seguro.</p>
             </div>
             <div class="col-lg-4 text-lg-end">
-                <a href="/Sigilosas-MySQL/pages/cadastro-acompanhante.php" class="btn btn-light btn-lg d-flex align-items-center gap-2">
+                <a href="<?php echo SITE_URL; ?>/pages/cadastro-acompanhante.php" class="btn btn-light btn-lg d-flex align-items-center gap-2">
                     <i class="fas fa-user-plus" style="color:#3D263F;"></i> <span style="color:#3D263F;">Cadastrar Perfil</span>
                 </a>
             </div>
@@ -384,7 +384,7 @@ estadoSelect.addEventListener('change', function() {
     const estadoId = this.value;
     cidadeSelect.innerHTML = '<option value="">Carregando...</option>';
     if (estadoId) {
-        fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + estadoId)
+        fetch('<?php echo SITE_URL; ?>/api/cidades.php?estado_id=' + estadoId)
             .then(res => res.json())
             .then(data => {
                 let options = '<option value="">Selecione a Cidade</option>';
@@ -412,7 +412,7 @@ form.addEventListener('submit', function(e) {
     buscarBtn.disabled = true;
     if (spinnerBusca) spinnerBusca.style.display = 'inline-block';
     resultDiv.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border"></div></div>';
-    fetch(`/Sigilosas-MySQL/api/busca-acompanhantes.php?estado_id=${estadoId}&cidade_id=${cidadeId}`)
+            fetch(`<?php echo SITE_URL; ?>/api/busca-acompanhantes.php?estado_id=${estadoId}&cidade_id=${cidadeId}`)
         .then(res => res.json())
         .then(data => {
             buscarBtn.disabled = false;
@@ -492,7 +492,7 @@ form.addEventListener('submit', function(e) {
                 html += `<div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
                     <div class='card shadow-sm h-100 acompanhante-card w-100'>
                         <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
-                            ${a.foto ? `<img id="${imgId}" src="/Sigilosas-MySQL/uploads/perfil/${a.foto}" class="card-img-top rounded-3" alt="${a.apelido||a.nome}" style="height: 210px; object-fit: cover; width:100%;">` : `<div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>`}
+                            ${a.foto ? `<img id="${imgId}" src="<?php echo SITE_URL; ?>/uploads/perfil/${a.foto}" class="card-img-top rounded-3" alt="${a.apelido||a.nome}" style="height: 210px; object-fit: cover; width:100%;">` : `<div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>`}
                         </div>
                         <div class="flex-grow-1 w-100 px-2 pt-2 pb-0 d-flex flex-column" style="min-height:140px;">
                             <h5 class="card-title mb-1 text-center">${a.apelido||a.nome}</h5>
@@ -508,7 +508,7 @@ form.addEventListener('submit', function(e) {
                             ${sobreMim}
                         </div>
                         <div class="px-3 pb-3 pt-2 w-100">
-                            <a href="/Sigilosas-MySQL/pages/acompanhante.php?id=${a.id}" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
+                            <a href="<?php echo SITE_URL; ?>/pages/acompanhante.php?id=${a.id}" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
                         </div>
                     </div>
                 </div>`;

@@ -96,7 +96,7 @@ include '../includes/header.php';
 <nav aria-label="breadcrumb" class="bg-light py-2">
     <div class="container">
         <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="http://localhost/Sigilosas-MySQL/">Início</a></li>
+                            <li class="breadcrumb-item"><a href="<?php echo SITE_URL; ?>/">Início</a></li>
             <li class="breadcrumb-item active"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></li>
         </ol>
     </div>
@@ -110,7 +110,7 @@ include '../includes/header.php';
   <div class="d-flex flex-column align-items-center">
     <?php
     $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$acompanhante_id]);
-    $foto_perfil_url = !empty($foto_perfil['url']) ? '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : 'https://ui-avatars.com/api/?name=' . urlencode($acompanhante['apelido'] ?? $acompanhante['nome']) . '&size=256&background=6f42c1&color=fff';
+    $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : 'https://ui-avatars.com/api/?name=' . urlencode($acompanhante['apelido'] ?? $acompanhante['nome']) . '&size=256&background=6f42c1&color=fff';
     ?>
     <img src="<?php echo $foto_perfil_url; ?>" class="rounded-circle shadow" style="width:160px;height:160px;object-fit:cover;border:6px solid #F3EAC2; margin-top:-80px; background:#eee;">
     <h2 class="mt-3 mb-1 fw-bold text-center" style="color:#3D263F;"><?php echo htmlspecialchars($acompanhante['apelido'] ?? $acompanhante['nome']); ?></h2>
@@ -390,6 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'avali
 }
 ?>
 
+<script>var SITE_URL = '<?php echo SITE_URL; ?>';</script>
 <script>
 // JS para destacar estrelas ao passar/clicar
 const estrelas = document.querySelectorAll('#estrelasAvaliacao label');
@@ -609,13 +610,13 @@ function abrirGaleria(index) {
   const link = document.getElementById('galeriaImgLink');
   const original = document.getElementById('galeriaOriginal');
   if (img) {
-    img.src = '../uploads/galeria/' + fotosGaleria[index];
+    img.src = SITE_URL + '/uploads/galeria/' + fotosGaleria[index];
   }
   if (contador) {
     contador.textContent = `Foto ${index + 1} de ${fotosGaleria.length}`;
   }
   if (link && original) {
-    const url = '../uploads/galeria/' + fotosGaleria[index];
+    const url = SITE_URL + '/uploads/galeria/' + fotosGaleria[index];
     link.href = url;
     original.href = url;
   }
@@ -684,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (bsModal) bsModal.hide();
       }
       // Cria overlay
-      const url = '../uploads/galeria/' + fotosGaleria[galeriaIndex];
+      const url = SITE_URL + '/uploads/galeria/' + fotosGaleria[galeriaIndex];
       let old = document.getElementById('overlay-original-galeria');
       if (old) old.remove();
       let overlay = document.createElement('div');

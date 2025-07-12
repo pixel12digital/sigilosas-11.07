@@ -9,8 +9,12 @@ if (!defined('SIGILOSAS_CONFIG_LOADED')) {
     if (!defined('SITE_URL')) {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'];
-        $base = '';
-        define('SITE_URL', "$protocol://$host$base");
+        // Força o caminho correto no ambiente local
+        if (strpos($host, 'localhost') !== false) {
+            define('SITE_URL', $protocol . '://' . $host . '/Sigilosas-MySQL');
+        } else {
+            define('SITE_URL', $protocol . '://' . $host);
+        }
     }
     if (!defined('SITE_EMAIL')) define('SITE_EMAIL', 'contato@sigilosasvip.com');
     if (!defined('SITE_PHONE')) define('SITE_PHONE', '(11) 99999-9999');

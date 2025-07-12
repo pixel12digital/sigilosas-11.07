@@ -56,7 +56,7 @@ if (in_array($page, $pages_with_forms)) {
     include $page_file;
 } else {
     // Para outras páginas, incluir header primeiro
-    include 'includes/header.php';
+    include __DIR__ . '/includes/header.php';
     include $page_file;
     include 'includes/footer.php';
 }
