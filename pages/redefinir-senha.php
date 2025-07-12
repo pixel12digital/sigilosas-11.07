@@ -86,10 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $token_valido) {
 
 // Definir variáveis da página
 $pageTitle = 'Redefinir Senha - Sigilosas VIP';
-$pageDescription = 'Redefina sua senha de forma segura.';
-
-// Incluir o header global
-include '../includes/header.php';
+$pageDescription = 'Altere sua senha de forma segura.';
 ?>
 
 <main class="container">
@@ -157,6 +154,4 @@ include '../includes/header.php';
             </div>
         </div>
     </div>
-</main>
-
-<?php include '../includes/footer.php'; ?> 
+</main> 

@@ -89,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $pageTitle = ($acompanhante['apelido'] ?? $acompanhante['nome']) . ' - Sigilosas';
 $pageDescription = $acompanhante['descricao'] ? substr(strip_tags($acompanhante['descricao']), 0, 160) : 'Perfil de ' . ($acompanhante['apelido'] ?? $acompanhante['nome']);
-include '../includes/header.php';
 ?>
 
 <!-- Breadcrumb -->
@@ -168,7 +167,7 @@ include '../includes/header.php';
         <?php foreach ($fotos_galeria as $index => $foto): ?>
           <div class="col-auto">
             <div class="gallery-thumb-link" data-index="<?php echo $index; ?>">
-              <img src="../uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>" class="img-thumbnail gallery-thumb" alt="Miniatura <?php echo $index+1; ?>">
+              <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>" class="img-thumbnail gallery-thumb" alt="Miniatura <?php echo $index+1; ?>">
             </div>
           </div>
         <?php endforeach; ?>
@@ -549,7 +548,7 @@ estrelas.forEach((estrela, idx) => {
     </div>
 <?php endif; ?>
 
-<?php include '../includes/footer.php'; ?>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
 
 <!-- Botão flutuante do WhatsApp Suporte -->
 <style>

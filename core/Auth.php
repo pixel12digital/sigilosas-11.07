@@ -171,7 +171,7 @@ class Auth {
      */
     public function requireAuth() {
         if (!$this->isLoggedIn()) {
-            header('Location: /Sigilosas-MySQL/index.php?page=login');
+            header('Location: ' . SITE_URL . '/pages/login.php');
             exit;
         }
     }
@@ -182,7 +182,7 @@ class Auth {
     public function requireAdmin() {
         $this->requireAuth();
         if (!$this->isAdmin()) {
-            header('Location: /Sigilosas-MySQL/admin/');
+            header('Location: ' . SITE_URL . '/admin/');
             exit;
         }
     }

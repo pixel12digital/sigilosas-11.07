@@ -10,7 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/database.php';
 
 $db = getDB();
 $error = '';
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Painel Administrativo</title>
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -200,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
             
             <div class="text-center mt-4">
-                <a href="../index.php" class="text-muted">
+                <a href="<?php echo SITE_URL; ?>/" class="text-muted">
                     <i class="fas fa-arrow-left"></i> Voltar ao site
                 </a>
             </div>
@@ -208,6 +209,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

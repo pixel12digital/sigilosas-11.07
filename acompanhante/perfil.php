@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 if (!isset($_SESSION['acompanhante_id'])) {
-    header('Location: /Sigilosas-MySQL/pages/login-acompanhante.php');
+    header('Location: ' . SITE_URL . '/pages/login-acompanhante.php');
     exit;
 }
 /**
@@ -59,7 +59,7 @@ document.getElementById('formUploadPerfil').addEventListener('submit', function(
     if (!input.files.length) return;
     var formData = new FormData();
     formData.append('foto', input.files[0]);
-    fetch('/Sigilosas-MySQL/api/upload-foto-perfil.php', {
+            fetch(SITE_URL + '/api/upload-foto-perfil.php', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
@@ -450,8 +450,8 @@ if (!empty($acompanhante['especialidades'])) {
       </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
-      <a href="/Sigilosas-MySQL/pages/acompanhante.php?id=<?php echo $_SESSION['acompanhante_id']; ?>" target="_blank" class="btn btn-outline-primary" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:140px;"><i class="fas fa-eye"></i> Ver Perfil Público</a>
-      <a href="/Sigilosas-MySQL/" class="btn btn-outline-primary text-danger" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:100px;"><i class="fas fa-sign-out-alt"></i> Sair</a>
+      <a href="<?php echo SITE_URL; ?>/pages/acompanhante.php?id=<?php echo $_SESSION['acompanhante_id']; ?>" target="_blank" class="btn btn-outline-primary" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:140px;"><i class="fas fa-eye"></i> Ver Perfil Público</a>
+      <a href="<?php echo SITE_URL; ?>/" class="btn btn-outline-primary text-danger" style="background:#F3EAC2;color:#3D263F;border-color:#F3EAC2;min-width:100px;"><i class="fas fa-sign-out-alt"></i> Sair</a>
     </div>
   </div>
 </div>
@@ -912,7 +912,7 @@ if (!empty($acompanhante['especialidades'])) {
             <!-- Botão Salvar Alterações e Sair sem salvar -->
             <div class="col-12 text-center mt-4 mb-5 d-flex flex-wrap justify-content-center gap-3">
                 <button type="submit" class="btn btn-primary px-4 py-2">Salvar Alterações</button>
-                <a href="/Sigilosas-MySQL/acompanhante/" class="btn btn-outline-primary px-4 py-2">Sair sem salvar</a>
+                <a href="<?php echo SITE_URL; ?>/acompanhante/" class="btn btn-outline-primary px-4 py-2">Sair sem salvar</a>
             </div>
             <div style="height:40px;"></div>
         </form>
@@ -929,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function carregarCidades(estadoId, cidadeIdSelecionada) {
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
-        fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
+                    fetch(SITE_URL + '/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
             .then(response => response.json())
             .then(cidades => {
                 if (!Array.isArray(cidades) || cidades.length === 0) {
@@ -1018,7 +1018,7 @@ document.getElementById('btnUploadVideo').addEventListener('click', function() {
     }
     var formData = new FormData();
     formData.append('video_verificacao', input.files[0]);
-    fetch('/Sigilosas-MySQL/api/upload-video-verificacao.php', {
+            fetch(SITE_URL + '/api/upload-video-verificacao.php', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
@@ -1055,7 +1055,7 @@ document.getElementById('btnUploadVideo').addEventListener('click', function() {
 function excluirFotoGaleria(fotoId, btn) {
     if (!confirm('Tem certeza que deseja excluir esta foto?')) return;
     btn.disabled = true;
-    fetch('/Sigilosas-MySQL/api/delete-foto-galeria.php', {
+            fetch(SITE_URL + '/api/delete-foto-galeria.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'foto_id=' + encodeURIComponent(fotoId)
@@ -1113,7 +1113,7 @@ function previewDocumentosSelecionados(input) {
 function excluirDocumento(docId, btn) {
     if (!confirm('Tem certeza que deseja excluir este documento?')) return;
     btn.disabled = true;
-    fetch('/Sigilosas-MySQL/api/delete-documento.php', {
+            fetch(SITE_URL + '/api/delete-documento.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'documento_id=' + encodeURIComponent(docId)
@@ -1140,7 +1140,7 @@ function excluirDocumento(docId, btn) {
 function excluirVideoVerificacao(videoId, btn) {
     if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
     btn.disabled = true;
-    fetch('/Sigilosas-MySQL/api/delete-video-verificacao.php', {
+            fetch(SITE_URL + '/api/delete-video-verificacao.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'video_id=' + encodeURIComponent(videoId)

@@ -1,6 +1,5 @@
 <?php
 $pageTitle = 'Contato - Sigilosas VIP';
-include '../includes/header.php';
 ?>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Contato</h1>
@@ -24,5 +23,4 @@ include '../includes/header.php';
     </div>
     <button type="submit" class="btn" style="background:#3D263F;color:#F3EAC2;">Enviar</button>
   </form>
-</div>
-<?php include '../includes/footer.php'; ?> 
+</div> 

@@ -19,7 +19,7 @@ $currentUser = $auth->getCurrentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? 'Administração'; ?> - Sigilosas</title>
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -161,13 +161,13 @@ $currentUser = $auth->getCurrentUser();
         <div class="sidebar-menu">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" href="../index.php" target="_blank">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/" target="_blank">
                         <i class="fas fa-globe"></i> Ver Site
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'dashboard.php' ? 'active' : ''; ?>" 
-                       href="/Sigilosas-MySQL/admin/">
+                       href="<?php echo SITE_URL; ?>/admin/">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
@@ -202,7 +202,7 @@ $currentUser = $auth->getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="/Sigilosas-MySQL/admin/logout.php">
+                    <a class="nav-link text-danger" href="<?php echo SITE_URL; ?>/admin/logout.php">
                         <i class="fas fa-sign-out-alt"></i> Sair
                     </a>
                 </li>

@@ -11,6 +11,32 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset($pageTitle) ? $pageTitle : 'Cadastro de Acompanhante'; ?></title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<?php
+/**
+ * Cadastro Público de Acompanhante
+ * Arquivo: pages/cadastro-acompanhante.php
+ */
+
+// Iniciar sessão ANTES de qualquer saída
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('sigilosas_acompanhante_session');
+    session_start();
+}
+
+require_once __DIR__ . '/../config/database.php';
 
 $db = getDB();
 
@@ -165,8 +191,6 @@ $cidades = $db->fetchAll("
 $pageTitle = 'Cadastro de Acompanhante - Sigilosas';
 $pageDescription = 'Cadastre-se como acompanhante e comece a receber propostas.';
 
-// AGORA incluir o header (depois de todo o processamento)
-include '../includes/header.php';
 ?>
 
 <!-- Header da Página -->
@@ -418,6 +442,4 @@ estadoSelect.addEventListener('change', function() {
             });
         });
 });
-</script>
-
-<?php include '../includes/footer.php'; ?> 
+</script> 

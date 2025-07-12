@@ -1,6 +1,6 @@
     </main>
 
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>

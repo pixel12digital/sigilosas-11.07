@@ -54,7 +54,7 @@ try {
             <article class="card border-0 shadow-lg">
                 <!-- Imagem do post -->
                 <?php if ($post['imagem']): ?>
-                    <img src="uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
+                    <img src="<?php echo SITE_URL; ?>/uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
                          class="card-img-top" 
                          alt="<?php echo htmlspecialchars($post['titulo']); ?>"
                          style="max-height: 400px; object-fit: cover;">
@@ -145,7 +145,7 @@ try {
                         <div class="col-md-4 mb-3">
                             <div class="card border-0 shadow-sm h-100">
                                 <?php if ($related['imagem']): ?>
-                                    <img src="uploads/blog/<?php echo htmlspecialchars($related['imagem']); ?>" 
+                                    <img src="<?php echo SITE_URL; ?>/uploads/blog/<?php echo htmlspecialchars($related['imagem']); ?>" 
                                          class="card-img-top" 
                                          alt="<?php echo htmlspecialchars($related['titulo']); ?>"
                                          style="height: 150px; object-fit: cover;">

@@ -307,7 +307,7 @@ $error = $_GET['error'] ?? '';
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <?php if ($denuncia['acompanhante_foto']): ?>
-                                                <img src="../uploads/<?php echo $denuncia['acompanhante_foto']; ?>" 
+                                                <img src="<?php echo SITE_URL; ?>/uploads/<?php echo $denuncia['acompanhante_foto']; ?>" 
                                                      class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                                             <?php else: ?>
                                                 <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 

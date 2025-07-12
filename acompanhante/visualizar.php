@@ -292,7 +292,7 @@ foreach ($rows as $row) {
             </div>
             <div class="card-body text-center">
                 <?php if (!empty($fotos)): ?>
-                    <img src="../uploads/fotos/<?php echo $fotos[0]['arquivo']; ?>" 
+                    <img src="<?php echo SITE_URL; ?>/uploads/fotos/<?php echo $fotos[0]['arquivo']; ?>" 
                          class="img-fluid rounded" alt="Foto Principal" style="max-height: 300px;">
                 <?php else: ?>
                     <div class="py-5">
@@ -380,7 +380,7 @@ foreach ($rows as $row) {
         <div class="row">
             <?php foreach ($fotos as $index => $foto): ?>
                 <div class="col-md-3 col-sm-6 mb-3">
-                    <img src="../uploads/fotos/<?php echo $foto['arquivo']; ?>" 
+                    <img src="<?php echo SITE_URL; ?>/uploads/fotos/<?php echo $foto['arquivo']; ?>" 
                          class="img-fluid rounded" alt="Foto <?php echo $index + 1; ?>"
                          style="height: 200px; object-fit: cover; width: 100%;">
                 </div>
@@ -450,7 +450,7 @@ foreach ($rows as $row) {
                             <td><?php echo htmlspecialchars($doc['nome']); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
                             <td>
-                                <a href="../uploads/documentos/<?php echo $doc['arquivo']; ?>" 
+                                <a href="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo $doc['arquivo']; ?>" 
                                    class="btn btn-outline-info btn-sm" target="_blank">
                                     <i class="fas fa-download"></i>
                                 </a>
@@ -475,7 +475,7 @@ foreach ($rows as $row) {
         <?php if ($acompanhante['status'] === 'ativo'): ?>
             <div class="input-group">
                 <input type="text" class="form-control" 
-                       value="<?php echo 'http://' . $_SERVER['HTTP_HOST'] . '/pages/acompanhante.php?id=' . $_SESSION['acompanhante_id']; ?>" 
+                       value="<?php echo SITE_URL . '/pages/acompanhante.php?id=' . $_SESSION['acompanhante_id']; ?>" 
                        readonly>
                 <button class="btn btn-outline-primary" type="button" onclick="copiarLink()">
                     <i class="fas fa-copy"></i> Copiar

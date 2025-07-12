@@ -67,7 +67,7 @@ CREATE TABLE videos_perfil (
 #### **Upload:**
 ```javascript
 // Upload via AJAX/Fetch
-fetch('/Sigilosas-MySQL/api/upload-video-perfil.php', {
+fetch(SITE_URL + '/api/upload-video-perfil.php', {
     method: 'POST',
     body: formData
 })

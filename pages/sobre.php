@@ -1,6 +1,5 @@
 <?php
 $pageTitle = 'Sobre Nós - Sigilosas VIP';
-include '../includes/header.php';
 ?>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Sobre Nós</h1>
@@ -78,5 +77,4 @@ include '../includes/header.php';
       </div>
     </div>
   </div>
-</div>
-<?php include '../includes/footer.php'; ?> 
+</div> 

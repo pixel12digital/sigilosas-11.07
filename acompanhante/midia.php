@@ -119,8 +119,8 @@ $error = $_GET['error'] ?? '';
                 <?php foreach ($fotos as $foto): ?>
                     <div class="col-md-3 col-sm-6 mb-3">
                         <div class="card h-100">
-                            <img src="../uploads/fotos/<?php echo $foto['arquivo']; ?>" 
-                                 class="card-img-top" alt="Foto" style="height: 200px; object-fit: cover;">
+                                                    <img src="<?php echo SITE_URL; ?>/uploads/fotos/<?php echo $foto['arquivo']; ?>" 
+                             class="card-img-top" alt="Foto" style="height: 200px; object-fit: cover;">
                             <div class="card-body">
                                 <p class="card-text small">
                                     <strong>Ordem:</strong> <?php echo $foto['ordem']; ?><br>
@@ -234,7 +234,7 @@ $error = $_GET['error'] ?? '';
                                 <td><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="../uploads/documentos/<?php echo $doc['arquivo']; ?>" 
+                                        <a href="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo $doc['arquivo']; ?>" 
                                            class="btn btn-outline-info btn-sm" target="_blank">
                                             <i class="fas fa-download"></i>
                                         </a>

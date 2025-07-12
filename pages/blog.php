@@ -80,7 +80,7 @@ try {
                         <!-- Imagem do post -->
                         <div class="position-relative">
                             <?php if ($post['imagem']): ?>
-                                <img src="uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
+                                <img src="<?php echo SITE_URL; ?>/uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
                                      class="card-img-top" 
                                      alt="<?php echo htmlspecialchars($post['titulo']); ?>"
                                      style="height: 200px; object-fit: cover;">

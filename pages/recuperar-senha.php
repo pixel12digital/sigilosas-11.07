@@ -61,9 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Definir variáveis da página
 $pageTitle = 'Recuperar Senha - Sigilosas VIP';
 $pageDescription = 'Recupere sua senha de forma segura.';
-
-// Incluir o header global
-include '../includes/header.php';
 ?>
 
 <main class="container">
@@ -110,6 +107,4 @@ include '../includes/header.php';
             </div>
         </div>
     </div>
-</main>
-
-<?php include '../includes/footer.php'; ?> 
+</main> 

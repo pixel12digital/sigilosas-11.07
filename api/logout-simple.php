@@ -20,6 +20,7 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // Redirecionar para a página inicial
-header('Location: ../index.php?success=Logout realizado com sucesso!');
+require_once __DIR__ . '/../config/config.php';
+header('Location: ' . SITE_URL . '/?success=Logout realizado com sucesso!');
 exit;
 ?> 

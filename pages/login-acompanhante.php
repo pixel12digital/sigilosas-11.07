@@ -1,17 +1,14 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
+echo '<!-- SITE_URL: ' . (defined('SITE_URL') ? SITE_URL : 'NÃO DEFINIDO') . ' -->';
 /**
  * Login de Acompanhante
  * Arquivo: pages/login-acompanhante.php
  */
-
-require_once __DIR__ . '/../config/config.php';
-
-// Iniciar sessão ANTES de qualquer saída
-if (session_status() === PHP_SESSION_NONE) {
-    session_name('sigilosas_acompanhante_session');
-    session_start();
-}
-ob_start();
+/**
+ * Login de Acompanhante
+ * Arquivo: pages/login-acompanhante.php
+ */
 
 require_once __DIR__ . '/../config/database.php';
 
@@ -85,11 +82,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Definir variáveis da página ANTES de incluir o header
 $pageTitle = 'Login de Acompanhante - Sigilosas';
 $pageDescription = 'Acesse seu painel de acompanhante.';
-
-// AGORA incluir o header (depois de todo o processamento)
-include '../includes/header.php';
 ?>
-
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset(
+        $pageTitle) ? $pageTitle : 'Login de Acompanhante'; ?></title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+    <script src="<?php echo SITE_URL; ?>/assets/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
 <!-- Header da Página -->
 <section class="page-header py-5" style="background: #3D263F; color: #F3EAC2;">
     <div class="container">
@@ -192,6 +197,4 @@ document.getElementById('email').addEventListener('blur', function(e) {
         e.target.setCustomValidity('');
     }
 });
-</script>
-
-<?php include '../includes/footer.php'; ?> 
+</script> 

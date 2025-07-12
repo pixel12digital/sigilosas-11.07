@@ -1,6 +1,5 @@
 <?php
 $pageTitle = 'Política de Privacidade - Sigilosas VIP';
-include '../includes/header.php';
 ?>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Política de Privacidade</h1>
@@ -16,5 +15,4 @@ include '../includes/header.php';
   <h5 class="mt-4">5. Alterações nesta Política</h5>
   <p>Reservamo-nos o direito de alterar esta Política de Privacidade a qualquer momento. As alterações serão publicadas nesta página.</p>
   <p class="mt-4">Em caso de dúvidas, entre em contato: <a href="mailto:contato@sigilosasvip.com.br">contato@sigilosasvip.com.br</a></p>
-</div>
-<?php include '../includes/footer.php'; ?> 
+</div> 

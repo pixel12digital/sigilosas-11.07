@@ -169,9 +169,9 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND principal = 1 ORDER BY created_at DESC LIMIT 1", [$id]);
             $foto_perfil_url = $foto_perfil['url'] ?? 'assets/img/default-avatar.svg';
             if ($foto_perfil_url !== 'assets/img/default-avatar.svg') {
-                $miniatura_path = '/Sigilosas-MySQL/uploads/perfil/' . htmlspecialchars($foto_perfil_url);
+                $miniatura_path = SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil_url);
             } else {
-                $miniatura_path = '/Sigilosas-MySQL/' . $foto_perfil_url;
+                $miniatura_path = SITE_URL . '/assets/img/default-avatar.svg';
             }
             ?>
             <img id="fotoPerfilMiniatura"
@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
-        fetch('/Sigilosas-MySQL/api/cidades.php?estado_id=' + estadoId)
+                    fetch(SITE_URL + '/api/cidades.php?estado_id=' + estadoId)
             .then(response => response.json())
             .then(data => {
                 cidadeSelect.innerHTML = '<option value="">Selecione a cidade</option>';
@@ -665,7 +665,7 @@ document.getElementById('btnUploadVideo').addEventListener('click', function() {
     }
     var formData = new FormData();
     formData.append('video_verificacao', input.files[0]);
-    fetch('/Sigilosas-MySQL/api/upload-video-verificacao.php', {
+                fetch(SITE_URL + '/api/upload-video-verificacao.php', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
@@ -699,7 +699,7 @@ document.getElementById('btnUploadVideo').addEventListener('click', function() {
 function excluirVideoVerificacao(videoId, btn) {
     if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
     btn.disabled = true;
-    fetch('/Sigilosas-MySQL/api/delete-video-verificacao.php', {
+                fetch(SITE_URL + '/api/delete-video-verificacao.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'video_id=' + encodeURIComponent(videoId)
@@ -744,7 +744,7 @@ function previewGaleriaFotos(input) {
 function excluirFotoGaleria(fotoId, btn) {
     if (!confirm('Tem certeza que deseja excluir esta foto?')) return;
     btn.disabled = true;
-    fetch('/Sigilosas-MySQL/api/delete-foto-galeria.php', {
+                fetch(SITE_URL + '/api/delete-foto-galeria.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'foto_id=' + encodeURIComponent(fotoId)

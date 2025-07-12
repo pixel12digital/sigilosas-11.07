@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Upload da imagem
                 $imagem = '';
                 if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
-                    $upload_dir = '../uploads/blog/';
+                    $upload_dir = __DIR__ . '/../uploads/blog/';
                     if (!is_dir($upload_dir)) {
                         mkdir($upload_dir, 0755, true);
                     }
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Upload da nova imagem se fornecida
                 if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
-                    $upload_dir = '../uploads/blog/';
+                    $upload_dir = __DIR__ . '/../uploads/blog/';
                     if (!is_dir($upload_dir)) {
                         mkdir($upload_dir, 0755, true);
                     }
@@ -188,7 +188,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                                     <td><?php echo $post['id']; ?></td>
                                     <td>
                                         <?php if ($post['imagem']): ?>
-                                            <img src="../uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
+                                            <img src="<?php echo SITE_URL; ?>/uploads/blog/<?php echo htmlspecialchars($post['imagem']); ?>" 
                                                  alt="Imagem" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                         <?php else: ?>
                                             <div class="bg-light d-flex align-items-center justify-content-center" 
@@ -220,7 +220,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                                         <a href="?edit=<?php echo $post['id']; ?>" class="btn btn-sm btn-outline-primary" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="../index.php?page=post&id=<?php echo $post['id']; ?>" 
+                                        <a href="<?php echo SITE_URL; ?>/pages/post.php?id=<?php echo $post['id']; ?>" 
                                            class="btn btn-sm btn-outline-info" title="Visualizar" target="_blank">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -365,7 +365,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                         <?php if ($edit_post['imagem']): ?>
                             <div class="mt-2">
                                 <label class="form-label">Imagem Atual:</label>
-                                <img src="../uploads/blog/<?php echo htmlspecialchars($edit_post['imagem']); ?>" 
+                                <img src="<?php echo SITE_URL; ?>/uploads/blog/<?php echo htmlspecialchars($edit_post['imagem']); ?>" 
                                      alt="Imagem atual" style="max-width: 200px; height: auto; border-radius: 5px;">
                             </div>
                         <?php endif; ?>

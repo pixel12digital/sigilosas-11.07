@@ -25,6 +25,7 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // Redirecionar para página de login
-header('Location: ../pages/login-acompanhante.php?logout=1');
+require_once __DIR__ . '/../config/config.php';
+header('Location: ' . SITE_URL . '/pages/login-acompanhante.php?logout=1');
 exit;
 ?> 
