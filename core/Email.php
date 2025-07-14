@@ -1,7 +1,14 @@
 <?php
+// Incluir PHPMailer manualmente
+require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/PHPMailer/src/Exception.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
 class Email {
-    
     /**
      * Envia email de recuperação de senha
      */
@@ -9,86 +16,92 @@ class Email {
         $assunto = "Recuperação de Senha - Sigilosas VIP";
         $link = SITE_URL . '/pages/redefinir-senha.php?token=' . $token;
         
-        $mensagem = "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
-                .content { padding: 20px; background: #f8f9fa; }
-                .button { display: inline-block; padding: 12px 24px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; }
-                .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>Sigilosas VIP</h1>
-                    <p>Recuperação de Senha</p>
-                </div>
-                
-                <div class='content'>
-                    <h2>Olá, {$nome}!</h2>
-                    
-                    <p>Recebemos uma solicitação para redefinir sua senha.</p>
-                    
-                    <p>Clique no botão abaixo para criar uma nova senha:</p>
-                    
-                    <p style='text-align: center;'>
-                        <a href='{$link}' class='button'>Redefinir Senha</a>
-                    </p>
-                    
-                    <p><strong>Este link expira em 1 hora.</strong></p>
-                    
-                    <p>Se você não solicitou esta recuperação, ignore este email.</p>
-                    
-                    <p>Se o botão não funcionar, copie e cole este link no seu navegador:</p>
-                    <p style='word-break: break-all;'>{$link}</p>
-                </div>
-                
-                <div class='footer'>
-                    <p>Este é um email automático, não responda a esta mensagem.</p>
-                    <p>&copy; " . date('Y') . " Sigilosas VIP. Todos os direitos reservados.</p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        $mensagem = "<!DOCTYPE html>
+<html lang=\"pt-br\">
+<head>
+    <meta charset=\"UTF-8\">
+    <title>Recuperação de Senha - Sigilosas VIP</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 32px; }
+        .header { background: #3D263F; color: #F3EAC2; padding: 24px 0; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 24px 0; }
+        .button { display: inline-block; padding: 14px 32px; background: #3D263F; color: #F3EAC2; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 24px 0; }
+        .footer { font-size: 12px; color: #888; text-align: center; margin-top: 32px; }
+    </style>
+</head>
+<body>
+    <div class=\"container\">
+        <div class=\"header\">
+            <h1>Sigilosas VIP</h1>
+            <p>Recuperação de Senha</p>
+        </div>
+        <div class=\"content\">
+            <p>Olá, <strong>" . htmlspecialchars($nome) . "</strong>!</p>
+            <p>Recebemos uma solicitação para redefinir sua senha.</p>
+            <p>Clique no botão abaixo para criar uma nova senha. Este link expira em 1 hora:</p>
+            <p style=\"text-align: center;\">
+                <a href=\"$link\" class=\"button\">Redefinir Senha</a>
+            </p>
+            <p>Se o botão não funcionar, copie e cole este link no seu navegador:</p>
+            <p style=\"word-break: break-all; color: #555;\">$link</p>
+            <p>Se você não solicitou esta recuperação, ignore este e-mail.</p>
+        </div>
+        <div class=\"footer\">
+            <p>Este é um e-mail automático, não responda a esta mensagem.</p>
+            <p>&copy; " . date('Y') . " Sigilosas VIP. Todos os direitos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>";
         
-        return self::enviar($email, $assunto, $mensagem);
+        return self::enviarSMTP($email, $assunto, $mensagem);
     }
-    
+
     /**
-     * Envia email usando função mail() do PHP
-     */
-    private static function enviar($para, $assunto, $mensagem) {
-        $headers = array(
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: Sigilosas VIP <noreply@' . $_SERVER['HTTP_HOST'] . '>',
-            'Reply-To: noreply@' . $_SERVER['HTTP_HOST'],
-            'X-Mailer: PHP/' . phpversion()
-        );
-        
-        return mail($para, $assunto, $mensagem, implode("\r\n", $headers));
-    }
-    
-    /**
-     * Envia email usando SMTP (requer configuração adicional)
+     * Envia email usando PHPMailer via SMTP Hostinger
      */
     public static function enviarSMTP($para, $assunto, $mensagem) {
-        // TODO: Implementar envio via SMTP usando PHPMailer ou similar
-        // Por enquanto, usa a função mail() padrão
-        return self::enviar($para, $assunto, $mensagem);
+        $mail = new PHPMailer(true);
+        try {
+            // Configurações do servidor SMTP Hostinger
+            $mail->isSMTP();
+            $mail->Host = 'smtp.hostinger.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'recuperacao@sigilosasvip.com.br';
+            $mail->Password = 'F3Uuj5=W'; // Troque pela senha real
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = 465;
+            $mail->CharSet = 'UTF-8';
+
+            // Remetente
+            $mail->setFrom('recuperacao@sigilosasvip.com.br', 'Sigilosas VIP');
+            $mail->addReplyTo('recuperacao@sigilosasvip.com.br', 'Sigilosas VIP');
+
+            // Destinatário
+            $mail->addAddress($para);
+
+            // Conteúdo
+            $mail->isHTML(true);
+            $mail->Subject = $assunto;
+            $mail->Body    = $mensagem;
+            $mail->AltBody = strip_tags($mensagem);
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log('Erro ao enviar e-mail: ' . $mail->ErrorInfo);
+            return false;
+        }
     }
-    
+
     /**
      * Valida formato de email
      */
     public static function validarEmail($email) {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
-    
+
     /**
      * Limpa tokens expirados
      */

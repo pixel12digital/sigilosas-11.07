@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
 // Iniciar sessão e carregar dependências ANTES de qualquer saída
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -60,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['logged_in'] = true;
                 $_SESSION['login_time'] = time();
                 $_SESSION['success'] = "Login realizado com sucesso!";
+                error_log('Login admin bem-sucedido para: ' . $email);
+                error_log('Sessão admin_id: ' . $_SESSION['admin_id']);
                 header('Location: ' . SITE_URL . '/admin/');
                 exit;
             }
@@ -67,26 +70,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("SELECT id, nome, email, senha, status, verificado FROM acompanhantes WHERE email = ?");
             $stmt->execute([$email]);
             $acompanhante = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($acompanhante && password_verify($senha, $acompanhante['senha'])) {
-                if ($acompanhante['status'] === 'bloqueado') {
-                    $errors[] = 'Sua conta foi bloqueada. Entre em contato conosco.';
-                } else {
-                    $_SESSION['acompanhante_id'] = $acompanhante['id'];
-                    $_SESSION['acompanhante_nome'] = $acompanhante['nome'];
-                    $_SESSION['acompanhante_email'] = $acompanhante['email'];
-                    $_SESSION['acompanhante_status'] = $acompanhante['status'];
-                    $_SESSION['acompanhante_verificado'] = $acompanhante['verificado'];
-                    $_SESSION['acompanhante_aprovada'] = ($acompanhante['status'] === 'aprovado') ? 1 : 0;
-                    $_SESSION['success'] = 'Login realizado com sucesso! Bem-vinda ao seu painel.';
-                    // Atualizar último login
-                    $stmt = $pdo->prepare("UPDATE acompanhantes SET ultimo_login = ? WHERE id = ?");
-                    $stmt->execute([date('Y-m-d H:i:s'), $acompanhante['id']]);
-                    header('Location: ' . SITE_URL . '/acompanhante/');
-                    exit;
-                }
+            if (!$acompanhante) {
+                $errors[] = "Email não encontrado.";
+            } elseif (!password_verify($senha, $acompanhante['senha'])) {
+                $errors[] = "Senha incorreta.";
+            } elseif ($acompanhante['status'] === 'bloqueado') {
+                $errors[] = 'Sua conta foi bloqueada. Entre em contato conosco.';
+            } elseif ($acompanhante['status'] !== 'aprovado') {
+                $errors[] = 'Seu cadastro ainda não foi aprovado.';
+            } else {
+                $_SESSION['acompanhante_id'] = $acompanhante['id'];
+                $_SESSION['acompanhante_nome'] = $acompanhante['nome'];
+                $_SESSION['acompanhante_email'] = $acompanhante['email'];
+                $_SESSION['acompanhante_status'] = $acompanhante['status'];
+                $_SESSION['acompanhante_verificado'] = $acompanhante['verificado'];
+                $_SESSION['acompanhante_aprovada'] = ($acompanhante['status'] === 'aprovado') ? 1 : 0;
+                $_SESSION['success'] = 'Login realizado com sucesso! Bem-vinda ao seu painel.';
+                error_log('Login acompanhante bem-sucedido para: ' . $email);
+                error_log('Sessão acompanhante_id: ' . $_SESSION['acompanhante_id']);
+                // Atualizar último login
+                $stmt = $pdo->prepare("UPDATE acompanhantes SET ultimo_login = ? WHERE id = ?");
+                $stmt->execute([date('Y-m-d H:i:s'), $acompanhante['id']]);
+                header('Location: ' . SITE_URL . '/acompanhante/');
+                exit;
             }
-            // 3. Se não encontrou
-            $errors[] = "Email ou senha incorretos";
         } catch (Exception $e) {
             $errors[] = "Erro interno: " . $e->getMessage();
         }
@@ -101,6 +108,7 @@ $page_description = "Faça login como acompanhante ou administrador.";
 include __DIR__ . '/../includes/header.php';
 ?>
 
+<?php var_dump($errors); ?>
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">

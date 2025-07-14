@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 require_once '../config/config.php';
 require_once '../config/database.php';
 require_once '../core/Email.php';
@@ -34,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
                 
                 // Salvar token no banco (ajustar para acompanhante_id se necessário)
-                $stmt = $pdo->prepare("INSERT INTO recuperacao_senha (usuario_id, token, expira) VALUES (?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO recuperacao_senha (acompanhante_id, token, expira) VALUES (?, ?, ?)");
                 $stmt->execute([$usuario['id'], $token, $expira]);
                 
                 // Enviar email de recuperação
@@ -52,8 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
         } catch (Exception $e) {
-            $mensagem = 'Erro interno. Tente novamente.';
+            $mensagem = 'Erro interno: ' . $e->getMessage();
             $tipo_mensagem = 'erro';
+            error_log('Recuperação de senha - Erro: ' . $e->getMessage());
         }
     }
 }
@@ -63,48 +66,50 @@ $pageTitle = 'Recuperar Senha - Sigilosas VIP';
 $pageDescription = 'Recupere sua senha de forma segura.';
 ?>
 
-<main class="container">
-    <div class="auth-container">
-        <div class="auth-box">
-            <div class="auth-header">
-                <h1><i class="fas fa-key"></i> Recuperar Senha</h1>
-                <p>Digite seu email para receber o link de recuperação</p>
-            </div>
-
-            <?php if ($mensagem): ?>
-                <div class="alert alert-<?php echo $tipo_mensagem; ?>">
-                    <?php echo $mensagem; ?>
+<?php include_once __DIR__ . '/../includes/header.php'; ?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar Senha - Sigilosas VIP</title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h1 class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-key me-2"></i> Recuperar Senha</h1>
+                        <p class="lead text-muted">Digite seu email para receber o link de recuperação</p>
+                    </div>
+                    <?php if ($mensagem): ?>
+                        <div class="alert alert-<?php echo $tipo_mensagem; ?> text-center">
+                            <?php echo $mensagem; ?>
+                        </div>
+                    <?php endif; ?>
+                    <form method="POST" class="mb-3">
+                        <div class="mb-3">
+                            <label for="email" class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="email" name="email" class="form-control form-control-lg" required placeholder="Digite seu email cadastrado" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                        </div>
+                        <div class="d-grid mb-2">
+                            <button type="submit" class="btn btn-primary btn-lg" style="background:#3D263F; border-color:#3D263F;">
+                                <i class="fas fa-paper-plane"></i> Enviar Email de Recuperação
+                            </button>
+                        </div>
+                    </form>
+                    <div class="d-flex justify-content-between">
+                        <a href="login-acompanhante.php" class="link-secondary"><i class="fas fa-arrow-left"></i> Voltar ao Login</a>
+                        <a href="cadastro-acompanhante.php" class="link-secondary"><i class="fas fa-user-plus"></i> Criar Conta</a>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <form method="POST" class="auth-form">
-                <div class="form-group">
-                    <label for="email">
-                        <i class="fas fa-envelope"></i> Email
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        required 
-                        placeholder="Digite seu email cadastrado"
-                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
-                    >
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-paper-plane"></i> Enviar Email de Recuperação
-                </button>
-            </form>
-
-            <div class="auth-links">
-                <a href="login.php" class="link-secondary">
-                    <i class="fas fa-arrow-left"></i> Voltar ao Login
-                </a>
-                <a href="cadastro.php" class="link-secondary">
-                    <i class="fas fa-user-plus"></i> Criar Conta
-                </a>
             </div>
         </div>
     </div>
-</main> 
+</main>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 

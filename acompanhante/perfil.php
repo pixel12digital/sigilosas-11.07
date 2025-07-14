@@ -3,10 +3,9 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 require_once __DIR__ . '/../config/config.php';
-if (session_status() === PHP_SESSION_NONE) {
-    session_name('sigilosas_acompanhante_session');
-    session_start();
-}
+session_name('sigilosas_acompanhante_session');
+session_start();
+// Removido var_dump($_SESSION);
 if (!isset($_SESSION['acompanhante_id'])) {
     header('Location: ' . SITE_URL . '/pages/login-acompanhante.php');
     exit;
@@ -88,7 +87,10 @@ if (!isset($db)) { require_once __DIR__ . '/../config/database.php'; $db = getDB
 $success = '';
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && (!isset($_POST['action']) || $_POST['action'] !== 'upload_video_publico')
+) {
     $formData = [
         'nome' => trim($_POST['nome'] ?? ''),
         'apelido' => trim($_POST['apelido'] ?? ''),
@@ -187,8 +189,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($formData['senha']);
             }
             
-            // Antes do update, garantir que status sempre será 'pendente' ao atualizar
-            $formData['status'] = 'pendente';
+            // Se a acompanhante já está aprovada, só coloca em moderação se houver upload de mídia
+            $colocarEmModeracao = false;
+            $acompanhanteAtual = $db->fetch("SELECT status FROM acompanhantes WHERE id = ?", [$_SESSION['acompanhante_id']]);
+            $jaAprovada = ($acompanhanteAtual && $acompanhanteAtual['status'] === 'aprovado');
+
+            // Detectar upload de fotos da galeria
+            $houveUploadGaleria = isset($_FILES['fotos_galeria']) && !empty($_FILES['fotos_galeria']['name'][0]);
+            // Detectar upload de foto de perfil
+            $houveUploadPerfil = isset($_FILES['foto']) && !empty($_FILES['foto']['name']);
+            // Detectar upload de vídeo de verificação
+            $houveUploadVideo = isset($_FILES['video_verificacao']) && !empty($_FILES['video_verificacao']['name']);
+
+            if ($jaAprovada && ($houveUploadGaleria || $houveUploadPerfil || $houveUploadVideo)) {
+                $formData['status'] = 'pendente';
+            }
+            // Se não está aprovada, mantém lógica anterior (pode manter status pendente)
+            // Se quiser garantir que nunca "volte" para pendente por texto, só mídia, basta não setar status aqui
             $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
             
             $success = 'Perfil atualizado com sucesso!';
@@ -1163,4 +1180,171 @@ function excluirVideoVerificacao(videoId, btn) {
         btn.disabled = false;
     });
 }
+
+// Função para atualizar lista de vídeos dinamicamente
+function atualizarListaVideos() {
+    fetch(SITE_URL + '/api/get-videos-publicos.php', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            var container = document.getElementById('listaVideosPublicos');
+            if (container) {
+                container.innerHTML = data.html;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar lista:', error);
+    });
+}
+
+// Upload de vídeo público via AJAX
+document.getElementById('formVideoPublico').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    var input = document.getElementById('video_publico');
+    var titulo = document.getElementById('titulo_video').value;
+    var descricao = document.getElementById('descricao_video').value;
+    var btn = document.getElementById('btnEnviarVideo');
+    var msg = document.getElementById('msgVideoPublico');
+    
+    if (!input.files.length) {
+        msg.innerHTML = '<div class="alert alert-warning">Selecione um vídeo primeiro.</div>';
+        return;
+    }
+    
+    var file = input.files[0];
+    
+    // Validação de tamanho no frontend
+    if (file.size > 50 * 1024 * 1024) {
+        msg.innerHTML = '<div class="alert alert-danger">O vídeo excede o tamanho máximo permitido (50MB).</div>';
+        return;
+    }
+    
+    // Validação de tipo
+    var allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!allowedTypes.includes(file.type)) {
+        msg.innerHTML = '<div class="alert alert-danger">Formato de vídeo não permitido. Use MP4, WebM ou MOV.</div>';
+        return;
+    }
+    
+    // Desabilitar botão e mostrar loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+    msg.innerHTML = '<div class="alert alert-info">Enviando vídeo, aguarde...</div>';
+    
+    var formData = new FormData();
+    formData.append('video_publico', file);
+    formData.append('titulo_video', titulo);
+    formData.append('descricao_video', descricao);
+    formData.append('action', 'upload_video_publico');
+    
+    fetch(SITE_URL + '/api/upload-video-publico.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            // Limpar formulário
+            document.getElementById('formVideoPublico').reset();
+            // Atualizar lista de vídeos dinamicamente
+            setTimeout(() => {
+                atualizarListaVideos();
+            }, 1000);
+        } else {
+            msg.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        msg.innerHTML = '<div class="alert alert-danger">Erro ao enviar vídeo. Tente novamente. Erro: ' + error.message + '</div>';
+    })
+    .finally(() => {
+        // Reabilitar botão
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
+    });
+});
 </script> 
+
+<!-- Seção de Vídeos Públicos -->
+<div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
+  <div class="card-body">
+    <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos Públicos</div>
+    <div class="mb-2 text-muted">Adicione vídeos curtos para seu perfil público. Apenas vídeos aprovados serão exibidos no site. (Máx. 50MB, formatos: mp4, webm, mov)</div>
+    <form id="formVideoPublico" enctype="multipart/form-data" style="margin-bottom:0;">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label for="video_publico" class="form-label">Selecione o vídeo</label>
+          <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
+        </div>
+        <div class="col-md-3">
+          <label for="titulo_video" class="form-label">Título (opcional)</label>
+          <input type="text" class="form-control" id="titulo_video" name="titulo_video" maxlength="100">
+        </div>
+        <div class="col-md-3">
+          <label for="descricao_video" class="form-label">Descrição (opcional)</label>
+          <input type="text" class="form-control" id="descricao_video" name="descricao_video" maxlength="255">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" id="btnEnviarVideo" class="btn btn-primary w-100"><i class="fas fa-upload"></i> Enviar</button>
+        </div>
+      </div>
+    </form>
+    <div id="msgVideoPublico" class="mt-2"></div>
+    <?php
+    // Listar vídeos já enviados
+    $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
+    if ($videos_publicos): ?>
+    <div id="listaVideosPublicos" class="row mt-4 g-3">
+      <?php foreach ($videos_publicos as $v): ?>
+        <div class="col-md-4 col-6">
+          <div class="card h-100 shadow-sm">
+            <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
+            <div class="p-2">
+              <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
+              <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
+              <span class="badge bg-secondary"><?php echo ucfirst($v['status']); ?></span>
+              <form method="post" class="d-inline">
+                <input type="hidden" name="excluir_video_id" value="<?php echo $v['id']; ?>">
+                <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('Excluir este vídeo?');"><i class="fas fa-trash"></i></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <?php else: ?>
+    <div id="listaVideosPublicos" class="row mt-4 g-3">
+      <div class="col-12 text-center text-muted">Nenhum vídeo enviado ainda.</div>
+    </div>
+    <?php endif; ?>
+  </div>
+</div>
+<?php
+// Processar exclusão de vídeo
+if (isset($_POST['excluir_video_id'])) {
+  $vid = (int)$_POST['excluir_video_id'];
+  $video = $db->fetch("SELECT * FROM videos_publicos WHERE id = ? AND acompanhante_id = ?", [$vid, $_SESSION['acompanhante_id']]);
+  if ($video) {
+    $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
+    if (file_exists($file)) unlink($file);
+    $db->query("DELETE FROM videos_publicos WHERE id = ?", [$vid]);
+    echo '<div class="alert alert-success mt-2">Vídeo excluído com sucesso.</div>';
+    // Redirecionar para evitar repost
+    echo '<script>window.location.href=window.location.href;</script>';
+    exit;
+  }
+}
+?>

@@ -90,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $pageTitle = ($acompanhante['apelido'] ?? $acompanhante['nome']) . ' - Sigilosas';
 $pageDescription = $acompanhante['descricao'] ? substr(strip_tags($acompanhante['descricao']), 0, 160) : 'Perfil de ' . ($acompanhante['apelido'] ?? $acompanhante['nome']);
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <!-- Breadcrumb -->
@@ -121,7 +123,20 @@ $pageDescription = $acompanhante['descricao'] ? substr(strip_tags($acompanhante[
     <?php if (!empty($acompanhante['verificado'])): ?><span class="badge mb-2" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
     <div class="d-flex gap-2 mb-3">
       <?php if (!empty($acompanhante['telefone'])): ?>
-        <a href="tel:<?php echo $acompanhante['telefone']; ?>" class="btn" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-phone"></i> Ver telefone</a>
+        <?php
+          // Formatar número para padrão internacional (somente dígitos)
+          $whats_number = preg_replace('/\D+/', '', $acompanhante['telefone']);
+          if (strlen($whats_number) === 11) {
+            $whats_number = '55' . $whats_number; // Adiciona DDI Brasil se não tiver
+          } elseif (strlen($whats_number) === 13 && substr($whats_number, 0, 2) !== '55') {
+            $whats_number = '55' . substr($whats_number, -11);
+          }
+          $whats_msg = urlencode('Olá, vi seu perfil no SigilosasVIP e gostaria de conversar!');
+          $whats_link = 'https://wa.me/' . $whats_number . '?text=' . $whats_msg;
+        ?>
+        <a href="<?php echo $whats_link; ?>" class="btn" style="background:#3D263F;color:#F3EAC2;" target="_blank">
+          <i class="fab fa-whatsapp"></i> Conversar Agora
+        </a>
       <?php endif; ?>
       <button class="btn" style="background:#F3EAC2;color:#3D263F;border:1.5px solid #3D263F;" data-bs-toggle="modal" data-bs-target="#denunciaModal"><i class="fas fa-flag"></i> Denunciar</button>
       <?php if (!empty($acompanhante['instagram'])): ?><a href="<?php echo htmlspecialchars($acompanhante['instagram']); ?>" class="btn" style="background:#F3EAC2;color:#3D263F;border:1.5px solid #3D263F;" target="_blank"><i class="fab fa-instagram"></i></a><?php endif; ?>
@@ -264,7 +279,23 @@ $pageDescription = $acompanhante['descricao'] ? substr(strip_tags($acompanhante[
     <div class="card-body">
       <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-cogs"></i> Preferências e Serviços</div>
       <ul class="list-unstyled mb-0">
-        <li><b>Especialidades:</b> <?php echo htmlspecialchars($acompanhante['especialidades'] ?? ''); ?></li>
+        <li><b>Especialidades:</b> 
+<?php
+  $especialidades = $acompanhante['especialidades'] ?? '';
+  if ($especialidades) {
+    $espArr = json_decode($especialidades, true);
+    if (is_array($espArr)) {
+      foreach ($espArr as $esp) {
+        echo '<span class="badge bg-secondary me-1" style="background:#F3EAC2;color:#3D263F;font-weight:500;font-size:1em;">' . htmlspecialchars($esp) . '</span>';
+      }
+    } else {
+      echo htmlspecialchars($especialidades);
+    }
+  } else {
+    echo '<span class="text-muted">Não informado</span>';
+  }
+?>
+</li>
         <li><b>Idiomas:</b> <?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?></li>
       </ul>
     </div>
@@ -594,7 +625,7 @@ estrelas.forEach((estrela, idx) => {
 }
 </style>
 <a href="https://wa.me/5547996829294?text=Olá! Preciso de suporte no site Sigilosas." id="whatsapp-suporte" target="_blank" rel="noopener">
-  <span class="wa-icon"><i class="fab fa-whatsapp"></i></span> Suporte
+  <span class="wa-icon"><i class="fab fa-whatsapp"></i></span>
 </a>
 <!-- Certifique-se de que o FontAwesome está carregado para o ícone do WhatsApp -->
 

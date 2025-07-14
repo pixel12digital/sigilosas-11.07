@@ -610,3 +610,37 @@ Este projeto é proprietário da Sigilosas VIP. Todos os direitos reservados.
 ---
 
 **Desenvolvido com ❤️ para a Sigilosas VIP** 
+
+## Configuração de E-mail SMTP para Recuperação de Senha
+
+Para que o sistema envie e-mails de recuperação de senha (e outros avisos) usando seu e-mail profissional na Hostinger, siga as instruções abaixo:
+
+### 1. Dados da Caixa de E-mail
+- **E-mail:** recuperacao@sigilosasvip.com.br
+- **Senha:** (definida no painel da Hostinger)
+
+### 2. Configurações do Servidor SMTP (Hostinger)
+- **Servidor SMTP:** smtp.hostinger.com
+- **Porta:** 465
+- **Criptografia:** SSL
+- **Usuário:** recuperacao@sigilosasvip.com.br
+- **Senha:** (a mesma definida ao criar o e-mail)
+
+### 3. Exemplo de Configuração no Código (PHPMailer ou similar)
+```php
+$mail->isSMTP();
+$mail->Host = 'smtp.hostinger.com';
+$mail->SMTPAuth = true;
+$mail->Username = 'recuperacao@sigilosasvip.com.br';
+$mail->Password = 'SUA_SENHA_AQUI';
+$mail->SMTPSecure = 'ssl';
+$mail->Port = 465;
+```
+
+### 4. Observações
+- Altere a senha no código/configuração sempre que mudar no painel da Hostinger.
+- Nunca deixe a senha exposta em repositórios públicos.
+- Use variáveis de ambiente ou arquivos de configuração protegidos para armazenar as credenciais.
+
+---
+Essas informações garantem que o envio de e-mails de recuperação de senha funcione corretamente em produção. 

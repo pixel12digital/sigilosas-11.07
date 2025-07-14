@@ -12,16 +12,14 @@ $pageDescription = 'Encontre acompanhantes de luxo em sua cidade. Perfis verific
 
 $db = getDB();
 
-// Buscar acompanhantes em destaque (aprovadas e verificadas)
+// Buscar acompanhantes em destaque (aprovadas e destaque=1)
 $acompanhantes_destaque = $db->fetchAll("
-    SELECT a.*, c.nome as cidade_nome, e.nome as estado_nome, e.uf as estado_uf,
-           COALESCE((SELECT COUNT(*) FROM fotos f WHERE f.acompanhante_id = a.id), 0) as total_fotos
+    SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf
     FROM acompanhantes a
     LEFT JOIN cidades c ON a.cidade_id = c.id
     LEFT JOIN estados e ON c.estado_id = e.id
-    WHERE a.status = 'aprovado'
-    ORDER BY a.verificado DESC, a.created_at DESC
-    LIMIT 12
+    WHERE a.status = 'aprovado' AND a.destaque = 1
+    ORDER BY a.created_at DESC
 ");
 
 // Buscar estatísticas
@@ -33,13 +31,12 @@ $stats = [
 
 // Buscar estados para filtro
 $estados = $db->fetchAll("
-    SELECT e.*, COALESCE(COUNT(a.id), 0) as total_acompanhantes
+    SELECT e.*
     FROM estados e
-    LEFT JOIN acompanhantes a ON e.id = a.estado_id AND a.status = 'aprovado'
-    GROUP BY e.id, e.nome, e.uf
-    HAVING total_acompanhantes > 0
-    ORDER BY total_acompanhantes DESC
-    LIMIT 10
+    WHERE EXISTS (
+        SELECT 1 FROM acompanhantes a WHERE a.estado_id = e.id AND a.status = 'aprovado'
+    )
+    ORDER BY e.nome ASC
 ");
 ?>
 
@@ -101,22 +98,22 @@ $posts_recentes = $db->fetchAll("
 ");
 ?>
 
-<!-- Últimas Acompanhantes -->
-<section class="ultimas-acompanhantes-section py-4 bg-white">
+<!-- Seção Destaques -->
+<section class="destaques-section py-4 bg-white">
   <div class="container">
     <div class="row mb-3">
       <div class="col-12 text-center">
-        <h3 class="section-title" style="font-size:1.5rem;">Últimas Acompanhantes</h3>
+        <h3 class="section-title" style="font-size:1.5rem;">Destaques</h3>
+        <div class="text-muted mb-2" style="font-size:1.1em;">Veja as acompanhantes em destaque selecionadas pela nossa curadoria. Perfis verificados, fotos reais e atendimento premium.</div>
       </div>
     </div>
-    <div class="row justify-content-center">
-      <?php foreach ($ultimas_acompanhantes as $a): ?>
+    <div class="row justify-content-center" id="destaques-lista">
+      <?php foreach ($acompanhantes_destaque as $i => $a): ?>
         <?php
-          // Buscar foto de perfil igual ao resultado dos filtros
           $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$a['id']]);
           $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
         ?>
-        <div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
+        <div class="col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center destaque-card" style="<?php echo $i >= 6 ? 'display:none;' : ''; ?>">
           <div class='card shadow-sm h-100 acompanhante-card w-100'>
             <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
               <?php if ($foto_perfil_url): ?>
@@ -127,31 +124,7 @@ $posts_recentes = $db->fetchAll("
             </div>
             <div class="flex-grow-1 w-100 px-2 pt-2 pb-0 d-flex flex-column" style="min-height:140px;">
               <h5 class="card-title mb-1 text-center"><?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?></h5>
-              <div class="text-muted small mb-1 text-center">a partir de</div>
-              <?php
-                // Buscar menor valor e tempo de atendimento
-                $valores = $db->fetchAll("SELECT * FROM valores_atendimento WHERE acompanhante_id = ? ORDER BY valor ASC LIMIT 1", [$a['id']]);
-                if (!empty($valores)) {
-                  $v = $valores[0];
-                  echo "<div class='d-flex align-items-center mb-2 justify-content-center'><span class='fw-bold'>R$ ".number_format($v['valor'],2,',','.')."</span> <span class='text-muted'>- ".$v['tempo']."</span></div>";
-                } else {
-                  echo "<div class='mb-2 text-muted text-center'>Não informado</div>";
-                }
-              ?>
-              <?php if (!empty($a['idade'])): ?>
-                <div class='mb-1 text-center'><i class='fas fa-birthday-cake'></i> <?php echo $a['idade']; ?> anos</div>
-              <?php endif; ?>
-              <div class="mb-1 text-center">
-                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($a['cidade_nome']); ?>, <?php echo htmlspecialchars($a['estado_uf']); ?>
-              </div>
-              <?php if (!empty($a['local_atendimento'])): ?>
-                <?php
-                  $locais = @json_decode($a['local_atendimento'], true);
-                  if (is_array($locais) && count($locais) > 0) {
-                    echo "<div class='mb-1 text-center'><i class='fas fa-home'></i> ".implode(', ', array_map(function($l){return ucfirst(str_replace('_',' ',$l));}, $locais))."</div>";
-                  }
-                ?>
-              <?php endif; ?>
+              <div class="mb-1 text-center"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($a['cidade_nome']); ?>, <?php echo htmlspecialchars($a['estado_uf']); ?></div>
               <?php if (!empty($a['sobre_mim'])): ?>
                 <div class='fw-bold mb-1 mt-2'>Sobre Mim</div>
                 <div class='text-muted small mb-2 px-2'><?php echo mb_strimwidth(strip_tags($a['sobre_mim']),0,180,'...'); ?></div>
@@ -164,6 +137,28 @@ $posts_recentes = $db->fetchAll("
         </div>
       <?php endforeach; ?>
     </div>
+    <?php if (count($acompanhantes_destaque) > 6): ?>
+      <div class="row">
+        <div class="col-12 text-center">
+          <button id="btn-ver-mais-destaques" class="btn btn-primary mt-3" style="background:#3D263F; border-color:#3D263F; color:#F3EAC2;">Ver mais</button>
+        </div>
+      </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          let mostrados = 6;
+          const total = <?php echo count($acompanhantes_destaque); ?>;
+          const cards = document.querySelectorAll('.destaque-card');
+          document.getElementById('btn-ver-mais-destaques').addEventListener('click', function() {
+            let novos = 0;
+            for (let i = mostrados; i < cards.length && novos < 6; i++, novos++) {
+              cards[i].style.display = '';
+            }
+            mostrados += novos;
+            if (mostrados >= total) this.style.display = 'none';
+          });
+        });
+      </script>
+    <?php endif; ?>
   </div>
 </section>
 

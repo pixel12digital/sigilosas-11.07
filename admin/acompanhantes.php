@@ -1,13 +1,30 @@
 <?php
+ob_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_name('sigilosas_admin_session');
     session_start();
 }
+
 require_once '../config/database.php';
 $pageTitle = 'Acompanhantes';
 require_once '../includes/admin-header.php';
 
 $db = getDB();
+
+$acompanhantes = []; // inicializa para evitar warning
+
+// Processar alteração de destaque
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acompanhante_id'], $_POST['destaque'], $_POST['action']) && $_POST['action'] === 'destaque') {
+    $id = (int)$_POST['acompanhante_id'];
+    $destaque = (int)$_POST['destaque'];
+    $db->update('acompanhantes', ['destaque' => $destaque], 'id = ?', [$id]);
+    header('Location: acompanhantes.php?success=1');
+    exit;
+}
 
 // Filtros
 $status_filter = $_GET['status'] ?? '';
@@ -45,7 +62,7 @@ $sql = "SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf
         LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
-$acompanhantes = $db->fetchAll($sql, $params);
+$acompanhantes = $db->fetchAll($sql, $params) ?: [];
 
 // Contar total
 $countSql = "SELECT COUNT(*) as total FROM acompanhantes a
@@ -56,7 +73,7 @@ $total = $db->fetch($countSql, array_slice($params, 0, -2));
 $totalPages = ceil($total['total'] / $limit);
 
 // Mensagens de ação
-$success = $_GET['success'] ?? '';
+$success = isset($_GET['success']) ? 'Destaque atualizado com sucesso!' : ($_GET['success'] ?? '');
 $error = $_GET['error'] ?? '';
 ?>
 <div class="container-fluid">
@@ -159,6 +176,7 @@ $error = $_GET['error'] ?? '';
                                     <td>
                                         <form method="post" style="display:inline;">
                                             <input type="hidden" name="acompanhante_id" value="<?php echo $a['id']; ?>">
+                                            <input type="hidden" name="action" value="destaque">
                                             <select name="destaque" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
                                                 <option value="0" <?php if(!$a['destaque']) echo 'selected'; ?>>Não</option>
                                                 <option value="1" <?php if($a['destaque']) echo 'selected'; ?>>Sim</option>

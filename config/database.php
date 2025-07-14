@@ -51,6 +51,8 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
+            // Garantir timezone de Brasília
+            $this->connection->exec("SET time_zone = '-03:00'");
         } catch (PDOException $e) {
             // Exibe erro detalhado para debug
             die("Erro de conexão com o banco: " . $e->getMessage());

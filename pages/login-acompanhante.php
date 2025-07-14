@@ -1,4 +1,6 @@
 <?php
+session_name('sigilosas_acompanhante_session');
+session_start();
 require_once __DIR__ . '/../config/config.php';
 echo '<!-- SITE_URL: ' . (defined('SITE_URL') ? SITE_URL : 'NÃO DEFINIDO') . ' -->';
 /**
@@ -139,7 +141,7 @@ $pageDescription = 'Acesse seu painel de acompanhante.';
                                 <input type="password" class="form-control" id="senha" name="senha" 
                                        required>
                                 <div class="form-text">
-                                    <a href="#" class="text-decoration-none" onclick="alert('Entre em contato conosco para recuperar sua senha.')">
+                                    <a href="recuperar-senha.php" class="text-decoration-none">
                                         Esqueceu sua senha?
                                     </a>
                                 </div>

@@ -117,7 +117,7 @@
       text-decoration: none;
     }
     #whatsapp-suporte .wa-icon {
-      font-size: 1rem;
+      font-size: 1.7rem;
       margin: 0;
     }
     #suporte-label {
@@ -144,15 +144,15 @@
         height: 44px;
       }
       #suporte-label {
-        bottom: 16px;
-        right: 68px;
+        bottom: 60px;
+        right: 16px;
         font-size: 0.95rem;
         padding: 6px 12px;
       }
     }
     </style>
     <span id="suporte-label">Suporte</span>
-    <a href="https://wa.me/5547996829294?text=Olá! Preciso de suporte no site Sigilosas." id="whatsapp-suporte" target="_blank" rel="noopener">
+    <a href="https://wa.me/5547996829294?text=Ol%C3%A1!%20Preciso%20de%20suporte%20no%20site%20Sigilosas." id="whatsapp-suporte" target="_blank" rel="noopener">
       <span class="wa-icon"><i class="fab fa-whatsapp"></i></span>
     </a>
     <!-- Certifique-se de que o FontAwesome está carregado para o ícone do WhatsApp -->

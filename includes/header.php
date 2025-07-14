@@ -6,6 +6,9 @@ echo '<!-- SITE_URL: ' . SITE_URL . ' -->'; ?>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        const SITE_URL = "<?php echo SITE_URL; ?>";
+    </script>
     <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Sigilosas VIP - Acompanhantes de Luxo</title>
     <meta name="description" content="<?php echo isset($page_description) ? $page_description : 'Encontre as melhores acompanhantes de luxo do Brasil. Perfis verificados e seguros.'; ?>">
     
