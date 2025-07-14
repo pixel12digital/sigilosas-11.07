@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
 $page_title = "Blog";
 $page_description = "Leia artigos, dicas e novidades sobre o mundo das acompanhantes de luxo no nosso blog.";
 
@@ -24,6 +25,15 @@ try {
 }
 ?>
 
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo isset($page_title) ? $page_title : 'Blog Sigilosas VIP'; ?></title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
 <div class="container py-5">
     <!-- Header -->
     <div class="row mb-5">

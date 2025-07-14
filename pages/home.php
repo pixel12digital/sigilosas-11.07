@@ -4,6 +4,7 @@
  * Arquivo: pages/home.php
  */
 
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 
 $pageTitle = 'Sigilosas - Encontre Acompanhantes de Luxo';

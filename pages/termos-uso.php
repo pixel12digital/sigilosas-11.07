@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Termos de Uso - Sigilosas VIP';
 ?>
 <div class="container py-5">
