@@ -1,6 +1,16 @@
 <?php
-$pageTitle = 'Política de Privacidade - Sigilosas VIP';
+require_once __DIR__ . '/../config/config.php';
+include_once __DIR__ . '/../includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Política de Privacidade - Sigilosas VIP</title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Política de Privacidade</h1>
   <p>Esta Política de Privacidade descreve como coletamos, usamos e protegemos as informações dos usuários do Sigilosas VIP. Ao utilizar nosso site, você concorda com as práticas descritas neste documento.</p>
@@ -15,4 +25,7 @@ $pageTitle = 'Política de Privacidade - Sigilosas VIP';
   <h5 class="mt-4">5. Alterações nesta Política</h5>
   <p>Reservamo-nos o direito de alterar esta Política de Privacidade a qualquer momento. As alterações serão publicadas nesta página.</p>
   <p class="mt-4">Em caso de dúvidas, entre em contato: <a href="mailto:contato@sigilosasvip.com.br">contato@sigilosasvip.com.br</a></p>
-</div> 
+</div>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 

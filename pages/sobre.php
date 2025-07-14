@@ -1,4 +1,17 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
+include_once __DIR__ . '/../includes/header.php';
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sobre Nós - Sigilosas VIP</title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
+<?php
 $pageTitle = 'Sobre Nós - Sigilosas VIP';
 ?>
 <div class="container py-5">
@@ -77,4 +90,7 @@ $pageTitle = 'Sobre Nós - Sigilosas VIP';
       </div>
     </div>
   </div>
-</div> 
+</div>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 

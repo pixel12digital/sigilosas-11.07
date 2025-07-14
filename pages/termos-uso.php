@@ -1,7 +1,16 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Termos de Uso - Sigilosas VIP';
+include_once __DIR__ . '/../includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Termos de Uso - Sigilosas VIP</title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Termos de Uso</h1>
   <p>Ao acessar e utilizar o Sigilosas VIP, você concorda com os seguintes termos e condições:</p>
@@ -14,4 +23,7 @@ $pageTitle = 'Termos de Uso - Sigilosas VIP';
     <li>O uso do site implica na aceitação integral destes termos.</li>
   </ul>
   <p class="mt-4">Em caso de dúvidas, entre em contato: <a href="mailto:contato@sigilosasvip.com.br">contato@sigilosasvip.com.br</a></p>
-</div> 
+</div>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 

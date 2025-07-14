@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+include_once __DIR__ . '/../includes/header.php';
 $page_title = "Blog";
 $page_description = "Leia artigos, dicas e novidades sobre o mundo das acompanhantes de luxo no nosso blog.";
 
@@ -381,3 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
     categoriaSelect.addEventListener('change', filtrarPosts);
 });
 </script> 
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 

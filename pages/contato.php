@@ -1,7 +1,16 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Contato - Sigilosas VIP';
+include_once __DIR__ . '/../includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Contato - Sigilosas VIP</title>
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+</head>
+<body>
 <div class="container py-5">
   <h1 class="mb-4" style="color:#3D263F;">Contato</h1>
   <p>Entre em contato conosco pelo formulário abaixo ou pelos nossos canais oficiais:</p>
@@ -24,4 +33,7 @@ $pageTitle = 'Contato - Sigilosas VIP';
     </div>
     <button type="submit" class="btn" style="background:#3D263F;color:#F3EAC2;">Enviar</button>
   </form>
-</div> 
+</div>
+<?php include_once __DIR__ . '/../includes/footer.php'; ?>
+</body>
+</html> 
