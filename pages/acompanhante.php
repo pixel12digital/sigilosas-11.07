@@ -43,8 +43,11 @@ $videos = $db->fetchAll("
     ORDER BY id ASC
 ", [$acompanhante_id]);
 
-// Buscar fotos da galeria da acompanhante
-$fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AND tipo = 'galeria' ORDER BY id ASC", [$acompanhante_id]);
+// Buscar fotos da galeria da acompanhante (apenas aprovadas)
+$fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AND tipo = 'galeria' AND aprovada = 1 ORDER BY id ASC", [$acompanhante_id]);
+
+// Buscar vídeos públicos da acompanhante (apenas aprovados)
+$videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? AND status = 'aprovado' ORDER BY created_at DESC", [$acompanhante_id]);
 
 // Processar formulário de contato
 $success_message = '';
@@ -216,9 +219,11 @@ require_once __DIR__ . '/../includes/header.php';
           <?php else: ?>
             <div class="text-muted">Valores não informados.</div>
           <?php endif; ?>
-        </div>
-      </div>
-    </div>
+            </div>
+  </div>
+</div>
+
+
     <!-- Card Localização -->
     <div class="col-md-6">
       <div class="card shadow-sm mb-3" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
@@ -448,6 +453,33 @@ estrelas.forEach((estrela, idx) => {
   for (let i = 0; i < estrelas.length; i++) estrelas[i].style.color = (i < val) ? '#ffc107' : '#e83e8c';
 })();
 </script>
+
+  <!-- Seção de Vídeos Públicos -->
+  <?php if (!empty($videos_publicos)): ?>
+    <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
+      <div class="card-body">
+        <div class="fw-bold mb-3" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos</div>
+        <div class="row g-3">
+          <?php foreach ($videos_publicos as $video): ?>
+            <div class="col-md-4 col-6">
+              <div class="text-center">
+                <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($video['url']); ?>" 
+                       controls 
+                       style="width:100%; max-width:200px; aspect-ratio:9/16; height:auto; max-height:300px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;">
+                </video>
+                <?php if (!empty($video['titulo'])): ?>
+                  <div class="mt-2 fw-bold small"><?php echo htmlspecialchars($video['titulo']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($video['descricao'])): ?>
+                  <div class="text-muted small"><?php echo htmlspecialchars($video['descricao']); ?></div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 
   <!-- Segurança -->
   <div class="alert mt-4 mb-5" style="background:#3D263F;color:#F3EAC2;">

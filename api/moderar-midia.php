@@ -18,25 +18,37 @@ if (!$id || !in_array($acao, ['aprovar', 'reprovar']) || !in_array($tipo, ['foto
 }
 
 $db = getDB();
-$status = $acao === 'aprovar' ? 'aprovado' : 'rejeitado';
 $tabela = '';
+$campo = '';
+$valor = $acao === 'aprovar' ? 1 : 0;
+
 switch ($tipo) {
     case 'foto':
         $tabela = 'fotos';
+        $campo = 'aprovada';
         break;
     case 'documento':
         $tabela = 'documentos_acompanhante';
+        $campo = 'verificado';
         break;
     case 'video_verificacao':
         $tabela = 'videos_verificacao';
+        $campo = 'verificado';
         break;
 }
-if (!$tabela) {
+
+if (!$tabela || !$campo) {
     echo json_encode(['success' => false, 'message' => 'Tipo de mídia inválido.']);
     exit;
 }
+
 try {
-    $ok = $db->update($tabela, ['status' => $status], 'id = ?', [$id]);
+    $data = [$campo => $valor];
+    if ($acao === 'reprovar') {
+        $data['motivo_rejeicao'] = 'Reprovado pelo administrador';
+    }
+    
+    $ok = $db->update($tabela, $data, 'id = ?', [$id]);
     if ($ok) {
         echo json_encode(['success' => true, 'message' => 'Status atualizado com sucesso!']);
     } else {

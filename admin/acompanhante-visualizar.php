@@ -569,6 +569,13 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                             <?php elseif (preg_match('/\.pdf$/i', $doc['url'])): ?>
                                 <a href="<?php echo SITE_URL; ?>/uploads/documentos/<?php echo htmlspecialchars($doc['url']); ?>" target="_blank">Ver PDF</a>
                             <?php endif; ?>
+                            <div class="mt-1 text-center">
+                                <span class="badge bg-<?php echo $doc['verificado'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $doc['verificado'] ? 'Verificado' : 'Pendente'; ?></span>
+                                <?php if (!$doc['verificado']): ?>
+                                    <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="documento" data-midia-id="<?php echo $doc['id']; ?>" title="Aprovar">✓</button>
+                                <?php endif; ?>
+                                <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="documento" data-midia-id="<?php echo $doc['id']; ?>" title="Reprovar">✗</button>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -591,6 +598,13 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                             <source src="<?php echo SITE_URL; ?>/uploads/verificacao/<?php echo htmlspecialchars($videos_verificacao[0]['url']); ?>" type="video/mp4">
                             Seu navegador não suporta vídeo.
                         </video>
+                        <div class="mt-1 text-center">
+                            <span class="badge bg-<?php echo $videos_verificacao[0]['verificado'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $videos_verificacao[0]['verificado'] ? 'Verificado' : 'Pendente'; ?></span>
+                            <?php if (!$videos_verificacao[0]['verificado']): ?>
+                                <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="video_verificacao" data-midia-id="<?php echo $videos_verificacao[0]['id']; ?>" title="Aprovar">✓</button>
+                            <?php endif; ?>
+                            <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="video_verificacao" data-midia-id="<?php echo $videos_verificacao[0]['id']; ?>" title="Reprovar">✗</button>
+                        </div>
                     </div>
                 <?php else: ?>
                     <div class="text-muted">Nenhum vídeo enviado.</div>
@@ -610,6 +624,13 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                             <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>"
                                  alt="Foto Galeria"
                                  style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
+                            <div class="mt-1 text-center">
+                                <span class="badge bg-<?php echo $foto['aprovada'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $foto['aprovada'] ? 'Aprovada' : 'Pendente'; ?></span>
+                                <?php if (!$foto['aprovada']): ?>
+                                    <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="foto" data-midia-id="<?php echo $foto['id']; ?>" title="Aprovar">✓</button>
+                                <?php endif; ?>
+                                <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="foto" data-midia-id="<?php echo $foto['id']; ?>" title="Reprovar">✗</button>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -646,16 +667,10 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                         else echo 'warning text-dark';
                       ?> mt-1"><?php echo ucfirst($v['status']); ?></span>
                       <?php if ($v['status'] !== 'aprovado'): ?>
-                        <form method="post" class="d-inline">
-                          <input type="hidden" name="video_id" value="<?php echo $v['id']; ?>">
-                          <button type="submit" name="aprovar_video" class="btn btn-success btn-sm ms-2">Aprovar</button>
-                        </form>
+                        <button type="button" name="aprovar_video" class="btn btn-success btn-sm ms-2" onclick="atualizarStatusVideo(<?php echo $v['id']; ?>, 'aprovar', this)">Aprovar</button>
                       <?php endif; ?>
                       <?php if ($v['status'] !== 'rejeitado'): ?>
-                        <form method="post" class="d-inline">
-                          <input type="hidden" name="video_id" value="<?php echo $v['id']; ?>">
-                          <button type="submit" name="reprovar_video" class="btn btn-danger btn-sm ms-2">Reprovar</button>
-                        </form>
+                        <button type="button" name="reprovar_video" class="btn btn-danger btn-sm ms-2" onclick="atualizarStatusVideo(<?php echo $v['id']; ?>, 'reprovar', this)">Reprovar</button>
                       <?php endif; ?>
                     </div>
                   </div>
@@ -872,20 +887,7 @@ function atualizarStatusVideo(videoId, acao, btn) {
         btn.disabled = false;
     });
 }
-document.querySelectorAll('button[name="aprovar_video"]').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const videoId = this.closest('form').querySelector('input[name="video_id"]').value;
-        atualizarStatusVideo(videoId, 'aprovar', this);
-    });
-});
-document.querySelectorAll('button[name="reprovar_video"]').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const videoId = this.closest('form').querySelector('input[name="video_id"]').value;
-        atualizarStatusVideo(videoId, 'reprovar', this);
-    });
-});
+
 
 function atualizarStatusMidia(tipo, id, acao, btn) {
     btn.disabled = true;
@@ -897,11 +899,13 @@ function atualizarStatusMidia(tipo, id, acao, btn) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const card = btn.closest('.card, .d-inline-block');
+            const card = btn.closest('.card, .d-inline-block, .galeria-item');
             const badge = card.querySelector('.badge');
             badge.className = 'badge mt-1 bg-' + (acao === 'aprovar' ? 'success' : 'danger');
-            badge.textContent = acao === 'aprovar' ? 'Aprovado' : 'Rejeitado';
-            card.querySelectorAll('form.d-inline').forEach(f => f.remove());
+            badge.textContent = acao === 'aprovar' ? (tipo === 'documento' || tipo === 'video_verificacao' ? 'Verificado' : 'Aprovado') : 'Rejeitado';
+            
+            // Remove botões de ação
+            card.querySelectorAll('[data-midia-aprovar], [data-midia-reprovar]').forEach(b => b.remove());
         } else {
             alert(data.message || 'Erro ao atualizar status.');
             btn.disabled = false;
