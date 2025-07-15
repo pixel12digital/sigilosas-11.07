@@ -58,6 +58,7 @@ $video_id = $db->insert('videos_verificacao', [
     'url' => $filename,
     'tamanho' => $file['size'],
     'formato' => $file_extension,
+    'status' => 'pendente',
     'created_at' => date('Y-m-d H:i:s'),
     'updated_at' => date('Y-m-d H:i:s')
 ]);

@@ -76,6 +76,7 @@ foreach ($tipos as $inputName => $tipoDoc) {
         'storage_path' => $filename,
         'tamanho' => $file['size'],
         'formato' => $file_extension,
+        'status' => 'pendente',
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ]);

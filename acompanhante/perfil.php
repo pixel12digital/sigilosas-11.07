@@ -209,6 +209,8 @@ if (
             $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
             
             $success = 'Perfil atualizado com sucesso!';
+            echo '<script>window.location.href = "/acompanhante/";</script>';
+            exit;
             
             // Atualizar dados da sessão
             $_SESSION['acompanhante_nome'] = $formData['nome'];
@@ -926,7 +928,78 @@ if (!empty($acompanhante['especialidades'])) {
                 <div id="previewGaleria" class="d-flex justify-content-center gap-3 flex-wrap mt-2 mb-2"></div>
             </div>
 
-            <!-- Botão Salvar Alterações e Sair sem salvar -->
+            <!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
+            <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
+              <div class="card-body">
+                <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos Públicos</div>
+                <div class="mb-2 text-muted">Adicione vídeos curtos para seu perfil público. Apenas vídeos aprovados serão exibidos no site. (Máx. 50MB, formatos: mp4, webm, mov)</div>
+                <form id="formVideoPublico" enctype="multipart/form-data" style="margin-bottom:0;">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                      <label for="video_publico" class="form-label">Selecione o vídeo</label>
+                      <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label for="titulo_video" class="form-label">Título (opcional)</label>
+                      <input type="text" class="form-control" id="titulo_video" name="titulo_video" maxlength="100">
+                    </div>
+                    <div class="col-md-3">
+                      <label for="descricao_video" class="form-label">Descrição (opcional)</label>
+                      <input type="text" class="form-control" id="descricao_video" name="descricao_video" maxlength="255">
+                    </div>
+                    <div class="col-md-2">
+                      <button type="submit" id="btnEnviarVideo" class="btn btn-primary w-100"><i class="fas fa-upload"></i> Enviar</button>
+                    </div>
+                  </div>
+                </form>
+                <div id="msgVideoPublico" class="mt-2"></div>
+                <?php
+                // Listar vídeos já enviados
+                $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
+                if ($videos_publicos): ?>
+                <div id="listaVideosPublicos" class="row mt-4 g-3">
+                  <?php foreach ($videos_publicos as $v): ?>
+                    <div class="col-md-4 col-6">
+                      <div class="card h-100 shadow-sm">
+                        <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
+                        <div class="p-2">
+                          <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
+                          <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
+                          <span class="badge bg-secondary"><?php echo ucfirst($v['status']); ?></span>
+                          <form method="post" class="d-inline">
+                            <input type="hidden" name="excluir_video_id" value="<?php echo $v['id']; ?>">
+                            <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('Excluir este vídeo?');"><i class="fas fa-trash"></i></button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <div id="listaVideosPublicos" class="row mt-4 g-3">
+                  <div class="col-12 text-center text-muted">Nenhum vídeo enviado ainda.</div>
+                </div>
+                <?php endif; ?>
+              </div>
+            </div>
+            <?php
+            // Processar exclusão de vídeo
+            if (isset($_POST['excluir_video_id'])) {
+              $vid = (int)$_POST['excluir_video_id'];
+              $video = $db->fetch("SELECT * FROM videos_publicos WHERE id = ? AND acompanhante_id = ?", [$vid, $_SESSION['acompanhante_id']]);
+              if ($video) {
+                $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
+                if (file_exists($file)) unlink($file);
+                $db->query("DELETE FROM videos_publicos WHERE id = ?", [$vid]);
+                echo '<div class="alert alert-success mt-2">Vídeo excluído com sucesso.</div>';
+                // Redirecionar para evitar repost
+                echo '<script>window.location.href=window.location.href;</script>';
+                exit;
+              }
+            }
+            ?>
+
+            <!-- Botão Salvar Alterações e Sair sem salvar (MOVIDO) -->
             <div class="col-12 text-center mt-4 mb-5 d-flex flex-wrap justify-content-center gap-3">
                 <button type="submit" class="btn btn-primary px-4 py-2">Salvar Alterações</button>
                 <a href="<?php echo SITE_URL; ?>/acompanhante/" class="btn btn-outline-primary px-4 py-2">Sair sem salvar</a>
@@ -1278,141 +1351,3 @@ document.getElementById('formVideoPublico').addEventListener('submit', function(
 });
 </script> 
 
-<!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
-<div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
-  <div class="card-body">
-    <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos Públicos</div>
-    <div class="mb-2 text-muted">Adicione vídeos curtos para seu perfil público. Apenas vídeos aprovados serão exibidos no site. (Máx. 50MB, formatos: mp4, webm, mov)</div>
-    <form id="formVideoPublico" enctype="multipart/form-data" style="margin-bottom:0;">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label for="video_publico" class="form-label">Selecione o vídeo</label>
-          <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
-        </div>
-        <div class="col-md-3">
-          <label for="titulo_video" class="form-label">Título (opcional)</label>
-          <input type="text" class="form-control" id="titulo_video" name="titulo_video" maxlength="100">
-        </div>
-        <div class="col-md-3">
-          <label for="descricao_video" class="form-label">Descrição (opcional)</label>
-          <input type="text" class="form-control" id="descricao_video" name="descricao_video" maxlength="255">
-        </div>
-        <div class="col-md-2">
-          <button type="submit" id="btnEnviarVideo" class="btn btn-primary w-100"><i class="fas fa-upload"></i> Enviar</button>
-        </div>
-      </div>
-    </form>
-    <div id="msgVideoPublico" class="mt-2"></div>
-    <?php
-    // Listar vídeos já enviados
-    $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
-    if ($videos_publicos): ?>
-    <div id="listaVideosPublicos" class="row mt-4 g-3">
-      <?php foreach ($videos_publicos as $v): ?>
-        <div class="col-md-4 col-6">
-          <div class="card h-100 shadow-sm">
-            <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
-            <div class="p-2">
-              <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
-              <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
-              <span class="badge bg-secondary"><?php echo ucfirst($v['status']); ?></span>
-              <form method="post" class="d-inline">
-                <input type="hidden" name="excluir_video_id" value="<?php echo $v['id']; ?>">
-                <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('Excluir este vídeo?');"><i class="fas fa-trash"></i></button>
-              </form>
-            </div>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-    <?php else: ?>
-    <div id="listaVideosPublicos" class="row mt-4 g-3">
-      <div class="col-12 text-center text-muted">Nenhum vídeo enviado ainda.</div>
-    </div>
-    <?php endif; ?>
-  </div>
-</div>
-<?php
-// Processar exclusão de vídeo
-if (isset($_POST['excluir_video_id'])) {
-  $vid = (int)$_POST['excluir_video_id'];
-  $video = $db->fetch("SELECT * FROM videos_publicos WHERE id = ? AND acompanhante_id = ?", [$vid, $_SESSION['acompanhante_id']]);
-  if ($video) {
-    $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
-    if (file_exists($file)) unlink($file);
-    $db->query("DELETE FROM videos_publicos WHERE id = ?", [$vid]);
-    echo '<div class="alert alert-success mt-2">Vídeo excluído com sucesso.</div>';
-    // Redirecionar para evitar repost
-    echo '<script>window.location.href=window.location.href;</script>';
-    exit;
-  }
-}
-?>
-
-
-<script>
-// Upload de vídeo público via AJAX
-document.getElementById('formVideoPublico').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var input = document.getElementById('video_publico');
-    var titulo = document.getElementById('titulo_video').value;
-    var descricao = document.getElementById('descricao_video').value;
-    var btn = document.getElementById('btnEnviarVideo');
-    var msg = document.getElementById('msgVideoPublico');
-    if (!input.files.length) {
-        msg.innerHTML = '<div class="alert alert-warning">Selecione um vídeo primeiro.</div>';
-        return;
-    }
-    var file = input.files[0];
-    // Validação de tamanho no frontend
-    if (file.size > 50 * 1024 * 1024) {
-        msg.innerHTML = '<div class="alert alert-danger">O vídeo excede o tamanho máximo permitido (50MB).</div>';
-        return;
-    }
-    btn.disabled = true;
-    msg.innerHTML = '<div class="alert alert-info">Enviando vídeo, aguarde...</div>';
-    var formData = new FormData();
-    formData.append('video_publico', file);
-    formData.append('titulo_video', titulo);
-    formData.append('descricao_video', descricao);
-    fetch(SITE_URL + '/api/upload-video-publico.php', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        btn.disabled = false;
-        if (data.success) {
-            msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-            document.getElementById('formVideoPublico').reset();
-            setTimeout(() => { atualizarListaVideos(); }, 1000);
-        } else {
-            msg.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-        }
-    })
-    .catch(error => {
-        btn.disabled = false;
-        msg.innerHTML = '<div class="alert alert-danger">Erro ao enviar vídeo. Tente novamente.</div>';
-    });
-});
-// Função para atualizar lista de vídeos dinamicamente
-function atualizarListaVideos() {
-    fetch(SITE_URL + '/api/get-videos-publicos.php', {
-        method: 'GET',
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            var container = document.getElementById('listaVideosPublicos');
-            if (container) {
-                container.innerHTML = data.html;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao atualizar lista:', error);
-    });
-}
-</script>

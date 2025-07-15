@@ -63,6 +63,7 @@ for ($i = 0; $i < count($files['name']); $i++) {
         'tipo' => 'galeria',
         'tamanho' => $files['size'][$i],
         'formato' => $file_extension,
+        'status' => 'pendente',
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ]);

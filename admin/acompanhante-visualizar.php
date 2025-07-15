@@ -139,6 +139,21 @@ $acompanhante = $db->fetch("
     LEFT JOIN estados e ON c.estado_id = e.id
     WHERE a.id = ?
 ", [$id]);
+
+// Processar aprovação/reprovação de vídeo público
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['aprovar_video'], $_POST['video_id'])) {
+        $video_id = (int)$_POST['video_id'];
+        $db->update('videos_publicos', ['status' => 'aprovado'], 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
+        $success = 'Vídeo aprovado com sucesso!';
+    }
+    if (isset($_POST['reprovar_video'], $_POST['video_id'])) {
+        $video_id = (int)$_POST['video_id'];
+        $db->update('videos_publicos', ['status' => 'rejeitado'], 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
+        $success = 'Vídeo reprovado com sucesso!';
+    }
+}
+
 if (!$acompanhante) {
     echo '<div class="alert alert-danger">Acompanhante não encontrada.</div>';
     require_once '../includes/admin-footer.php';
@@ -605,6 +620,53 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             <div id="previewGaleria" class="d-flex justify-content-center gap-3 flex-wrap mt-2 mb-2"></div>
         </div>
         <!-- FIM SEÇÃO DE VÍDEO DE VERIFICAÇÃO -->
+
+        <!-- SEÇÃO DE VÍDEOS PÚBLICOS (ADMIN) -->
+        <div class="col-12 mt-4 text-center" id="secao-videos-publicos">
+          <div class="d-flex justify-content-between align-items-center mb-2" style="max-width:900px;margin:auto;">
+            <h5 class="mb-0"><i class="fas fa-video"></i> Vídeos Públicos</h5>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.location.reload()"><i class="fas fa-sync-alt"></i> Atualizar</button>
+          </div>
+          <div class="mb-2 text-muted">Vídeos enviados pela acompanhante para o perfil público. Apenas vídeos aprovados são exibidos no site.</div>
+          <div id="listaVideosPublicos" class="row mt-4 g-3">
+            <?php
+            $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$id]);
+            if ($videos_publicos): ?>
+              <?php foreach ($videos_publicos as $v): ?>
+                <div class="col-md-4 col-6">
+                  <div class="card h-100 shadow-sm">
+                    <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
+                    <div class="p-2">
+                      <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
+                      <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
+                      <div class="text-muted small">Enviado em: <?php echo date('d/m/Y', strtotime($v['created_at'])); ?></div>
+                      <span class="badge bg-<?php
+                        if ($v['status'] === 'aprovado') echo 'success';
+                        elseif ($v['status'] === 'rejeitado') echo 'danger';
+                        else echo 'warning text-dark';
+                      ?> mt-1"><?php echo ucfirst($v['status']); ?></span>
+                      <?php if ($v['status'] !== 'aprovado'): ?>
+                        <form method="post" class="d-inline">
+                          <input type="hidden" name="video_id" value="<?php echo $v['id']; ?>">
+                          <button type="submit" name="aprovar_video" class="btn btn-success btn-sm ms-2">Aprovar</button>
+                        </form>
+                      <?php endif; ?>
+                      <?php if ($v['status'] !== 'rejeitado'): ?>
+                        <form method="post" class="d-inline">
+                          <input type="hidden" name="video_id" value="<?php echo $v['id']; ?>">
+                          <button type="submit" name="reprovar_video" class="btn btn-danger btn-sm ms-2">Reprovar</button>
+                        </form>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div class="text-muted">Nenhum vídeo público enviado.</div>
+            <?php endif; ?>
+          </div>
+        </div>
+        <!-- FIM SEÇÃO DE VÍDEOS PÚBLICOS (ADMIN) -->
         <?php
         $status = $acompanhante['status'] ?? 'pendente';
         function btnClass($current, $expected) {
@@ -779,6 +841,91 @@ btns.forEach(btn => {
         this.classList.remove('btn-outline-primary');
         this.classList.add('btn-primary');
         document.getElementById('status-input').value = this.dataset.status;
+    });
+});
+
+// Aprovação/reprovação de vídeo público via AJAX
+function atualizarStatusVideo(videoId, acao, btn) {
+    btn.disabled = true;
+    fetch('api/moderar-video-publico.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'video_id=' + encodeURIComponent(videoId) + '&acao=' + encodeURIComponent(acao)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Atualiza badge e botões
+            const card = btn.closest('.card');
+            const badge = card.querySelector('.badge');
+            badge.className = 'badge mt-1 bg-' + (acao === 'aprovar' ? 'success' : 'danger');
+            badge.textContent = acao === 'aprovar' ? 'Aprovado' : 'Rejeitado';
+            // Remove botões de ação
+            card.querySelectorAll('form.d-inline').forEach(f => f.remove());
+        } else {
+            alert(data.message || 'Erro ao atualizar status.');
+            btn.disabled = false;
+        }
+    })
+    .catch(() => {
+        alert('Erro ao atualizar status.');
+        btn.disabled = false;
+    });
+}
+document.querySelectorAll('button[name="aprovar_video"]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const videoId = this.closest('form').querySelector('input[name="video_id"]').value;
+        atualizarStatusVideo(videoId, 'aprovar', this);
+    });
+});
+document.querySelectorAll('button[name="reprovar_video"]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const videoId = this.closest('form').querySelector('input[name="video_id"]').value;
+        atualizarStatusVideo(videoId, 'reprovar', this);
+    });
+});
+
+function atualizarStatusMidia(tipo, id, acao, btn) {
+    btn.disabled = true;
+    fetch('api/moderar-midia.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'tipo=' + encodeURIComponent(tipo) + '&id=' + encodeURIComponent(id) + '&acao=' + encodeURIComponent(acao)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const card = btn.closest('.card, .d-inline-block');
+            const badge = card.querySelector('.badge');
+            badge.className = 'badge mt-1 bg-' + (acao === 'aprovar' ? 'success' : 'danger');
+            badge.textContent = acao === 'aprovar' ? 'Aprovado' : 'Rejeitado';
+            card.querySelectorAll('form.d-inline').forEach(f => f.remove());
+        } else {
+            alert(data.message || 'Erro ao atualizar status.');
+            btn.disabled = false;
+        }
+    })
+    .catch(() => {
+        alert('Erro ao atualizar status.');
+        btn.disabled = false;
+    });
+}
+document.querySelectorAll('[data-midia-aprovar]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tipo = this.getAttribute('data-midia-tipo');
+        const id = this.getAttribute('data-midia-id');
+        atualizarStatusMidia(tipo, id, 'aprovar', this);
+    });
+});
+document.querySelectorAll('[data-midia-reprovar]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tipo = this.getAttribute('data-midia-tipo');
+        const id = this.getAttribute('data-midia-id');
+        atualizarStatusMidia(tipo, id, 'reprovar', this);
     });
 });
 </script>
