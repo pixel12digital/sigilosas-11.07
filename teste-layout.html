@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Layout</title>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .teste-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .campo-teste {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        .campo-teste label {
+            font-weight: 600;
+            color: #3D263F;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .campo-teste input, .campo-teste select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="teste-container">
+        <h2>Teste de Layout Multicoluna</h2>
+        
+        <form class="row g-3">
+            <!-- Primeira linha -->
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Nome</label>
+                    <input type="text" value="João Silva">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Apelido</label>
+                    <input type="text" value="João">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Email</label>
+                    <input type="email" value="joao@email.com">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Telefone</label>
+                    <input type="tel" value="41999999999">
+                </div>
+            </div>
+            
+            <!-- Segunda linha -->
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Idade</label>
+                    <input type="number" value="25">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Gênero</label>
+                    <select>
+                        <option>Feminino</option>
+                        <option>Masculino</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Altura</label>
+                    <input type="number" value="165">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="campo-teste">
+                    <label>Peso</label>
+                    <input type="number" value="60">
+                </div>
+            </div>
+        </form>
+        
+        <hr>
+        <h3>Teste com CSS Forçado</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 0 0 calc(25% - 12px); background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label style="font-weight: bold; color: #3D263F;">Campo 1</label>
+                <input type="text" value="Valor 1" style="width: 100%; padding: 8px; border: 1px solid #ccc;">
+            </div>
+            <div style="flex: 0 0 calc(25% - 12px); background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label style="font-weight: bold; color: #3D263F;">Campo 2</label>
+                <input type="text" value="Valor 2" style="width: 100%; padding: 8px; border: 1px solid #ccc;">
+            </div>
+            <div style="flex: 0 0 calc(25% - 12px); background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label style="font-weight: bold; color: #3D263F;">Campo 3</label>
+                <input type="text" value="Valor 3" style="width: 100%; padding: 8px; border: 1px solid #ccc;">
+            </div>
+            <div style="flex: 0 0 calc(25% - 12px); background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label style="font-weight: bold; color: #3D263F;">Campo 4</label>
+                <input type="text" value="Valor 4" style="width: 100%; padding: 8px; border: 1px solid #ccc;">
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

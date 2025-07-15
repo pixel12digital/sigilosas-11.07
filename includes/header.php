@@ -18,7 +18,7 @@ require_once __DIR__ . '/../config/config.php';
     <!-- CSS -->
     <link href="<?php echo SITE_URL; ?>/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="<?php echo SITE_URL; ?>/assets/css/style.css" rel="stylesheet">
+    <link href="<?php echo SITE_URL; ?>/assets/css/style.css?v=<?php echo time(); ?>" rel="stylesheet">
     <style>
         /* Garantir que o dropdown apareça */
         .dropdown-menu {

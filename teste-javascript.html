@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste JavaScript</title>
+</head>
+<body>
+    <h1>Teste de Funções JavaScript</h1>
+    
+    <button onclick="testarValidacao()">Testar Validação</button>
+    <button onclick="enviarFormulario()">Enviar Formulário</button>
+    
+    <script>
+        console.log('=== JAVASCRIPT CARREGADO ===');
+        
+        // Função para validar formulário antes do envio
+        function validarFormulario() {
+            console.log('=== VALIDANDO FORMULÁRIO ===');
+            return true;
+        }
+        
+        // Função para testar validação
+        function testarValidacao() {
+            console.log('=== TESTANDO VALIDAÇÃO ===');
+            const resultado = validarFormulario();
+            console.log('Resultado da validação:', resultado);
+            if (resultado) {
+                alert('✅ Validação OK! Todos os campos obrigatórios estão preenchidos.');
+            } else {
+                alert('❌ Validação falhou! Verifique os campos obrigatórios.');
+            }
+        }
+        
+        // Função para enviar o formulário
+        function enviarFormulario() {
+            console.log('=== ENVIANDO FORMULÁRIO ===');
+            alert('Formulário seria enviado aqui!');
+        }
+        
+        // Debug quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== PÁGINA CARREGADA ===');
+        });
+    </script>
+</body>
+</html> 

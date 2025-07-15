@@ -25,9 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+// Debug
+error_log('=== DEBUG GET VÍDEOS PÚBLICOS ===');
+error_log('Session ID: ' . session_id());
+error_log('Acompanhante ID: ' . ($_SESSION['acompanhante_id'] ?? 'NÃO DEFINIDO'));
+
 try {
     // Buscar vídeos da acompanhante
+    error_log('Buscando vídeos para acompanhante ID: ' . $_SESSION['acompanhante_id']);
     $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
+    error_log('Vídeos encontrados: ' . count($videos_publicos));
+    error_log('Dados dos vídeos: ' . json_encode($videos_publicos));
     
     $html = '';
     if ($videos_publicos) {

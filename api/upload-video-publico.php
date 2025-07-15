@@ -26,9 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Debug: Log de informações
-error_log('DEBUG: Iniciando upload de vídeo público');
-error_log('DEBUG: $_FILES = ' . print_r($_FILES, true));
-error_log('DEBUG: $_POST = ' . print_r($_POST, true));
+error_log('=== DEBUG UPLOAD VÍDEO PÚBLICO ===');
+error_log('Session ID: ' . session_id());
+error_log('Acompanhante ID: ' . ($_SESSION['acompanhante_id'] ?? 'NÃO DEFINIDO'));
+error_log('REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
+error_log('CONTENT_TYPE: ' . ($_SERVER['CONTENT_TYPE'] ?? 'NÃO DEFINIDO'));
+error_log('CONTENT_LENGTH: ' . ($_SERVER['CONTENT_LENGTH'] ?? 'NÃO DEFINIDO'));
+error_log('$_FILES = ' . print_r($_FILES, true));
+error_log('$_POST = ' . print_r($_POST, true));
 
 // Verificar se foi enviado um arquivo
 if (!isset($_FILES['video_publico'])) {
@@ -118,6 +123,15 @@ try {
     }
     
     // Salvar no banco de dados
+    error_log('Salvando vídeo no banco de dados...');
+    error_log('Dados para inserção: ' . json_encode([
+        'acompanhante_id' => $_SESSION['acompanhante_id'],
+        'url' => $filename,
+        'titulo' => $titulo ?: null,
+        'descricao' => $descricao ?: null,
+        'status' => 'pendente'
+    ]));
+    
     $video_id = $db->insert('videos_publicos', [
         'acompanhante_id' => $_SESSION['acompanhante_id'],
         'url' => $filename,
@@ -128,7 +142,10 @@ try {
         'updated_at' => date('Y-m-d H:i:s')
     ]);
     
+    error_log('Resultado da inserção: ' . ($video_id ? 'SUCESSO - ID: ' . $video_id : 'FALHA'));
+    
     if (!$video_id) {
+        error_log('ERRO: Falha ao inserir vídeo no banco');
         // Se falhou ao salvar no banco, remover arquivo
         if (file_exists($dest)) {
             unlink($dest);

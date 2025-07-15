@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Formulário</title>
+</head>
+<body>
+    <h1>Teste de Formulário</h1>
+    
+    <form id="testeForm" method="post">
+        <div>
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" value="Ariel Leblanc" required>
+        </div>
+        <div>
+            <label for="apelido">Apelido:</label>
+            <input type="text" id="apelido" name="apelido" value="Ariel" required>
+        </div>
+        <div>
+            <label for="telefone">Telefone:</label>
+            <input type="tel" id="telefone" name="telefone" value="+5547996164699" required>
+        </div>
+        <div>
+            <label for="idade">Idade:</label>
+            <input type="number" id="idade" name="idade" value="28" min="18" required>
+        </div>
+        <div>
+            <label for="genero">Gênero:</label>
+            <select id="genero" name="genero" required>
+                <option value="">Selecione</option>
+                <option value="feminino" selected>Feminino</option>
+                <option value="masculino">Masculino</option>
+            </select>
+        </div>
+        <div>
+            <label for="estado_id">Estado:</label>
+            <select id="estado_id" name="estado_id" required>
+                <option value="">Selecione</option>
+                <option value="24" selected>Santa Catarina</option>
+            </select>
+        </div>
+        <div>
+            <label for="cidade_id">Cidade:</label>
+            <select id="cidade_id" name="cidade_id" required>
+                <option value="">Selecione</option>
+                <option value="4338" selected>Balneário Camboriú</option>
+            </select>
+        </div>
+        <div>
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha" name="senha">
+        </div>
+        
+        <button type="button" onclick="testarValidacao()">Testar Validação</button>
+        <button type="button" onclick="enviarFormulario()">Enviar Formulário</button>
+    </form>
+    
+    <script>
+        // Função para validar formulário antes do envio
+        function validarFormulario() {
+            console.log('=== VALIDANDO FORMULÁRIO ===');
+            const form = document.getElementById('testeForm');
+            
+            if (!form) {
+                console.log('ERRO: Formulário não encontrado!');
+                return false;
+            }
+            
+            console.log('Formulário encontrado:', form);
+            
+            // Verificar campos obrigatórios
+            const nome = document.getElementById('nome');
+            const apelido = document.getElementById('apelido');
+            const telefone = document.getElementById('telefone');
+            const idade = document.getElementById('idade');
+            const genero = document.getElementById('genero');
+            const cidadeSelect = document.getElementById('cidade_id');
+            const estadoSelect = document.getElementById('estado_id');
+            
+            console.log('Campos encontrados:');
+            console.log('- nome:', nome?.value);
+            console.log('- apelido:', apelido?.value);
+            console.log('- telefone:', telefone?.value);
+            console.log('- idade:', idade?.value);
+            console.log('- genero:', genero?.value);
+            console.log('- estado_id:', estadoSelect?.value);
+            console.log('- cidade_id:', cidadeSelect?.value);
+            
+            let hasEmptyRequired = false;
+            let emptyFields = [];
+            
+            // Verificar cada campo obrigatório
+            if (!nome || !nome.value.trim()) {
+                console.log('ERRO: Nome vazio');
+                emptyFields.push('nome');
+                hasEmptyRequired = true;
+            }
+            
+            if (!apelido || !apelido.value.trim()) {
+                console.log('ERRO: Apelido vazio');
+                emptyFields.push('apelido');
+                hasEmptyRequired = true;
+            }
+            
+            if (!telefone || !telefone.value.trim()) {
+                console.log('ERRO: Telefone vazio');
+                emptyFields.push('telefone');
+                hasEmptyRequired = true;
+            }
+            
+            if (!idade || !idade.value.trim() || parseInt(idade.value) < 18) {
+                console.log('ERRO: Idade inválida');
+                emptyFields.push('idade');
+                hasEmptyRequired = true;
+            }
+            
+            if (!genero || !genero.value.trim()) {
+                console.log('ERRO: Gênero não selecionado');
+                emptyFields.push('genero');
+                hasEmptyRequired = true;
+            }
+            
+            if (!estadoSelect || !estadoSelect.value.trim()) {
+                console.log('ERRO: Estado não selecionado');
+                emptyFields.push('estado');
+                hasEmptyRequired = true;
+            }
+            
+            if (!cidadeSelect || !cidadeSelect.value.trim()) {
+                console.log('ERRO: Cidade não selecionada');
+                emptyFields.push('cidade');
+                hasEmptyRequired = true;
+            }
+            
+            if (hasEmptyRequired) {
+                console.log('ERRO: Campos obrigatórios vazios:', emptyFields);
+                alert('Por favor, preencha todos os campos obrigatórios: ' + emptyFields.join(', '));
+                return false;
+            }
+            
+            console.log('Validação OK - formulário será enviado');
+            return true;
+        }
+        
+        // Função para testar validação
+        function testarValidacao() {
+            console.log('=== TESTANDO VALIDAÇÃO ===');
+            const resultado = validarFormulario();
+            console.log('Resultado da validação:', resultado);
+            if (resultado) {
+                alert('✅ Validação OK! Todos os campos obrigatórios estão preenchidos.');
+            } else {
+                alert('❌ Validação falhou! Verifique os campos obrigatórios.');
+            }
+        }
+        
+        // Função para enviar o formulário
+        function enviarFormulario() {
+            console.log('=== ENVIANDO FORMULÁRIO ===');
+            const form = document.getElementById('testeForm');
+            if (!form) {
+                console.log('ERRO: Formulário não encontrado!');
+                alert('Erro: Formulário não encontrado!');
+                return;
+            }
+            
+            console.log('Formulário encontrado, validando...');
+            
+            if (validarFormulario()) {
+                console.log('Validação OK, enviando formulário...');
+                console.log('Action:', form.action);
+                console.log('Method:', form.method);
+                
+                // Debug dos dados do formulário
+                const formData = new FormData(form);
+                console.log('Dados do formulário:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                alert('Formulário seria enviado aqui! Dados válidos.');
+            } else {
+                console.log('Validação falhou, formulário não enviado');
+                alert('Por favor, corrija os erros antes de salvar.');
+            }
+        }
+    </script>
+</body>
+</html> 

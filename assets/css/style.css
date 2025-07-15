@@ -117,21 +117,167 @@ body {
     border-radius: 8px;
     border: 2px solid #e9ecef;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
 }
 
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(61, 38, 63, 0.25);
 }
 
 .form-select {
     border-radius: 8px;
     border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
 }
 
 .form-select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(61, 38, 63, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Melhorias para layout de formulários */
+.row .col-md-3,
+.row .col-md-4,
+.row .col-md-6 {
+    margin-bottom: 1.5rem;
+}
+
+/* Espaçamento entre seções */
+.col-12 h5 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--secondary-color);
+    position: relative;
+}
+
+.col-12 h5::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+/* Campos de medidas físicas */
+.medidas-fisicas {
+    text-align: center;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+}
+
+.medidas-fisicas:focus {
+    background: #fff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(61, 38, 63, 0.25);
+}
+
+/* Melhorias para responsividade */
+@media (max-width: 768px) {
+    .row .col-md-3,
+    .row .col-md-4,
+    .row .col-md-6 {
+        margin-bottom: 1rem;
+    }
+    
+    .form-control,
+    .form-select {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-label {
+        font-size: 0.85rem;
+    }
+}
+
+/* Melhorias para checkboxes e radio buttons */
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Estilos para seção de valores */
+.valor-tempo-check:checked + .form-check-label {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.valor-tempo-input {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.valor-tempo-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(61, 38, 63, 0.15);
+}
+
+/* Melhorias para tabelas */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.table thead th {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-align: center;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    border-color: #dee2e6;
+}
+
+/* Estilo para botões de ação */
+.btn-save {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #5a2d5a 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background: linear-gradient(135deg, #5a2d5a 0%, var(--primary-color) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 38, 63, 0.3);
 }
 
 /* ===== ACCOMPANHANTE CARD ===== */
