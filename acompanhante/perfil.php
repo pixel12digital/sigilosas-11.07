@@ -479,7 +479,7 @@ if (!empty($acompanhante['especialidades'])) {
         <div class="card-header" style="background: #3D263F; color: #F3EAC2;">
             <h4 class="mb-0">Editar Perfil</h4>
         </div>
-        <?php echo '<div style="color:orange">DEBUG: Após header</div>'; ?>
+        <?php // echo '<div style="color:orange">DEBUG: Após header</div>'; ?>
         <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
@@ -1278,7 +1278,7 @@ document.getElementById('formVideoPublico').addEventListener('submit', function(
 });
 </script> 
 
-<!-- Seção de Vídeos Públicos -->
+<!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
 <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
   <div class="card-body">
     <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos Públicos</div>
