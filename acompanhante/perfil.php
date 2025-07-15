@@ -87,6 +87,11 @@ if (!isset($db)) { require_once __DIR__ . '/../config/database.php'; $db = getDB
 $success = '';
 $error = '';
 
+// Verificar se há mensagem de sucesso na URL
+if (isset($_GET['success']) && $_GET['success'] == '1') {
+    $success = 'Perfil atualizado com sucesso!';
+}
+
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST'
     && (!isset($_POST['action']) || $_POST['action'] !== 'upload_video_publico')
@@ -173,9 +178,15 @@ if (
         }
     }
 
-    // Cidade
+    // Cidade - Garantir que sempre seja salva
     if (empty($formData['cidade_id']) || !is_numeric($formData['cidade_id']) || $formData['cidade_id'] <= 0) {
-        $errors[] = 'Selecione uma cidade válida.';
+        // Se não foi enviada cidade, manter a cidade atual
+        $cidade_atual = $db->fetch("SELECT cidade_id FROM acompanhantes WHERE id = ?", [$_SESSION['acompanhante_id']]);
+        if ($cidade_atual && $cidade_atual['cidade_id']) {
+            $formData['cidade_id'] = $cidade_atual['cidade_id'];
+        } else {
+            $errors[] = 'Selecione uma cidade válida.';
+        }
     }
 
     // Se não há erros, salvar
@@ -206,24 +217,28 @@ if (
             }
             // Se não está aprovada, mantém lógica anterior (pode manter status pendente)
             // Se quiser garantir que nunca "volte" para pendente por texto, só mídia, basta não setar status aqui
-            $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
             
-            $success = 'Perfil atualizado com sucesso!';
-            echo '<script>window.location.href = "/acompanhante/";</script>';
-            exit;
+            // Garantir que cidade_id nunca seja perdida
+            if (empty($formData['cidade_id'])) {
+                $cidade_atual = $db->fetch("SELECT cidade_id FROM acompanhantes WHERE id = ?", [$_SESSION['acompanhante_id']]);
+                if ($cidade_atual && $cidade_atual['cidade_id']) {
+                    $formData['cidade_id'] = $cidade_atual['cidade_id'];
+                }
+            }
+            
+            $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
             
             // Atualizar dados da sessão
             $_SESSION['acompanhante_nome'] = $formData['nome'];
             $_SESSION['acompanhante_apelido'] = $formData['apelido'];
             
-            // Recarregar dados da acompanhante
-            $acompanhante = $db->fetch("
-                SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf
-                FROM acompanhantes a
-                LEFT JOIN cidades c ON a.cidade_id = c.id
-                LEFT JOIN estados e ON c.estado_id = e.id
-                WHERE a.id = ?
-            ", [$_SESSION['acompanhante_id']]);
+            $success = 'Perfil atualizado com sucesso!';
+            
+            // Redirecionar para o início da página com mensagem de sucesso
+            echo '<script>
+                window.location.href = "' . SITE_URL . '/acompanhante/perfil.php?success=1#top";
+            </script>';
+            exit;
             
             // Salvar horários detalhados
             if (isset($_POST['horario_inicio'], $_POST['horario_fim'], $_POST['atende'])) {
@@ -477,33 +492,22 @@ if (!empty($acompanhante['especialidades'])) {
 <!-- FIM ACESSOS RÁPIDOS -->
 
 <main class="main-content">
+    <div id="top"></div>
     <div class="container py-4">
         <div class="card-header" style="background: #3D263F; color: #F3EAC2;">
             <h4 class="mb-0">Editar Perfil</h4>
         </div>
         <?php // echo '<div style="color:orange">DEBUG: Após header</div>'; ?>
-        <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3">
+        <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3" onsubmit="return validarFormulario()">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
             <?php endif; ?>
             <?php if (!empty($success)): ?>
                 <div class="alert alert-success"><?php echo $success; ?></div>
             <?php endif; ?>
-            <?php 
-            $cidade_id_enviado = $_POST['cidade_id'] ?? '';
-            $cidade_id_salvo = $formData['cidade_id'] ?? '';
-            $erros_upload = $error; // Usar a variável $error para os erros de upload
-            ?>
-            <?php if (!empty($erros_upload) || (isset($cidade_id_enviado) && isset($cidade_id_salvo) && $cidade_id_enviado != $cidade_id_salvo)): ?>
+            <?php if (!empty($error)): ?>
                 <div class="alert alert-warning">
-                    <?php if (isset($cidade_id_enviado) && isset($cidade_id_salvo) && $cidade_id_enviado != $cidade_id_salvo): ?>
-                        <strong>Problema ao salvar cidade!</strong><br>
-                        DEBUG cidade_id enviado: <?php echo htmlspecialchars($cidade_id_enviado); ?><br>
-                        DEBUG cidade_id salvo: <?php echo htmlspecialchars($cidade_id_salvo); ?><br>
-                    <?php endif; ?>
-                    <?php if (!empty($erros_upload)): ?>
-                        <strong>Erros de upload:</strong> <?php echo htmlspecialchars($erros_upload); ?><br>
-                    <?php endif; ?>
+                    <strong>Erros encontrados:</strong> <?php echo htmlspecialchars($error); ?><br>
                     Se o problema persistir, por favor, contate o suporte técnico.
                 </div>
             <?php endif; ?>
@@ -1040,6 +1044,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carregar cidades ao abrir a página, se já houver estado selecionado
     if (estadoSelect.value) {
         carregarCidades(estadoSelect.value, cidadeId);
+    } else if (cidadeId) {
+        // Se não há estado selecionado mas há cidade, buscar o estado da cidade
+        fetch(SITE_URL + '/api/cidades.php?cidade_id=' + encodeURIComponent(cidadeId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.estado_id) {
+                    estadoSelect.value = data.estado_id;
+                    carregarCidades(data.estado_id, cidadeId);
+                }
+            })
+            .catch(() => {
+                console.log('Erro ao buscar estado da cidade');
+            });
     }
 
     estadoSelect.addEventListener('change', function() {
@@ -1349,5 +1366,34 @@ document.getElementById('formVideoPublico').addEventListener('submit', function(
         btn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
     });
 });
-</script> 
+
+// Função para validar formulário antes do envio
+function validarFormulario() {
+    const cidadeSelect = document.getElementById('cidade_id');
+    const estadoSelect = document.getElementById('estado_id');
+    
+    // Garantir que cidade seja sempre enviada
+    if (!cidadeSelect.value) {
+        alert('Por favor, selecione uma cidade.');
+        cidadeSelect.focus();
+        return false;
+    }
+    
+    // Garantir que estado seja sempre enviado
+    if (!estadoSelect.value) {
+        alert('Por favor, selecione um estado.');
+        estadoSelect.focus();
+        return false;
+    }
+    
+    return true;
+}
+
+// Verificar se há mensagem de sucesso na URL e rolar para o topo
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.search.includes('success=1')) {
+        window.scrollTo(0, 0);
+    }
+});
+</script>
 

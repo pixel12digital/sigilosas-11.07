@@ -32,7 +32,20 @@ try {
         case 'GET':
             // Listar cidades
             $estado_id = isset($_GET['estado_id']) ? (int)$_GET['estado_id'] : null;
+            $cidade_id = isset($_GET['cidade_id']) ? (int)$_GET['cidade_id'] : null;
             $public = isset($_GET['public']) ? (int)$_GET['public'] : 0;
+
+            // Buscar cidade específica por ID
+            if ($cidade_id) {
+                $cidade = $db->fetch("SELECT c.*, e.id as estado_id, e.nome as estado_nome, e.uf as estado_uf FROM cidades c LEFT JOIN estados e ON c.estado_id = e.id WHERE c.id = ?", [$cidade_id]);
+                if ($cidade) {
+                    echo json_encode($cidade);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Cidade não encontrada']);
+                }
+                break;
+            }
 
             if ($estado_id) {
                 if ($public) {
