@@ -188,6 +188,9 @@ if (
             $errors[] = 'Selecione uma cidade válida.';
         }
     }
+    
+    // Debug temporário para verificar cidade
+    error_log('DEBUG CIDADE - Enviada: ' . ($_POST['cidade_id'] ?? 'VAZIO') . ' - Processada: ' . ($formData['cidade_id'] ?? 'VAZIO'));
 
     // Se não há erros, salvar
     if (empty($errors)) {
@@ -231,14 +234,6 @@ if (
             // Atualizar dados da sessão
             $_SESSION['acompanhante_nome'] = $formData['nome'];
             $_SESSION['acompanhante_apelido'] = $formData['apelido'];
-            
-            $success = 'Perfil atualizado com sucesso!';
-            
-            // Redirecionar para o início da página com mensagem de sucesso
-            echo '<script>
-                window.location.href = "' . SITE_URL . '/acompanhante/perfil.php?success=1#top";
-            </script>';
-            exit;
             
             // Salvar horários detalhados
             if (isset($_POST['horario_inicio'], $_POST['horario_fim'], $_POST['atende'])) {
@@ -302,7 +297,7 @@ if (
                         $dest = __DIR__ . '/../uploads/documentos/' . $filename;
                         if (move_uploaded_file($files['tmp_name'][$i], $dest)) {
                             if (!$db->insert('documentos_acompanhante', [
-                                'acompanhante_id' => $acompanhante['id'],
+                                'acompanhante_id' => $_SESSION['acompanhante_id'],
                                 'tipo' => 'rg',
                                 'url' => $filename,
                                 'storage_path' => $filename,
@@ -336,7 +331,7 @@ if (
                         $dest = __DIR__ . '/../uploads/galeria/' . $filename;
                         if (move_uploaded_file($files['tmp_name'][$i], $dest)) {
                             $db->insert('fotos', [
-                                'acompanhante_id' => $acompanhante['id'],
+                                'acompanhante_id' => $_SESSION['acompanhante_id'],
                                 'tipo' => 'galeria',
                                 'url' => $filename,
                                 'ordem' => 0,
@@ -355,6 +350,13 @@ if (
                 }
             }
             // --- FIM UPLOAD GALERIA ---
+            
+            // Se chegou até aqui, tudo foi salvo com sucesso
+            $success = 'Perfil atualizado com sucesso!';
+            
+            // Redirecionar para o início da página com mensagem de sucesso
+            header('Location: ' . SITE_URL . '/acompanhante/perfil.php?success=1#top');
+            exit;
             
         } catch (Exception $e) {
             $error = 'Erro ao atualizar perfil. Tente novamente.';
@@ -1372,6 +1374,10 @@ function validarFormulario() {
     const cidadeSelect = document.getElementById('cidade_id');
     const estadoSelect = document.getElementById('estado_id');
     
+    console.log('DEBUG - Validando formulário...');
+    console.log('DEBUG - Cidade selecionada:', cidadeSelect.value);
+    console.log('DEBUG - Estado selecionado:', estadoSelect.value);
+    
     // Garantir que cidade seja sempre enviada
     if (!cidadeSelect.value) {
         alert('Por favor, selecione uma cidade.');
@@ -1386,6 +1392,7 @@ function validarFormulario() {
         return false;
     }
     
+    console.log('DEBUG - Formulário válido, enviando...');
     return true;
 }
 
