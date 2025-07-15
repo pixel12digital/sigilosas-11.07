@@ -1349,54 +1349,6 @@ if (isset($_POST['excluir_video_id'])) {
 }
 ?>
 
-<!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
-<div class="col-12 mt-4 text-center" id="secao-videos-publicos">
-  <h5 class="mb-3"><i class="fas fa-video"></i> Vídeos Públicos</h5>
-  <div class="mb-2 text-muted">Adicione vídeos curtos para seu perfil público. Apenas vídeos aprovados serão exibidos no site. (Máx. 50MB, formatos: mp4, webm, mov)</div>
-  <form id="formVideoPublico" enctype="multipart/form-data" style="margin-bottom:0;">
-    <div class="row g-2 align-items-end justify-content-center">
-      <div class="col-md-4">
-        <label for="video_publico" class="form-label">Selecione o vídeo</label>
-        <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
-      </div>
-      <div class="col-md-3">
-        <label for="titulo_video" class="form-label">Título (opcional)</label>
-        <input type="text" class="form-control" id="titulo_video" name="titulo_video" maxlength="100">
-      </div>
-      <div class="col-md-3">
-        <label for="descricao_video" class="form-label">Descrição (opcional)</label>
-        <input type="text" class="form-control" id="descricao_video" name="descricao_video" maxlength="255">
-      </div>
-      <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-success" id="btnEnviarVideo">Enviar Vídeo</button>
-      </div>
-    </div>
-  </form>
-  <div id="msgVideoPublico" class="mt-2"></div>
-  <div id="listaVideosPublicos" class="row mt-4 g-3">
-    <?php
-    // Listar vídeos já enviados
-    $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
-    if ($videos_publicos): ?>
-      <?php foreach ($videos_publicos as $v): ?>
-        <div class="col-md-4 col-6">
-          <div class="card h-100 shadow-sm">
-            <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
-            <div class="p-2">
-              <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
-              <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
-              <div class="text-muted small">Enviado em: <?php echo date('d/m/Y', strtotime($v['created_at'])); ?></div>
-              <span class="badge bg-<?php echo $v['status'] === 'aprovado' ? 'success' : ($v['status'] === 'rejeitado' ? 'danger' : 'warning text-dark'); ?> mt-1"><?php echo ucfirst($v['status']); ?></span>
-            </div>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    <?php else: ?>
-      <div class="text-muted">Nenhum vídeo público enviado.</div>
-    <?php endif; ?>
-  </div>
-</div>
-<!-- FIM SEÇÃO DE VÍDEOS PÚBLICOS -->
 
 <script>
 // Upload de vídeo público via AJAX
