@@ -380,7 +380,7 @@ estadoSelect.addEventListener('change', function() {
     const estadoId = this.value;
     cidadeSelect.innerHTML = '<option value="">Carregando...</option>';
     if (estadoId) {
-        fetch('<?php echo SITE_URL; ?>/api/cidades.php?estado_id=' + estadoId)
+        fetch('<?php echo SITE_URL; ?>/api/cidades.php?estado_id=' + estadoId + '&public=1')
             .then(res => res.json())
             .then(data => {
                 let options = '<option value="">Selecione a Cidade</option>';

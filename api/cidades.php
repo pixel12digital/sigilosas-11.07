@@ -32,8 +32,14 @@ try {
         case 'GET':
             // Listar cidades
             $estado_id = isset($_GET['estado_id']) ? (int)$_GET['estado_id'] : null;
+            $public = isset($_GET['public']) ? (int)$_GET['public'] : 0;
+
             if ($estado_id) {
-                $sql = "SELECT c.id, c.nome FROM cidades c WHERE c.estado_id = ? ORDER BY c.nome ASC";
+                if ($public) {
+                    $sql = "SELECT c.id, c.nome FROM cidades c WHERE c.estado_id = ? AND EXISTS (SELECT 1 FROM acompanhantes a WHERE a.cidade_id = c.id AND a.status = 'aprovado') ORDER BY c.nome ASC";
+                } else {
+                    $sql = "SELECT c.id, c.nome FROM cidades c WHERE c.estado_id = ? ORDER BY c.nome ASC";
+                }
                 $cidades = $db->fetchAll($sql, [$estado_id]);
                 echo json_encode($cidades);
                 break;

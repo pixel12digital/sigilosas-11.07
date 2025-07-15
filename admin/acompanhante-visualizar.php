@@ -847,7 +847,7 @@ btns.forEach(btn => {
 // Aprovação/reprovação de vídeo público via AJAX
 function atualizarStatusVideo(videoId, acao, btn) {
     btn.disabled = true;
-    fetch('api/moderar-video-publico.php', {
+    fetch(SITE_URL + '/api/moderar-video-publico.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'video_id=' + encodeURIComponent(videoId) + '&acao=' + encodeURIComponent(acao)
@@ -889,7 +889,7 @@ document.querySelectorAll('button[name="reprovar_video"]').forEach(btn => {
 
 function atualizarStatusMidia(tipo, id, acao, btn) {
     btn.disabled = true;
-    fetch('api/moderar-midia.php', {
+    fetch(SITE_URL + '/api/moderar-midia.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'tipo=' + encodeURIComponent(tipo) + '&id=' + encodeURIComponent(id) + '&acao=' + encodeURIComponent(acao)
