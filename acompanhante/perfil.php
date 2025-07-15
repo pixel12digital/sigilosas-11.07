@@ -1348,3 +1348,119 @@ if (isset($_POST['excluir_video_id'])) {
   }
 }
 ?>
+
+<!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
+<div class="col-12 mt-4 text-center" id="secao-videos-publicos">
+  <h5 class="mb-3"><i class="fas fa-video"></i> Vídeos Públicos</h5>
+  <div class="mb-2 text-muted">Adicione vídeos curtos para seu perfil público. Apenas vídeos aprovados serão exibidos no site. (Máx. 50MB, formatos: mp4, webm, mov)</div>
+  <form id="formVideoPublico" enctype="multipart/form-data" style="margin-bottom:0;">
+    <div class="row g-2 align-items-end justify-content-center">
+      <div class="col-md-4">
+        <label for="video_publico" class="form-label">Selecione o vídeo</label>
+        <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
+      </div>
+      <div class="col-md-3">
+        <label for="titulo_video" class="form-label">Título (opcional)</label>
+        <input type="text" class="form-control" id="titulo_video" name="titulo_video" maxlength="100">
+      </div>
+      <div class="col-md-3">
+        <label for="descricao_video" class="form-label">Descrição (opcional)</label>
+        <input type="text" class="form-control" id="descricao_video" name="descricao_video" maxlength="255">
+      </div>
+      <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-success" id="btnEnviarVideo">Enviar Vídeo</button>
+      </div>
+    </div>
+  </form>
+  <div id="msgVideoPublico" class="mt-2"></div>
+  <div id="listaVideosPublicos" class="row mt-4 g-3">
+    <?php
+    // Listar vídeos já enviados
+    $videos_publicos = $db->fetchAll("SELECT * FROM videos_publicos WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
+    if ($videos_publicos): ?>
+      <?php foreach ($videos_publicos as $v): ?>
+        <div class="col-md-4 col-6">
+          <div class="card h-100 shadow-sm">
+            <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
+            <div class="p-2">
+              <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
+              <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
+              <div class="text-muted small">Enviado em: <?php echo date('d/m/Y', strtotime($v['created_at'])); ?></div>
+              <span class="badge bg-<?php echo $v['status'] === 'aprovado' ? 'success' : ($v['status'] === 'rejeitado' ? 'danger' : 'warning text-dark'); ?> mt-1"><?php echo ucfirst($v['status']); ?></span>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <div class="text-muted">Nenhum vídeo público enviado.</div>
+    <?php endif; ?>
+  </div>
+</div>
+<!-- FIM SEÇÃO DE VÍDEOS PÚBLICOS -->
+
+<script>
+// Upload de vídeo público via AJAX
+document.getElementById('formVideoPublico').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var input = document.getElementById('video_publico');
+    var titulo = document.getElementById('titulo_video').value;
+    var descricao = document.getElementById('descricao_video').value;
+    var btn = document.getElementById('btnEnviarVideo');
+    var msg = document.getElementById('msgVideoPublico');
+    if (!input.files.length) {
+        msg.innerHTML = '<div class="alert alert-warning">Selecione um vídeo primeiro.</div>';
+        return;
+    }
+    var file = input.files[0];
+    // Validação de tamanho no frontend
+    if (file.size > 50 * 1024 * 1024) {
+        msg.innerHTML = '<div class="alert alert-danger">O vídeo excede o tamanho máximo permitido (50MB).</div>';
+        return;
+    }
+    btn.disabled = true;
+    msg.innerHTML = '<div class="alert alert-info">Enviando vídeo, aguarde...</div>';
+    var formData = new FormData();
+    formData.append('video_publico', file);
+    formData.append('titulo_video', titulo);
+    formData.append('descricao_video', descricao);
+    fetch(SITE_URL + '/api/upload-video-publico.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+            msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            document.getElementById('formVideoPublico').reset();
+            setTimeout(() => { atualizarListaVideos(); }, 1000);
+        } else {
+            msg.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        msg.innerHTML = '<div class="alert alert-danger">Erro ao enviar vídeo. Tente novamente.</div>';
+    });
+});
+// Função para atualizar lista de vídeos dinamicamente
+function atualizarListaVideos() {
+    fetch(SITE_URL + '/api/get-videos-publicos.php', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            var container = document.getElementById('listaVideosPublicos');
+            if (container) {
+                container.innerHTML = data.html;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar lista:', error);
+    });
+}
+</script>
