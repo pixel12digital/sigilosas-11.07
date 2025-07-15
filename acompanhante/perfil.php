@@ -1,35 +1,110 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 require_once __DIR__ . '/../config/config.php';
 session_name('sigilosas_acompanhante_session');
 session_start();
-// Removido var_dump($_SESSION);
+
 if (!isset($_SESSION['acompanhante_id'])) {
     header('Location: ' . SITE_URL . '/pages/login-acompanhante.php');
     exit;
 }
-/**
- * Edição de Perfil da Acompanhante
- * Arquivo: acompanhante/perfil.php
- */
-
-// DEBUG: Exibir o valor do ID da acompanhante na tela e no log
-// (Removido)
 
 $page_title = 'Editar Perfil';
 $page_description = 'Edite suas informações pessoais e profissionais';
 
-include __DIR__ . '/../includes/header.php';
-
-// Buscar foto de perfil atual
-if (!isset($db)) {
-    require_once __DIR__ . '/../config/database.php';
-    $db = getDB();
+// NÃO incluir o header aqui - será incluído depois do processamento do formulário
+?>
+<script>
+// Função para validar formulário antes do envio
+function validarFormulario() {
+    const form = document.getElementById('editarPerfilForm');
+    
+    if (!form) {
+        return false;
+    }
+    
+    // Verificar campos obrigatórios
+    const nome = document.getElementById('nome');
+    const apelido = document.getElementById('apelido');
+    const telefone = document.getElementById('telefone');
+    const idade = document.getElementById('idade');
+    const genero = document.getElementById('genero');
+    const cidadeSelect = document.getElementById('cidade_id');
+    const estadoSelect = document.getElementById('estado_id');
+    
+    let hasEmptyRequired = false;
+    let emptyFields = [];
+    
+    // Verificar cada campo obrigatório
+    if (!nome || !nome.value.trim()) {
+        emptyFields.push('nome');
+        hasEmptyRequired = true;
+    }
+    
+    if (!apelido || !apelido.value.trim()) {
+        emptyFields.push('apelido');
+        hasEmptyRequired = true;
+    }
+    
+    if (!telefone || !telefone.value.trim()) {
+        emptyFields.push('telefone');
+        hasEmptyRequired = true;
+    }
+    
+    if (!idade || !idade.value.trim() || parseInt(idade.value) < 18) {
+        emptyFields.push('idade');
+        hasEmptyRequired = true;
+    }
+    
+    if (!genero || !genero.value.trim()) {
+        emptyFields.push('genero');
+        hasEmptyRequired = true;
+    }
+    
+    if (!estadoSelect || !estadoSelect.value.trim()) {
+        emptyFields.push('estado');
+        hasEmptyRequired = true;
+    }
+    
+    if (!cidadeSelect || !cidadeSelect.value.trim()) {
+        emptyFields.push('cidade');
+        hasEmptyRequired = true;
+    }
+    
+    if (hasEmptyRequired) {
+        alert('Por favor, preencha todos os campos obrigatórios: ' + emptyFields.join(', '));
+        return false;
+    }
+    
+    return true;
 }
+
+// Função para enviar o formulário
+function enviarFormulario() {
+    const form = document.getElementById('editarPerfilForm');
+    if (!form) {
+        alert('Erro: Formulário não encontrado!');
+        return;
+    }
+    
+    if (validarFormulario()) {
+        form.submit();
+    } else {
+        alert('Por favor, corrija os erros antes de salvar.');
+    }
+}
+</script>
+<?php
+
+
+
+// Certificar que $db está definido
+if (!isset($db)) { 
+    require_once __DIR__ . '/../config/database.php'; 
+    $db = getDB(); 
+}
+
+// Preparar dados da foto de perfil para usar depois do header
 $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND principal = 1 ORDER BY created_at DESC LIMIT 1", [$_SESSION['acompanhante_id']]);
-// Corrigir caminho da miniatura
 $foto_perfil_url = $foto_perfil['url'] ?? 'default-avatar.svg';
 if ($foto_perfil_url !== 'default-avatar.svg') {
     $miniatura_path = SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil_url);
@@ -37,51 +112,16 @@ if ($foto_perfil_url !== 'default-avatar.svg') {
     $miniatura_path = SITE_URL . '/assets/img/default-avatar.svg';
 }
 
-// Bloco de upload de foto de perfil movido para o início da página
-?>
-<div class="col-12 mt-5 mb-4 text-center">
-    <h5 style="color: #3D263F;">Foto de Perfil</h5>
-    <img id="fotoPerfilMiniatura"
-         src="<?php echo $miniatura_path; ?>"
-         alt="Foto de Perfil"
-         style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:2px solid #3D263F;">
-    <form id="formUploadPerfil" enctype="multipart/form-data" style="display:inline-block; margin-top:10px;">
-        <input type="file" id="inputFotoPerfil" name="foto" accept="image/*" style="max-width:200px; display:inline-block;">
-        <button type="submit" class="btn btn-sm btn-primary">Enviar Nova Foto</button>
-    </form>
-    <div id="fotoPerfilMsg" class="mt-2"></div>
-</div>
-<script>
-document.getElementById('formUploadPerfil').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var input = document.getElementById('inputFotoPerfil');
-    if (!input.files.length) return;
-    var formData = new FormData();
-    formData.append('foto', input.files[0]);
-            fetch(SITE_URL + '/api/upload-foto-perfil.php', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        var msg = document.getElementById('fotoPerfilMsg');
-        if (data.success) {
-            document.getElementById('fotoPerfilMiniatura').src = SITE_URL + '/uploads/perfil/' + data.filename + '?' + Date.now();
-            msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
-        } else {
-            msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
-        }
-    })
-    .catch(() => {
-        document.getElementById('fotoPerfilMsg').innerHTML = '<span class="text-danger">Erro ao enviar foto.</span>';
-    });
-});
-</script>
-<?php
 
-// Certificar que $db está definido
-if (!isset($db)) { require_once __DIR__ . '/../config/database.php'; $db = getDB(); }
+
+// Carregar dados da acompanhante ANTES do processamento do formulário
+$acompanhante = $db->fetch("
+    SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf
+    FROM acompanhantes a
+    LEFT JOIN cidades c ON a.cidade_id = c.id
+    LEFT JOIN estados e ON c.estado_id = e.id
+    WHERE a.id = ?
+", [$_SESSION['acompanhante_id']]);
 
 // Processar formulário
 $success = '';
@@ -92,10 +132,28 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
     $success = 'Perfil atualizado com sucesso!';
 }
 
+// Verificar se há mensagem de vídeo excluído
+if (isset($_GET['video_deleted']) && $_GET['video_deleted'] == '1') {
+    $success = 'Vídeo excluído com sucesso!';
+}
+
 if (
     $_SERVER['REQUEST_METHOD'] === 'POST'
     && (!isset($_POST['action']) || $_POST['action'] !== 'upload_video_publico')
 ) {
+    // Debug temporário
+    error_log('=== DEBUG FORMULARIO ===');
+    error_log('POST recebido: ' . json_encode($_POST));
+    error_log('debug_test: ' . ($_POST['debug_test'] ?? 'NAO_ENVIADO'));
+    error_log('cidade_id no POST: ' . ($_POST['cidade_id'] ?? 'VAZIO'));
+    error_log('estado_id no POST: ' . ($_POST['estado_id'] ?? 'VAZIO'));
+    error_log('REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
+    error_log('CONTENT_TYPE: ' . ($_SERVER['CONTENT_TYPE'] ?? 'NAO_DEFINIDO'));
+    error_log('Dados de horários no POST:');
+    error_log('- atende: ' . json_encode($_POST['atende'] ?? 'NAO_ENVIADO'));
+    error_log('- horario_inicio: ' . json_encode($_POST['horario_inicio'] ?? 'NAO_ENVIADO'));
+    error_log('- horario_fim: ' . json_encode($_POST['horario_fim'] ?? 'NAO_ENVIADO'));
+
     $formData = [
         'nome' => trim($_POST['nome'] ?? ''),
         'apelido' => trim($_POST['apelido'] ?? ''),
@@ -114,7 +172,7 @@ if (
         'email' => trim($_POST['email'] ?? ''),
         'genero' => trim($_POST['genero'] ?? ''),
         'cidade_id' => trim($_POST['cidade_id'] ?? ''),
-        'estado_id' => trim($_POST['estado_id'] ?? ''),
+        'estado_id' => !empty($_POST['estado_id']) ? (int)$_POST['estado_id'] : ($acompanhante['estado_id'] ?? null),
         'senha' => $_POST['senha'] ?? '',
         'preferencia_sexual' => trim($_POST['preferencia_sexual'] ?? ''),
         'bairro' => trim($_POST['bairro'] ?? ''),
@@ -184,14 +242,19 @@ if (
         $cidade_atual = $db->fetch("SELECT cidade_id FROM acompanhantes WHERE id = ?", [$_SESSION['acompanhante_id']]);
         if ($cidade_atual && $cidade_atual['cidade_id']) {
             $formData['cidade_id'] = $cidade_atual['cidade_id'];
+            error_log('Cidade restaurada do banco: ' . $cidade_atual['cidade_id']);
         } else {
+            error_log('ERRO: Nenhuma cidade encontrada no banco');
             $errors[] = 'Selecione uma cidade válida.';
         }
+    } else {
+        error_log('Cidade válida no formulário: ' . $formData['cidade_id']);
     }
     
-    // Debug temporário para verificar cidade
-    error_log('DEBUG CIDADE - Enviada: ' . ($_POST['cidade_id'] ?? 'VAZIO') . ' - Processada: ' . ($formData['cidade_id'] ?? 'VAZIO'));
 
+
+
+    
     // Se não há erros, salvar
     if (empty($errors)) {
         try {
@@ -229,26 +292,40 @@ if (
                 }
             }
             
-            $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
+            // Garantir que estado_id nunca seja perdido
+            if (empty($formData['estado_id'])) {
+                $estado_atual = $db->fetch("SELECT estado_id FROM acompanhantes WHERE id = ?", [$_SESSION['acompanhante_id']]);
+                if ($estado_atual && $estado_atual['estado_id']) {
+                    $formData['estado_id'] = $estado_atual['estado_id'];
+                }
+            }
+            
+            $result = $db->update('acompanhantes', $formData, 'id = ?', [$_SESSION['acompanhante_id']]);
             
             // Atualizar dados da sessão
             $_SESSION['acompanhante_nome'] = $formData['nome'];
             $_SESSION['acompanhante_apelido'] = $formData['apelido'];
             
-            // Salvar horários detalhados
-            if (isset($_POST['horario_inicio'], $_POST['horario_fim'], $_POST['atende'])) {
+            // Salvar horários de atendimento
+            if (isset($_POST['horario_inicio'], $_POST['horario_fim'])) {
                 $dias_semana = [1,2,3,4,5,6,7];
+                
+                // Deletar horários existentes
                 $db->query("DELETE FROM horarios_atendimento WHERE acompanhante_id = ?", [$_SESSION['acompanhante_id']]);
+                
                 foreach ($dias_semana as $dia) {
-                    if (!isset($_POST['atende'][$dia])) continue;
-                    $inicio = $_POST['horario_inicio'][$dia] ?? '08:00';
-                    $fim = $_POST['horario_fim'][$dia] ?? '23:59';
-                    $db->insert('horarios_atendimento', [
-                        'acompanhante_id' => $_SESSION['acompanhante_id'],
-                        'dia_semana' => $dia,
-                        'hora_inicio' => $inicio,
-                        'hora_fim' => $fim
-                    ]);
+                    // Só salvar se o dia estiver marcado como "atende"
+                    if (isset($_POST['atende'][$dia])) {
+                        $inicio = $_POST['horario_inicio'][$dia] ?? '08:00';
+                        $fim = $_POST['horario_fim'][$dia] ?? '23:59';
+                        
+                        $db->insert('horarios_atendimento', [
+                            'acompanhante_id' => $_SESSION['acompanhante_id'],
+                            'dia_semana' => $dia,
+                            'hora_inicio' => $inicio,
+                            'hora_fim' => $fim
+                        ]);
+                    }
                 }
             }
             
@@ -381,14 +458,9 @@ foreach ($documentos as $doc) {
 // Buscar vídeos de verificação já enviados
 $videos_verificacao = $db->fetchAll("SELECT * FROM videos_verificacao WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
 
-// Carregar dados da acompanhante
-$acompanhante = $db->fetch("
-    SELECT a.*, c.nome as cidade_nome, e.uf as estado_uf
-    FROM acompanhantes a
-    LEFT JOIN cidades c ON a.cidade_id = c.id
-    LEFT JOIN estados e ON c.estado_id = e.id
-    WHERE a.id = ?
-", [$_SESSION['acompanhante_id']]);
+
+
+
 
 // Buscar cidades para o select
 $cidades = $db->fetchAll("
@@ -465,6 +537,9 @@ if (!empty($acompanhante['especialidades'])) {
         }
     }
 }
+
+// Agora incluir o header após todo o processamento do formulário
+include __DIR__ . '/../includes/header.php';
 ?>
 
 <!-- MENU RESPONSIVO DA ACOMPANHANTE -->
@@ -499,20 +574,61 @@ if (!empty($acompanhante['especialidades'])) {
         <div class="card-header" style="background: #3D263F; color: #F3EAC2;">
             <h4 class="mb-0">Editar Perfil</h4>
         </div>
-        <?php // echo '<div style="color:orange">DEBUG: Após header</div>'; ?>
-        <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3" onsubmit="return validarFormulario()">
+        
+
+
+                <form method="post" enctype="multipart/form-data" id="editarPerfilForm" class="row g-3" onsubmit="return validarFormulario();">
+
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
             <?php endif; ?>
             <?php if (!empty($success)): ?>
                 <div class="alert alert-success"><?php echo $success; ?></div>
             <?php endif; ?>
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-warning">
-                    <strong>Erros encontrados:</strong> <?php echo htmlspecialchars($error); ?><br>
-                    Se o problema persistir, por favor, contate o suporte técnico.
-                </div>
-            <?php endif; ?>
+            
+            <!-- Bloco de upload de foto de perfil -->
+            <div class="col-12 mt-3 mb-4 text-center">
+                <h5 style="color: #3D263F;">Foto de Perfil</h5>
+                <img id="fotoPerfilMiniatura"
+                     src="<?php echo $miniatura_path; ?>"
+                     alt="Foto de Perfil"
+                     style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:2px solid #3D263F;">
+                <form id="formUploadPerfil" enctype="multipart/form-data" style="display:inline-block; margin-top:10px;">
+                    <input type="file" id="inputFotoPerfil" name="foto" accept="image/*" style="max-width:200px; display:inline-block;">
+                    <button type="submit" class="btn btn-sm btn-primary">Enviar Nova Foto</button>
+                </form>
+                <div id="fotoPerfilMsg" class="mt-2"></div>
+            </div>
+            <script>
+            const formUploadPerfil = document.getElementById('formUploadPerfil');
+            if (formUploadPerfil) {
+                formUploadPerfil.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var input = document.getElementById('inputFotoPerfil');
+                    if (!input.files.length) return;
+                    var formData = new FormData();
+                    formData.append('foto', input.files[0]);
+                    fetch(SITE_URL + '/api/upload-foto-perfil.php', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        var msg = document.getElementById('fotoPerfilMsg');
+                        if (data.success) {
+                            document.getElementById('fotoPerfilMiniatura').src = SITE_URL + '/uploads/perfil/' + data.filename + '?' + Date.now();
+                            msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                        } else {
+                            msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('fotoPerfilMsg').innerHTML = '<span class="text-danger">Erro ao enviar foto.</span>';
+                    });
+                });
+            }
+            </script>
             <div class="col-12"><h5 class="mt-3">Dados Pessoais</h5></div>
                 <div class="col-md-6">
                         <label for="nome" class="form-label">Nome Completo *</label>
@@ -943,7 +1059,7 @@ if (!empty($acompanhante['especialidades'])) {
                   <div class="row g-2 align-items-end">
                     <div class="col-md-4">
                       <label for="video_publico" class="form-label">Selecione o vídeo</label>
-                      <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime" required>
+                      <input type="file" class="form-control" id="video_publico" name="video_publico" accept="video/mp4,video/webm,video/quicktime">
                     </div>
                     <div class="col-md-3">
                       <label for="titulo_video" class="form-label">Título (opcional)</label>
@@ -997,9 +1113,8 @@ if (!empty($acompanhante['especialidades'])) {
                 $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
                 if (file_exists($file)) unlink($file);
                 $db->query("DELETE FROM videos_publicos WHERE id = ?", [$vid]);
-                echo '<div class="alert alert-success mt-2">Vídeo excluído com sucesso.</div>';
                 // Redirecionar para evitar repost
-                echo '<script>window.location.href=window.location.href;</script>';
+                header('Location: ' . $_SERVER['REQUEST_URI'] . '?video_deleted=1');
                 exit;
               }
             }
@@ -1007,7 +1122,8 @@ if (!empty($acompanhante['especialidades'])) {
 
             <!-- Botão Salvar Alterações e Sair sem salvar (MOVIDO) -->
             <div class="col-12 text-center mt-4 mb-5 d-flex flex-wrap justify-content-center gap-3">
-                <button type="submit" class="btn btn-primary px-4 py-2">Salvar Alterações</button>
+                <button type="button" class="btn btn-primary px-4 py-2" onclick="enviarFormulario()">Salvar Alterações</button>
+                <button type="button" class="btn btn-warning px-4 py-2" onclick="console.log('Botão clicado!'); testarValidacao()">Testar Validação</button>
                 <a href="<?php echo SITE_URL; ?>/acompanhante/" class="btn btn-outline-primary px-4 py-2">Sair sem salvar</a>
             </div>
             <div style="height:40px;"></div>
@@ -1022,12 +1138,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const cidadeSelect = document.getElementById('cidade_id');
     // Garantir que cidadeId seja string (ou vazio), nunca undefined
     const cidadeId = String(<?php echo json_encode($acompanhante['cidade_id'] ?? ''); ?>);
+    
+
 
     function carregarCidades(estadoId, cidadeIdSelecionada) {
+        console.log('Carregando cidades para estado:', estadoId, 'cidade selecionada:', cidadeIdSelecionada);
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
-                    fetch(SITE_URL + '/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
+        fetch(SITE_URL + '/api/cidades.php?estado_id=' + encodeURIComponent(estadoId))
             .then(response => response.json())
             .then(cidades => {
+                console.log('Cidades recebidas:', cidades);
                 if (!Array.isArray(cidades) || cidades.length === 0) {
                     cidadeSelect.innerHTML = '<option value="">Nenhuma cidade encontrada</option>';
                     return;
@@ -1037,8 +1157,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     let selected = String(cidadeIdSelecionada) === String(cidade.id) ? 'selected' : '';
                     cidadeSelect.innerHTML += '<option value="' + cidade.id + '" ' + selected + '>' + cidade.nome + '</option>';
                 });
+                console.log('Cidades carregadas no select. Valor atual:', cidadeSelect.value);
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Erro ao carregar cidades:', error);
                 cidadeSelect.innerHTML = '<option value="">Erro ao carregar cidades</option>';
             });
     }
@@ -1068,6 +1190,8 @@ document.addEventListener('DOMContentLoaded', function() {
             cidadeSelect.innerHTML = '<option value="">Selecione o estado primeiro</option>';
         }
     });
+    
+
 });
 </script>
 
@@ -1075,27 +1199,37 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Aqui será exibido o formulário de horários detalhados por dia da semana -->
 
 <script>
-document.querySelectorAll('.atende-dia').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
-        var dia = this.getAttribute('data-dia');
-        var inputs = document.querySelectorAll('input[data-dia="' + dia + '"]');
-        inputs.forEach(function(input) {
-            if (input.type === 'time') {
-                input.style.display = checkbox.checked ? '' : 'none';
-            }
+// Verificar se existem elementos antes de adicionar event listeners
+const atendeDiaElements = document.querySelectorAll('.atende-dia');
+if (atendeDiaElements.length > 0) {
+    atendeDiaElements.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            var dia = this.getAttribute('data-dia');
+            var inputs = document.querySelectorAll('input[data-dia="' + dia + '"]');
+            inputs.forEach(function(input) {
+                if (input.type === 'time') {
+                    input.style.display = checkbox.checked ? '' : 'none';
+                }
+            });
         });
     });
-});
+}
 </script>
 
 <script>
-document.querySelectorAll('.valor-tempo-check').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
-        var input = this.closest('.form-check').parentNode.querySelector('input[type=number]');
-        input.disabled = !this.checked;
-        if (!this.checked) input.value = '';
+// Verificar se existem elementos antes de adicionar event listeners
+const valorTempoElements = document.querySelectorAll('.valor-tempo-check');
+if (valorTempoElements.length > 0) {
+    valorTempoElements.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            var input = this.closest('.form-check').parentNode.querySelector('input[type=number]');
+            if (input) {
+                input.disabled = !this.checked;
+                if (!this.checked) input.value = '';
+            }
+        });
     });
-});
+}
 </script>
 
 <script>
@@ -1118,46 +1252,52 @@ function previewGaleriaFotos(input) {
     }
 }
 
-// Upload de vídeo de verificação
-document.getElementById('btnUploadVideo').addEventListener('click', function() {
-    var input = document.getElementById('inputVideoVerificacao');
-    if (!input.files.length) {
-        alert('Selecione um vídeo primeiro.');
-        return;
-    }
-    var formData = new FormData();
-    formData.append('video_verificacao', input.files[0]);
-            fetch(SITE_URL + '/api/upload-video-verificacao.php', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        var msg = document.getElementById('videoVerificacaoMsg');
-        if (data.success) {
-            msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
-            // Adicionar preview do vídeo enviado
-            if (data.filename && data.video_id) {
-                var previewDiv = document.querySelector('#secao-video-verificacao .mt-3');
-                previewDiv.innerHTML = `
-                    <h6>Vídeo enviado:</h6>
-                    <div class="d-inline-block position-relative" style="display:inline-block;">
-                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(${data.video_id}, this)">×</button>
-                        <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
-                            <source src="${SITE_URL}/uploads/verificacao/${data.filename}" type="video/mp4">
-                            Seu navegador não suporta vídeo.
-                        </video>
-                    </div>
-                `;
+// Aguardar o DOM estar carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Upload de vídeo de verificação
+    var btnUploadVideo = document.getElementById('btnUploadVideo');
+    if (btnUploadVideo) {
+        btnUploadVideo.addEventListener('click', function() {
+            var input = document.getElementById('inputVideoVerificacao');
+            if (!input.files.length) {
+                alert('Selecione um vídeo primeiro.');
+                return;
             }
-        } else {
-            msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
-        }
-    })
-    .catch(() => {
-        document.getElementById('videoVerificacaoMsg').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
-    });
+            var formData = new FormData();
+            formData.append('video_verificacao', input.files[0]);
+            fetch(SITE_URL + '/api/upload-video-verificacao.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                var msg = document.getElementById('videoVerificacaoMsg');
+                if (data.success) {
+                    msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                    // Adicionar preview do vídeo enviado
+                    if (data.filename && data.video_id) {
+                        var previewDiv = document.querySelector('#secao-video-verificacao .mt-3');
+                        previewDiv.innerHTML = `
+                            <h6>Vídeo enviado:</h6>
+                            <div class="d-inline-block position-relative" style="display:inline-block;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(${data.video_id}, this)">×</button>
+                                <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
+                                    <source src="${SITE_URL}/uploads/verificacao/${data.filename}" type="video/mp4">
+                                    Seu navegador não suporta vídeo.
+                                </video>
+                            </div>
+                        `;
+                    }
+                } else {
+                    msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
+                }
+            })
+            .catch(() => {
+                document.getElementById('videoVerificacaoMsg').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
+            });
+        });
+    }
 });
 
 // Excluir foto da galeria
@@ -1273,134 +1413,170 @@ function excluirVideoVerificacao(videoId, btn) {
     });
 }
 
-// Função para atualizar lista de vídeos dinamicamente
-function atualizarListaVideos() {
-    fetch(SITE_URL + '/api/get-videos-publicos.php', {
-        method: 'GET',
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            var container = document.getElementById('listaVideosPublicos');
-            if (container) {
-                container.innerHTML = data.html;
+    // Função para atualizar lista de vídeos dinamicamente
+    function atualizarListaVideos() {
+        fetch(SITE_URL + '/api/get-videos-publicos.php', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                var container = document.getElementById('listaVideosPublicos');
+                if (container) {
+                    container.innerHTML = data.html;
+                }
             }
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao atualizar lista:', error);
-    });
-}
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar lista:', error);
+        });
+    }
 
-// Upload de vídeo público via AJAX
-document.getElementById('formVideoPublico').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    var input = document.getElementById('video_publico');
-    var titulo = document.getElementById('titulo_video').value;
-    var descricao = document.getElementById('descricao_video').value;
-    var btn = document.getElementById('btnEnviarVideo');
-    var msg = document.getElementById('msgVideoPublico');
-    
-    if (!input.files.length) {
-        msg.innerHTML = '<div class="alert alert-warning">Selecione um vídeo primeiro.</div>';
-        return;
+    // Upload de vídeo público via AJAX
+    var formVideoPublico = document.getElementById('formVideoPublico');
+    if (formVideoPublico) {
+        formVideoPublico.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var input = document.getElementById('video_publico');
+            var titulo = document.getElementById('titulo_video').value;
+            var descricao = document.getElementById('descricao_video').value;
+            var btn = document.getElementById('btnEnviarVideo');
+            var msg = document.getElementById('msgVideoPublico');
+            
+            if (!input.files.length) {
+                msg.innerHTML = '<div class="alert alert-warning">Selecione um vídeo primeiro.</div>';
+                return;
+            }
+            
+            var file = input.files[0];
+            
+            // Validação de tamanho no frontend
+            if (file.size > 50 * 1024 * 1024) {
+                msg.innerHTML = '<div class="alert alert-danger">O vídeo excede o tamanho máximo permitido (50MB).</div>';
+                return;
+            }
+            
+            // Validação de tipo
+            var allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+            if (!allowedTypes.includes(file.type)) {
+                msg.innerHTML = '<div class="alert alert-danger">Formato de vídeo não permitido. Use MP4, WebM ou MOV.</div>';
+                return;
+            }
+            
+            // Desabilitar botão e mostrar loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            msg.innerHTML = '<div class="alert alert-info">Enviando vídeo, aguarde...</div>';
+            
+            var formData = new FormData();
+            formData.append('video_publico', file);
+            formData.append('titulo_video', titulo);
+            formData.append('descricao_video', descricao);
+            formData.append('action', 'upload_video_publico');
+            
+            fetch(SITE_URL + '/api/upload-video-publico.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+                    // Limpar formulário
+                    document.getElementById('formVideoPublico').reset();
+                    // Atualizar lista de vídeos dinamicamente
+                    setTimeout(() => {
+                        atualizarListaVideos();
+                    }, 1000);
+                } else {
+                    msg.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                msg.innerHTML = '<div class="alert alert-danger">Erro ao enviar vídeo. Tente novamente. Erro: ' + error.message + '</div>';
+            })
+            .finally(() => {
+                // Reabilitar botão
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
+            });
+        });
     }
     
-    var file = input.files[0];
-    
-    // Validação de tamanho no frontend
-    if (file.size > 50 * 1024 * 1024) {
-        msg.innerHTML = '<div class="alert alert-danger">O vídeo excede o tamanho máximo permitido (50MB).</div>';
-        return;
+    // Verificar se há mensagem de sucesso na URL e rolar para o topo
+    if (window.location.search.includes('success=1')) {
+        window.scrollTo(0, 0);
     }
     
-    // Validação de tipo
-    var allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-    if (!allowedTypes.includes(file.type)) {
-        msg.innerHTML = '<div class="alert alert-danger">Formato de vídeo não permitido. Use MP4, WebM ou MOV.</div>';
-        return;
+    // Debug: Adicionar event listener direto no botão de salvar
+    const btnSalvar = document.querySelector('button[type="submit"]');
+    if (btnSalvar) {
+        console.log('Botão de salvar encontrado:', btnSalvar);
+        btnSalvar.addEventListener('click', function(e) {
+            console.log('=== BOTÃO SALVAR CLICADO ===');
+            console.log('Evento:', e);
+            console.log('Formulário pai:', this.closest('form'));
+        });
+    } else {
+        console.log('ERRO: Botão de salvar não encontrado!');
     }
     
-    // Desabilitar botão e mostrar loading
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-    msg.innerHTML = '<div class="alert alert-info">Enviando vídeo, aguarde...</div>';
-    
-    var formData = new FormData();
-    formData.append('video_publico', file);
-    formData.append('titulo_video', titulo);
-    formData.append('descricao_video', descricao);
-    formData.append('action', 'upload_video_publico');
-    
-    fetch(SITE_URL + '/api/upload-video-publico.php', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            msg.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-            // Limpar formulário
-            document.getElementById('formVideoPublico').reset();
-            // Atualizar lista de vídeos dinamicamente
-            setTimeout(() => {
-                atualizarListaVideos();
-            }, 1000);
-        } else {
-            msg.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-        }
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        msg.innerHTML = '<div class="alert alert-danger">Erro ao enviar vídeo. Tente novamente. Erro: ' + error.message + '</div>';
-    })
-    .finally(() => {
-        // Reabilitar botão
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
-    });
+    // Debug: Adicionar event listener no formulário
+    const form = document.getElementById('editarPerfilForm');
+    if (form) {
+        console.log('Formulário encontrado no DOMContentLoaded:', form);
+        form.addEventListener('submit', function(e) {
+            console.log('=== FORMULÁRIO SUBMIT ===');
+            console.log('Evento:', e);
+            console.log('Formulário:', this);
+        });
+    } else {
+        console.log('ERRO: Formulário não encontrado no DOMContentLoaded!');
+    }
 });
 
-// Função para validar formulário antes do envio
-function validarFormulario() {
-    const cidadeSelect = document.getElementById('cidade_id');
-    const estadoSelect = document.getElementById('estado_id');
-    
-    console.log('DEBUG - Validando formulário...');
-    console.log('DEBUG - Cidade selecionada:', cidadeSelect.value);
-    console.log('DEBUG - Estado selecionado:', estadoSelect.value);
-    
-    // Garantir que cidade seja sempre enviada
-    if (!cidadeSelect.value) {
-        alert('Por favor, selecione uma cidade.');
-        cidadeSelect.focus();
-        return false;
-    }
-    
-    // Garantir que estado seja sempre enviado
-    if (!estadoSelect.value) {
-        alert('Por favor, selecione um estado.');
-        estadoSelect.focus();
-        return false;
-    }
-    
-    console.log('DEBUG - Formulário válido, enviando...');
-    return true;
-}
-
-// Verificar se há mensagem de sucesso na URL e rolar para o topo
+// Debug: Adicionar event listener no botão de salvar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
+    const btnSalvar = document.querySelector('button[type="submit"]');
+    if (btnSalvar) {
+        console.log('Botão de salvar encontrado:', btnSalvar);
+        btnSalvar.addEventListener('click', function(e) {
+            console.log('=== BOTÃO SALVAR CLICADO ===');
+            console.log('Evento:', e);
+            console.log('Formulário pai:', this.closest('form'));
+        });
+    } else {
+        console.log('ERRO: Botão de salvar não encontrado!');
+    }
+    
+    // Adicionar event listener alternativo para o botão testarEnvio
+    const btnTestar = document.querySelector('button[onclick*="testarEnvio"]');
+    if (btnTestar) {
+        console.log('Botão testar encontrado:', btnTestar);
+        btnTestar.addEventListener('click', function(e) {
+            console.log('=== BOTÃO TESTAR CLICADO (event listener) ===');
+            if (typeof testarEnvio === 'function') {
+                testarEnvio();
+            } else {
+                console.log('ERRO: Função testarEnvio não encontrada!');
+            }
+        });
+    } else {
+        console.log('ERRO: Botão testar não encontrado!');
+    }
+    
+    // Verificar se há mensagem de sucesso na URL e rolar para o topo
     if (window.location.search.includes('success=1')) {
         window.scrollTo(0, 0);
     }
 });
-</script>
 

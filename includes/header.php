@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-echo '<!-- SITE_URL: ' . SITE_URL . ' -->'; ?>
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
