@@ -2132,12 +2132,13 @@ document.addEventListener('DOMContentLoaded', function() {
                      // Limpar o input de arquivo
                      inputVideoVerificacao.value = '';
                      
-                     // Mostrar mensagem final
+                     // Atualizar a exibição do vídeo dinamicamente
                      setTimeout(() => {
+                         atualizarVideoVerificacao(data.filename, data.video_id);
                          if (videoMsg) {
                              videoMsg.innerHTML = '<div class="text-success"><i class="fas fa-check-circle"></i> Vídeo enviado com sucesso!</div>';
                          }
-                     }, 3000);
+                     }, 1000);
                  } else {
                     if (videoMsg) {
                         videoMsg.innerHTML = '<div class="text-danger">' + data.message + '</div>';
@@ -2173,5 +2174,38 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('ERRO: Elementos não encontrados para upload de vídeo de verificação');
     }
 });
+
+// Função para atualizar a exibição do vídeo de verificação
+function atualizarVideoVerificacao(filename, videoId) {
+    console.log('Atualizando vídeo de verificação:', filename, 'ID:', videoId);
+    
+    // URL base do site
+    const SITE_URL = '<?php echo SITE_URL; ?>';
+    
+    // Encontrar a seção onde o vídeo é exibido
+    const videoSection = document.querySelector('#secao-video-verificacao .mt-3');
+    
+    if (videoSection && filename) {
+        // Criar HTML do vídeo
+        const videoHTML = `
+            <h6>Vídeo enviado:</h6>
+            <div class="d-inline-block position-relative" style="display:inline-block;">
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" 
+                        style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" 
+                        title="Excluir vídeo" onclick="excluirVideoVerificacao(${videoId}, this)">×</button>
+                <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
+                     <source src="${SITE_URL}/uploads/verificacao/${filename}" type="video/mp4">
+                     Seu navegador não suporta vídeo.
+                 </video>
+            </div>
+        `;
+        
+        // Atualizar o conteúdo
+        videoSection.innerHTML = videoHTML;
+        console.log('Vídeo atualizado na página');
+    } else {
+        console.log('ERRO: Seção do vídeo não encontrada ou filename inválido');
+    }
+}
 </script>
 
