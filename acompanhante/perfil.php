@@ -537,6 +537,21 @@ foreach ($documentos as $doc) {
 // Buscar vídeos de verificação já enviados
 $videos_verificacao = $db->fetchAll("SELECT * FROM videos_verificacao WHERE acompanhante_id = ? ORDER BY created_at DESC", [$_SESSION['acompanhante_id']]);
 
+// Debug: Verificar diretório de vídeos de verificação
+$video_dir = __DIR__ . '/../uploads/verificacao/';
+if (!is_dir($video_dir)) {
+    error_log('AVISO: Diretório de vídeos de verificação não existe: ' . $video_dir);
+    if (mkdir($video_dir, 0755, true)) {
+        error_log('✅ Diretório criado com sucesso: ' . $video_dir);
+    } else {
+        error_log('❌ ERRO: Não foi possível criar diretório: ' . $video_dir);
+    }
+} else {
+    error_log('✅ Diretório de vídeos existe: ' . $video_dir);
+}
+
+error_log('📹 Vídeos de verificação encontrados: ' . count($videos_verificacao));
+
 
 
 
@@ -1983,4 +1998,121 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Script para upload de vídeo público -->
 <script src="<?php echo SITE_URL; ?>/assets/js/video-upload.js"></script>
+
+<!-- Script para upload de vídeo de verificação -->
+<script>
+// Upload de vídeo de verificação
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== CONFIGURANDO UPLOAD DE VÍDEO DE VERIFICAÇÃO ===');
+    
+    const btnUploadVideo = document.getElementById('btnUploadVideo');
+    const inputVideoVerificacao = document.getElementById('inputVideoVerificacao');
+    const videoMsg = document.getElementById('videoVerificacaoMsg');
+    
+    console.log('Botão encontrado:', btnUploadVideo);
+    console.log('Input encontrado:', inputVideoVerificacao);
+    console.log('Mensagem encontrada:', videoMsg);
+    
+    if (btnUploadVideo && inputVideoVerificacao) {
+        btnUploadVideo.addEventListener('click', function() {
+            console.log('=== UPLOAD DE VÍDEO DE VERIFICAÇÃO INICIADO ===');
+            
+            if (!inputVideoVerificacao.files.length) {
+                alert('Por favor, selecione um vídeo primeiro.');
+                return;
+            }
+            
+            const file = inputVideoVerificacao.files[0];
+            console.log('Arquivo selecionado:', file);
+            
+            // Validação de tamanho (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert('O vídeo excede o tamanho máximo permitido (50MB).');
+                return;
+            }
+            
+                         // Validação de tipo
+             const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/ogg'];
+             const allowedExtensions = ['mp4', 'webm', 'mov', 'avi', 'ogg'];
+             const fileExtension = file.name.split('.').pop().toLowerCase();
+             
+             console.log('Tipo do arquivo:', file.type);
+             console.log('Extensão do arquivo:', fileExtension);
+             
+             if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                 alert('Formato de vídeo não permitido. Use MP4, WebM, MOV, AVI ou OGG.');
+                 return;
+             }
+            
+            // Desabilitar botão e mostrar loading
+            btnUploadVideo.disabled = true;
+            btnUploadVideo.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            
+            if (videoMsg) {
+                videoMsg.innerHTML = '<div class="text-info">Enviando vídeo, aguarde...</div>';
+            }
+            
+            // Criar FormData
+            const formData = new FormData();
+            formData.append('video_verificacao', file);
+            
+            console.log('Enviando para API...');
+            
+            // Enviar para API
+            fetch('<?php echo SITE_URL; ?>/api/upload-video-verificacao.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    if (videoMsg) {
+                        videoMsg.innerHTML = '<div class="text-success">' + data.message + '</div>';
+                    }
+                    // Recarregar página para mostrar o vídeo
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    if (videoMsg) {
+                        videoMsg.innerHTML = '<div class="text-danger">' + data.message + '</div>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                if (videoMsg) {
+                    videoMsg.innerHTML = '<div class="text-danger">Erro ao enviar vídeo. Tente novamente.</div>';
+                }
+            })
+            .finally(() => {
+                // Reabilitar botão
+                btnUploadVideo.disabled = false;
+                btnUploadVideo.innerHTML = 'Enviar Vídeo';
+            });
+        });
+        
+        // Preview do arquivo selecionado
+        inputVideoVerificacao.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                console.log('Arquivo selecionado:', file.name, 'Tamanho:', file.size);
+                
+                if (videoMsg) {
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    videoMsg.innerHTML = `<div class="text-info">Arquivo selecionado: ${file.name} (${sizeMB}MB)</div>`;
+                }
+            }
+        });
+    } else {
+        console.log('ERRO: Elementos não encontrados para upload de vídeo de verificação');
+    }
+});
+</script>
 
