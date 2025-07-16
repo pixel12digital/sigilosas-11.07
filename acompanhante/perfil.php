@@ -1977,16 +1977,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event delegation para botões de exclusão de galeria
     // Isso permite que botões adicionados dinamicamente funcionem
     document.addEventListener('click', function(e) {
+        console.log('=== CLIQUE DETECTADO ===');
+        console.log('Elemento clicado:', e.target);
+        console.log('Classes do elemento:', e.target.classList);
+        console.log('Tem classe galeria-excluir-btn?', e.target.classList.contains('galeria-excluir-btn'));
+        
         if (e.target.classList.contains('galeria-excluir-btn')) {
+            console.log('✅ Clique em botão de exclusão de galeria detectado!');
             const fotoId = e.target.getAttribute('data-foto-id');
+            console.log('data-foto-id:', fotoId);
+            
             if (fotoId) {
-                console.log('Clique no botão de exclusão de foto ID:', fotoId);
+                console.log('Chamando excluirFotoGaleria com ID:', fotoId);
                 excluirFotoGaleria(fotoId, e.target);
+            } else {
+                console.log('❌ ERRO: data-foto-id não encontrado');
             }
         }
         
         // Event delegation para botões de exclusão de documentos
         if (e.target.classList.contains('doc-excluir-btn')) {
+            console.log('✅ Clique em botão de exclusão de documento detectado!');
             const docId = e.target.getAttribute('onclick');
             if (docId) {
                 // Extrair o ID do atributo onclick
@@ -2282,6 +2293,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Adicionar fotos à galeria
                     if (data.photos && data.photos.length > 0) {
+                        console.log('Dados das fotos recebidos:', data.photos);
+                        
+                        // Debug visual na tela
+                        const debugDiv = document.createElement('div');
+                        debugDiv.style.cssText = 'position: fixed; top: 10px; left: 10px; background: #4CAF50; color: white; padding: 15px; border-radius: 8px; z-index: 9999; max-width: 400px; font-family: monospace; font-size: 12px;';
+                        debugDiv.innerHTML = `
+                            <strong>🔍 DEBUG - Upload Galeria</strong><br>
+                            Fotos recebidas: ${data.photos.length}<br>
+                            ${data.photos.map(p => `ID: ${p.id}, File: ${p.filename}`).join('<br>')}
+                        `;
+                        document.body.appendChild(debugDiv);
+                        
+                        // Remover debug após 8 segundos
+                        setTimeout(() => {
+                            if (debugDiv.parentNode) {
+                                document.body.removeChild(debugDiv);
+                            }
+                        }, 8000);
+                        
                         atualizarGaleriaFotos(data.photos);
                     }
                 } else {
@@ -2307,20 +2337,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Função para atualizar a galeria de fotos dinamicamente
 function atualizarGaleriaFotos(photos) {
-    console.log('Atualizando galeria com', photos.length, 'fotos');
+    console.log('=== ATUALIZANDO GALERIA ===');
+    console.log('Recebidas', photos.length, 'fotos:', photos);
     
     const SITE_URL = '<?php echo SITE_URL; ?>';
+    console.log('SITE_URL:', SITE_URL);
+    
     const galeriaContainer = document.getElementById('galeriaMiniaturas');
+    console.log('Container da galeria:', galeriaContainer);
     
     if (galeriaContainer) {
         // Se não há fotos, remover mensagem "Nenhuma foto na galeria"
         const emptyMsg = galeriaContainer.querySelector('.text-muted');
         if (emptyMsg) {
+            console.log('Removendo mensagem de galeria vazia');
             emptyMsg.remove();
         }
         
         // Adicionar cada nova foto
-        photos.forEach(photo => {
+        photos.forEach((photo, index) => {
+            console.log(`Adicionando foto ${index + 1}:`, photo);
+            
             const fotoHTML = `
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="${photo.id}">
                     <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" 
@@ -2332,12 +2369,60 @@ function atualizarGaleriaFotos(photos) {
                 </div>
             `;
             
+            console.log('HTML da foto:', fotoHTML);
             galeriaContainer.insertAdjacentHTML('beforeend', fotoHTML);
+            console.log(`Foto ${index + 1} adicionada ao DOM`);
         });
         
-        console.log('Galeria atualizada com sucesso');
+        // Verificar se os botões foram realmente adicionados
+        const botões = galeriaContainer.querySelectorAll('.galeria-excluir-btn');
+        console.log('Total de botões de exclusão encontrados:', botões.length);
+        
+        // Debug detalhado dos botões
+        botões.forEach((btn, i) => {
+            console.log(`Botão ${i + 1}:`, btn);
+            console.log(`- Visível?`, btn.offsetWidth > 0 && btn.offsetHeight > 0);
+            console.log(`- Classes:`, btn.classList.toString());
+            console.log(`- data-foto-id:`, btn.getAttribute('data-foto-id'));
+            console.log(`- Style:`, btn.style.cssText);
+            
+            // Forçar estilo para garantir visibilidade
+            btn.style.display = 'block';
+            btn.style.visibility = 'visible';
+            btn.style.opacity = '1';
+        });
+        
+        // Criar botão de teste visual na tela
+        const testButton = document.createElement('button');
+        testButton.innerHTML = '🔍 Testar Botões';
+        testButton.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #FF5722; color: white; padding: 10px; border: none; border-radius: 5px; z-index: 10000; cursor: pointer;';
+        testButton.onclick = function() {
+            const todosBotoes = document.querySelectorAll('.galeria-excluir-btn');
+            alert(`Encontrados ${todosBotoes.length} botões de exclusão na página.\n\nBotões recém-adicionados: ${botões.length}`);
+            
+            // Destacar botões na tela
+            todosBotoes.forEach((btn, i) => {
+                btn.style.background = '#FF0000';
+                btn.style.border = '3px solid #FFFF00';
+                setTimeout(() => {
+                    btn.style.background = '';
+                    btn.style.border = '';
+                }, 3000);
+            });
+        };
+        document.body.appendChild(testButton);
+        
+        // Remover botão de teste após 10 segundos
+        setTimeout(() => {
+            if (testButton.parentNode) {
+                document.body.removeChild(testButton);
+            }
+        }, 10000);
+        
+        console.log('✅ Galeria atualizada com sucesso');
     } else {
-        console.log('ERRO: Container da galeria não encontrado');
+        console.log('❌ ERRO: Container da galeria não encontrado');
+        console.log('Elemento galeriaMiniaturas:', document.getElementById('galeriaMiniaturas'));
     }
 }
 
