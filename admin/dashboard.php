@@ -69,8 +69,7 @@ try {
     // Buscar total de cidades únicas com acompanhantes
     $stats['cidades_com_acompanhantes'] = $db->fetch("SELECT COUNT(DISTINCT cidade_id) as total FROM acompanhantes WHERE cidade_id IS NOT NULL")['total'];
 
-    // Buscar total de vídeos públicos pendentes
-    $stats['videos_pendentes'] = $db->fetch("SELECT COUNT(*) as total FROM videos_publicos WHERE status = 'pendente'")['total'];
+    // Removido: busca de vídeos pendentes (aprovação agora é centralizada)
 } catch (Exception $e) {
     $error_db = "Erro ao conectar com o banco: " . $e->getMessage();
 }
@@ -144,28 +143,7 @@ try {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 mb-4">
-                    <div class="card border-left-danger py-2 h-100" style="min-height: 160px;">
-                        <div class="card-body d-flex flex-column justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <div class="me-auto">
-                                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                        Mídias Pendentes
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        <?php echo number_format($stats['videos_pendentes'] ?? 0); ?>
-                                    </div>
-                                </div>
-                                <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
-                            </div>
-                            <?php if (($stats['videos_pendentes'] ?? 0) > 0): ?>
-                                <div class="mt-2">
-                                    <a href="acompanhantes.php?filtro=midias_pendentes" class="btn btn-danger btn-sm w-100">Ver Mídias Pendentes</a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
+                <!-- Card de Mídias Pendentes removido - aprovação agora é centralizada -->
             </div>
 
             <!-- Menu de Navegação -->

@@ -175,6 +175,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->update('acompanhantes', ['status' => 'rejeitado'], 'id = ?', [$id]);
         header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante reprovada com sucesso');
         exit;
+    } elseif ($id && $action === 'excluir') {
+        // Exclusão completa da acompanhante e todos os dados relacionados
+        try {
+            // 1. Excluir fotos físicas e registros
+            $fotos = $db->fetchAll('SELECT * FROM fotos WHERE acompanhante_id = ?', [$id]);
+            foreach ($fotos as $foto) {
+                if ($foto['url'] && file_exists($foto['url'])) {
+                    unlink($foto['url']);
+                }
+            }
+            $db->delete('fotos', 'acompanhante_id = ?', [$id]);
+
+            // 2. Excluir vídeos de verificação físicos e registros
+            $videos_verificacao = $db->fetchAll('SELECT * FROM videos_verificacao WHERE acompanhante_id = ?', [$id]);
+            foreach ($videos_verificacao as $video) {
+                if ($video['url'] && file_exists($video['url'])) {
+                    unlink($video['url']);
+                }
+            }
+            $db->delete('videos_verificacao', 'acompanhante_id = ?', [$id]);
+
+            // 3. Excluir vídeos públicos físicos e registros
+            $videos_publicos = $db->fetchAll('SELECT * FROM videos_publicos WHERE acompanhante_id = ?', [$id]);
+            foreach ($videos_publicos as $video) {
+                if ($video['url'] && file_exists($video['url'])) {
+                    unlink($video['url']);
+                }
+            }
+            $db->delete('videos_publicos', 'acompanhante_id = ?', [$id]);
+
+            // 4. Excluir documentos físicos e registros
+            $documentos = $db->fetchAll('SELECT * FROM documentos_acompanhante WHERE acompanhante_id = ?', [$id]);
+            foreach ($documentos as $doc) {
+                if ($doc['url'] && file_exists($doc['url'])) {
+                    unlink($doc['url']);
+                }
+            }
+            $db->delete('documentos_acompanhante', 'acompanhante_id = ?', [$id]);
+
+            // 5. Excluir dados relacionados
+            $db->delete('valores_atendimento', 'acompanhante_id = ?', [$id]);
+            $db->delete('horarios_atendimento', 'acompanhante_id = ?', [$id]);
+            $db->delete('avaliacoes', 'acompanhante_id = ?', [$id]);
+            $db->delete('denuncias', 'acompanhante_id = ?', [$id]);
+
+            // 6. Finalmente, excluir acompanhante
+            $result = $db->delete('acompanhantes', 'id = ?', [$id]);
+            
+            if ($result) {
+                header('Location: acompanhantes.php?success=Acompanhante e todos os dados relacionados excluídos com sucesso');
+                exit;
+            } else {
+                $error = 'Erro ao excluir acompanhante do banco de dados.';
+            }
+        } catch (Exception $e) {
+            $error = 'Erro ao excluir acompanhante: ' . $e->getMessage();
+        }
     }
 }
 
