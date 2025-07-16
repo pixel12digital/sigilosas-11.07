@@ -142,6 +142,33 @@ $acompanhante = $db->fetch("
 
 // Processamento removido - agora usa apenas o botão principal de aprovação
 
+// Processar exclusão de vídeo público
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_video_publico_id'])) {
+    $video_id = (int)$_POST['excluir_video_publico_id'];
+    
+    // Buscar o vídeo para obter o nome do arquivo
+    $video = $db->fetch("SELECT * FROM videos_publicos WHERE id = ? AND acompanhante_id = ?", [$video_id, $id]);
+    
+    if ($video) {
+        // Excluir o arquivo físico
+        $arquivo_video = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
+        if (file_exists($arquivo_video)) {
+            unlink($arquivo_video);
+        }
+        
+        // Excluir o registro do banco
+        $db->delete('videos_publicos', 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
+        
+        $success = 'Vídeo excluído com sucesso!';
+        
+        // Redirecionar para evitar reenvio do formulário
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $id . '&success=' . urlencode($success));
+        exit;
+    } else {
+        $error = 'Vídeo não encontrado.';
+    }
+}
+
 if (!$acompanhante) {
     echo '<div class="alert alert-danger">Acompanhante não encontrada.</div>';
     require_once '../includes/admin-footer.php';
@@ -627,7 +654,13 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             if ($videos_publicos): ?>
               <?php foreach ($videos_publicos as $v): ?>
                 <div class="col-md-4 col-6">
-                  <div class="card h-100 shadow-sm">
+                  <div class="card h-100 shadow-sm position-relative">
+                    <!-- Botão de exclusão -->
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" 
+                            style="z-index: 10; border-radius: 50%; width: 28px; height: 28px; padding: 0; font-weight: bold;" 
+                            onclick="excluirVideoPublico(<?php echo $v['id']; ?>, this)" 
+                            title="Excluir vídeo">×</button>
+                    
                     <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
                     <div class="p-2">
                       <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
@@ -873,5 +906,29 @@ document.getElementById('whatsapp').addEventListener('input', function() {
     // Atualizar campo oculto
     document.getElementById('telefone').value = telefoneFormatado;
 });
+
+// Função para excluir vídeo público
+function excluirVideoPublico(videoId, btn) {
+    if (!confirm('Tem certeza que deseja excluir este vídeo?\n\nEsta ação não pode ser desfeita!')) {
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    // Criar formulário para enviar via POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'excluir_video_publico_id';
+    input.value = videoId;
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 <?php require_once '../includes/admin-footer.php'; ?> 
