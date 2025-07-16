@@ -123,8 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData = [
         'nome' => trim($_POST['nome'] ?? ''),
         'apelido' => trim($_POST['apelido'] ?? ''),
-        'telefone' => trim($_POST['telefone'] ?? ''),
-        'whatsapp' => trim($_POST['whatsapp'] ?? ''),
+        'telefone' => trim($_POST['whatsapp'] ?? ''),
         'idade' => (int)($_POST['idade'] ?? 0),
         'genero' => trim($_POST['genero'] ?? ''),
         'estado_id' => (int)($_POST['estado_id'] ?? 0),
@@ -167,7 +166,7 @@ if (
     error_log('debug_test: ' . ($_POST['debug_test'] ?? 'NAO_ENVIADO'));
     error_log('nome no POST: ' . ($_POST['nome'] ?? 'VAZIO'));
     error_log('apelido no POST: ' . ($_POST['apelido'] ?? 'VAZIO'));
-    error_log('telefone no POST: ' . ($_POST['telefone'] ?? 'VAZIO'));
+    error_log('whatsapp no POST: ' . ($_POST['whatsapp'] ?? 'VAZIO'));
     error_log('idade no POST: ' . ($_POST['idade'] ?? 'VAZIO'));
     error_log('cidade_id no POST: ' . ($_POST['cidade_id'] ?? 'VAZIO'));
     error_log('estado_id no POST: ' . ($_POST['estado_id'] ?? 'VAZIO'));
@@ -181,8 +180,7 @@ if (
     $formData = [
         'nome' => trim($_POST['nome'] ?? ''),
         'apelido' => trim($_POST['apelido'] ?? ''),
-        'telefone' => trim($_POST['telefone'] ?? ''),
-        'whatsapp' => trim($_POST['whatsapp'] ?? ''),
+        'telefone' => trim($_POST['whatsapp'] ?? ''),
         'idade' => (int)($_POST['idade'] ?? 0),
         'altura' => !empty($_POST['altura']) ? (float)$_POST['altura'] : null,
         'peso' => !empty($_POST['peso']) ? (float)$_POST['peso'] : null,
@@ -240,24 +238,22 @@ if (
         $errors[] = 'Apelido deve ter no máximo 50 caracteres';
     }
 
-    // Telefone
+    // WhatsApp/Telefone (agora obrigatório)
     if (empty($formData['telefone'])) {
-        $errors[] = 'Telefone é obrigatório';
+        $errors[] = 'WhatsApp é obrigatório';
+    } else {
+        // Validar formato do WhatsApp
+        $whats = preg_replace('/\D+/', '', $formData['telefone']);
+        if (!preg_match('/^\d{10,11}$/', $whats)) {
+            $errors[] = 'WhatsApp deve conter apenas DDD e número, ex: 41999999999';
+        } else {
+            $formData['telefone'] = '+55' . $whats;
+        }
     }
 
     // Idade
     if ($formData['idade'] < 18) {
         $errors[] = 'Você deve ter pelo menos 18 anos';
-    }
-
-    // WhatsApp
-    if (!empty($formData['whatsapp'])) {
-        $whats = preg_replace('/\D+/', '', $formData['whatsapp']);
-        if (!preg_match('/^\d{10,11}$/', $whats)) {
-            $errors[] = 'WhatsApp deve conter apenas DDD e número, ex: 41999999999';
-        } else {
-            $formData['whatsapp'] = '+55' . $whats;
-        }
     }
 
     // Cidade - Garantir que sempre seja salva
@@ -908,18 +904,14 @@ include __DIR__ . '/../includes/header.php';
                 </div>
             </div>
             
-            <!-- Segunda linha: Telefone, WhatsApp, Idade, Gênero -->
+            <!-- Segunda linha: WhatsApp, Idade, Gênero -->
             <div class="form-row">
                 <div class="form-field">
-                    <label for="telefone" class="form-label">Telefone *</label>
-                    <input type="tel" class="form-control" id="telefone" name="telefone" value="<?php echo htmlspecialchars($acompanhante['telefone'] ?? ''); ?>" required>
-                </div>
-                <div class="form-field">
-                    <label for="whatsapp" class="form-label">WhatsApp</label>
+                    <label for="whatsapp" class="form-label">WhatsApp *</label>
                     <input type="tel" class="form-control" id="whatsapp" name="whatsapp"
                            pattern="^\d{10,11}$"
                            placeholder="DDD + número (ex: 41999999999)"
-                           value="<?php echo isset($acompanhante['whatsapp']) ? preg_replace('/^\+55/', '', $acompanhante['whatsapp']) : ''; ?>">
+                           value="<?php echo htmlspecialchars($acompanhante['telefone'] ?? ''); ?>" required>
                     <div class="form-text">Digite apenas DDD e número, sem espaços ou traços. Ex: 41999999999</div>
                 </div>
                 <div class="form-field">
@@ -1697,7 +1689,7 @@ function validarFormulario() {
     // Verificar campos obrigatórios
     const nome = document.getElementById('nome');
     const apelido = document.getElementById('apelido');
-    const telefone = document.getElementById('telefone');
+    const whatsapp = document.getElementById('whatsapp');
     const idade = document.getElementById('idade');
     const genero = document.getElementById('genero');
     const cidadeSelect = document.getElementById('cidade_id');
@@ -1706,7 +1698,7 @@ function validarFormulario() {
     console.log('Campos encontrados:');
     console.log('- nome:', nome?.value);
     console.log('- apelido:', apelido?.value);
-    console.log('- telefone:', telefone?.value);
+    console.log('- whatsapp:', whatsapp?.value);
     console.log('- idade:', idade?.value);
     console.log('- genero:', genero?.value);
     console.log('- estado_id:', estadoSelect?.value);
@@ -1715,7 +1707,7 @@ function validarFormulario() {
     debugDiv.innerHTML += '<strong>📋 Valores dos campos:</strong><br>';
     debugDiv.innerHTML += `Nome: "${nome?.value || 'VAZIO'}"<br>`;
     debugDiv.innerHTML += `Apelido: "${apelido?.value || 'VAZIO'}"<br>`;
-    debugDiv.innerHTML += `Telefone: "${telefone?.value || 'VAZIO'}"<br>`;
+    debugDiv.innerHTML += `WhatsApp: "${whatsapp?.value || 'VAZIO'}"<br>`;
     debugDiv.innerHTML += `Idade: "${idade?.value || 'VAZIO'}"<br>`;
     debugDiv.innerHTML += `Gênero: "${genero?.value || 'VAZIO'}"<br>`;
     debugDiv.innerHTML += `Estado: "${estadoSelect?.value || 'VAZIO'}"<br>`;
@@ -1737,9 +1729,9 @@ function validarFormulario() {
         hasEmptyRequired = true;
     }
     
-    if (!telefone || !telefone.value.trim()) {
-        console.log('ERRO: Telefone vazio');
-        emptyFields.push('telefone');
+    if (!whatsapp || !whatsapp.value.trim()) {
+        console.log('ERRO: WhatsApp vazio');
+        emptyFields.push('whatsapp');
         hasEmptyRequired = true;
     }
     
@@ -1880,7 +1872,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Botão salvar encontrado:', document.querySelector('button[onclick="enviarFormulario()"]'));
     
     // Debug dos campos do formulário
-    const campos = ['nome', 'apelido', 'telefone', 'idade', 'estado_id', 'cidade_id'];
+    const campos = ['nome', 'apelido', 'whatsapp', 'idade', 'estado_id', 'cidade_id'];
     campos.forEach(function(campo) {
         const elemento = document.getElementById(campo);
         console.log(`Campo ${campo}:`, elemento);
