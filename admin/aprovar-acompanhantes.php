@@ -32,6 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     $action = $_POST['action'];
     $motivo = trim($_POST['motivo'] ?? '');
     
+    // Debug log
+    error_log("Ação solicitada: $action para acompanhante ID: $acompanhante_id");
+    
     try {
         switch ($action) {
             case 'aprovar':
@@ -81,19 +84,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 break;
                 
             case 'excluir':
-                // Excluir mídias primeiro
+                // Buscar arquivos para excluir fisicamente
+                $fotos = $db->fetchAll("SELECT url FROM fotos WHERE acompanhante_id = ?", [$acompanhante_id]);
+                $videos_verificacao = $db->fetchAll("SELECT url FROM videos_verificacao WHERE acompanhante_id = ?", [$acompanhante_id]);
+                $videos_publicos = $db->fetchAll("SELECT url FROM videos_publicos WHERE acompanhante_id = ?", [$acompanhante_id]);
+                $documentos = $db->fetchAll("SELECT url FROM documentos_acompanhante WHERE acompanhante_id = ?", [$acompanhante_id]);
+                
+                // Excluir arquivos físicos
+                foreach ($fotos as $foto) {
+                    if (!empty($foto['url'])) {
+                        $arquivo = __DIR__ . '/../uploads/galeria/' . $foto['url'];
+                        if (file_exists($arquivo)) unlink($arquivo);
+                        $arquivo_perfil = __DIR__ . '/../uploads/perfil/' . $foto['url'];
+                        if (file_exists($arquivo_perfil)) unlink($arquivo_perfil);
+                    }
+                }
+                foreach ($videos_verificacao as $video) {
+                    if (!empty($video['url'])) {
+                        $arquivo = __DIR__ . '/../uploads/verificacao/' . $video['url'];
+                        if (file_exists($arquivo)) unlink($arquivo);
+                    }
+                }
+                foreach ($videos_publicos as $video) {
+                    if (!empty($video['url'])) {
+                        $arquivo = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
+                        if (file_exists($arquivo)) unlink($arquivo);
+                    }
+                }
+                foreach ($documentos as $doc) {
+                    if (!empty($doc['url'])) {
+                        $arquivo = __DIR__ . '/../uploads/documentos/' . $doc['url'];
+                        if (file_exists($arquivo)) unlink($arquivo);
+                    }
+                }
+                
+                // Excluir registros do banco (todas as tabelas relacionadas)
                 $db->delete('fotos', 'acompanhante_id = ?', [$acompanhante_id]);
                 $db->delete('videos_verificacao', 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->delete('videos_publicos', 'acompanhante_id = ?', [$acompanhante_id]);
                 $db->delete('documentos_acompanhante', 'acompanhante_id = ?', [$acompanhante_id]);
                 $db->delete('valores_atendimento', 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->delete('horarios_atendimento', 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->delete('avaliacoes', 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->delete('denuncias', 'acompanhante_id = ?', [$acompanhante_id]);
                 
                 // Excluir acompanhante
-                $db->delete('acompanhantes', 'id = ?', [$acompanhante_id]);
-                $success = 'Acompanhante excluída com sucesso!';
+                $result = $db->delete('acompanhantes', 'id = ?', [$acompanhante_id]);
+                
+                if ($result) {
+                    $success = 'Acompanhante e todos os dados relacionados excluídos com sucesso!';
+                    error_log("Acompanhante ID $acompanhante_id excluída com sucesso");
+                } else {
+                    $error = 'Erro ao excluir acompanhante do banco de dados.';
+                    error_log("Falha ao excluir acompanhante ID $acompanhante_id");
+                }
                 break;
         }
     } catch (Exception $e) {
         $error = 'Erro ao processar ação: ' . $e->getMessage();
+        error_log("Erro na exclusão de acompanhante ID $acompanhante_id: " . $e->getMessage());
     }
 }
 
