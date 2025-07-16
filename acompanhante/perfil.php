@@ -2346,11 +2346,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Adicionar fotos à galeria
                     if (data.photos && data.photos.length > 0) {
+                        console.log('Fotos recebidas da API:', data.photos);
                         atualizarGaleriaFotos(data.photos);
                         
-                        // Mostrar alert simples para confirmar
+                        // Verificar se os botões foram criados
                         setTimeout(() => {
-                            alert(`✅ ${data.photos.length} foto(s) adicionada(s)!\n\nClique nos botões X vermelhos para excluir.`);
+                            const novosButtons = document.querySelectorAll('.galeria-excluir-btn');
+                            console.log('Total de botões após upload:', novosButtons.length);
+                            
+                            alert(`✅ ${data.photos.length} foto(s) adicionada(s)!\n\nBotões encontrados: ${novosButtons.length}\n\nSe não vê os botões X, abra F12 console.`);
                         }, 500);
                     }
                 } else {
@@ -2376,18 +2380,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Função para atualizar a galeria de fotos dinamicamente
 function atualizarGaleriaFotos(photos) {
+    console.log('=== ATUALIZANDO GALERIA ===');
+    console.log('Photos:', photos);
+    
     const SITE_URL = '<?php echo SITE_URL; ?>';
+    console.log('SITE_URL:', SITE_URL);
+    
     const galeriaContainer = document.getElementById('galeriaMiniaturas');
+    console.log('galeriaContainer:', galeriaContainer);
     
     if (galeriaContainer) {
         // Se não há fotos, remover mensagem "Nenhuma foto na galeria"
         const emptyMsg = galeriaContainer.querySelector('.text-muted');
         if (emptyMsg) {
+            console.log('Removendo mensagem vazia');
             emptyMsg.remove();
         }
         
         // Adicionar cada nova foto
-        photos.forEach(photo => {
+        photos.forEach((photo, index) => {
+            console.log(`Processando foto ${index + 1}:`, photo);
+            
             const fotoHTML = `
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="${photo.id}">
                     <button type="button" class="btn btn-sm btn-danger position-absolute galeria-excluir-btn" 
@@ -2399,8 +2412,53 @@ function atualizarGaleriaFotos(photos) {
                 </div>
             `;
             
+            console.log('HTML gerado:', fotoHTML);
             galeriaContainer.insertAdjacentHTML('beforeend', fotoHTML);
+            console.log(`Foto ${index + 1} inserida no DOM`);
         });
+        
+        // Verificar quantos botões existem agora
+        const buttons = galeriaContainer.querySelectorAll('.galeria-excluir-btn');
+        console.log('Botões encontrados após inserção:', buttons.length);
+        
+        buttons.forEach((btn, i) => {
+            console.log(`Botão ${i + 1}:`, btn);
+            console.log(`- Visível: ${btn.offsetWidth > 0 && btn.offsetHeight > 0}`);
+            console.log(`- Style: ${btn.style.cssText}`);
+        });
+        
+        // Criar botão de teste para destacar os botões
+        const testBtn = document.createElement('button');
+        testBtn.innerHTML = '🔍 Destacar Botões X';
+        testBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #FF5722; color: white; padding: 8px; border: none; border-radius: 5px; z-index: 10001; cursor: pointer; font-size: 12px;';
+        testBtn.onclick = function() {
+            const allButtons = document.querySelectorAll('.galeria-excluir-btn');
+            console.log('Destacando', allButtons.length, 'botões');
+            allButtons.forEach(btn => {
+                btn.style.background = '#FFFF00 !important';
+                btn.style.color = '#000000 !important';
+                btn.style.border = '3px solid #FF0000 !important';
+                btn.style.fontSize = '16px';
+                setTimeout(() => {
+                    btn.style.background = '#dc3545 !important';
+                    btn.style.color = 'white !important';
+                    btn.style.border = 'none !important';
+                    btn.style.fontSize = '';
+                }, 3000);
+            });
+        };
+        document.body.appendChild(testBtn);
+        
+        // Remover botão após 15 segundos
+        setTimeout(() => {
+            if (testBtn.parentNode) {
+                document.body.removeChild(testBtn);
+            }
+        }, 15000);
+        
+        console.log('✅ Galeria atualizada');
+    } else {
+        console.log('❌ ERRO: galeriaContainer não encontrado');
     }
 }
 
