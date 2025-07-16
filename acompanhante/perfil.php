@@ -30,15 +30,10 @@ if (isset($_POST['excluir_video_id'])) {
     // Verificar se o vídeo existe e pertence à acompanhante
     $video = $db->fetch("SELECT * FROM videos_publicos WHERE id = ? AND acompanhante_id = ?", [$vid, $_SESSION['acompanhante_id']]);
     if ($video) {
-        // Verificar se há outros vídeos com a mesma URL
-        $duplicates = $db->fetchAll("SELECT * FROM videos_publicos WHERE url = ? AND acompanhante_id = ? ORDER BY id", [$video['url'], $_SESSION['acompanhante_id']]);
-        
-        // Excluir o arquivo apenas se for o único com essa URL
-        if (count($duplicates) == 1) {
-            $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
-            if (file_exists($file)) {
-                unlink($file);
-            }
+        // Excluir o arquivo físico (cada vídeo deve ter nome único)
+        $file = __DIR__ . '/../uploads/videos_publicos/' . $video['url'];
+        if (file_exists($file)) {
+            unlink($file);
         }
         
         // Excluir o registro do banco
@@ -730,6 +725,7 @@ include __DIR__ . '/../includes/header.php';
             <script>
             // Função para enviar vídeo público
             function enviarVideoPublico() {
+                const btn = document.getElementById('btnEnviarVideo');
                 const videoFile = document.getElementById('video_publico').files[0];
                 const titulo = document.getElementById('titulo_video').value;
                 const descricao = document.getElementById('descricao_video').value;
@@ -738,6 +734,13 @@ include __DIR__ . '/../includes/header.php';
                     alert('Selecione um vídeo primeiro.');
                     return;
                 }
+                
+                // Prevenir múltiplos cliques
+                if (btn.disabled) {
+                    return;
+                }
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
                 
                 const formData = new FormData();
                 formData.append('video_publico', videoFile);
@@ -761,7 +764,9 @@ include __DIR__ . '/../includes/header.php';
                         
                         // Adicionar vídeo à lista sem recarregar página
                         if (data.video) {
-                            atualizarListaVideosPublicos(data.video);
+                            setTimeout(() => {
+                                atualizarListaVideosPublicos(data.video);
+                            }, 200);
                         }
                         
                         // Mostrar confirmação
@@ -774,6 +779,11 @@ include __DIR__ . '/../includes/header.php';
                 })
                 .catch(() => {
                     document.getElementById('msgVideoPublico').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
+                })
+                .finally(() => {
+                    // Reabilitar o botão
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
                 });
             }
             
@@ -781,6 +791,12 @@ include __DIR__ . '/../includes/header.php';
             function atualizarListaVideosPublicos(video) {
                 const SITE_URL = '<?php echo SITE_URL; ?>';
                 const listaContainer = document.getElementById('listaVideosPublicos');
+                
+                // Verificar se o vídeo já existe na lista (evitar duplicação)
+                const existingVideo = listaContainer.querySelector(`[data-video-id="${video.id}"]`);
+                if (existingVideo) {
+                    return; // Vídeo já existe, não adicionar novamente
+                }
                 
                 // Se não há vídeos, remover mensagem "Nenhum vídeo enviado"
                 const emptyMsg = listaContainer.querySelector('.text-muted');
@@ -790,7 +806,7 @@ include __DIR__ . '/../includes/header.php';
                 
                 // Criar HTML do novo vídeo
                 const videoHTML = `
-                    <div class="col-md-4 col-6">
+                    <div class="col-md-4 col-6" data-video-container="${video.id}">
                         <div class="card h-100 shadow-sm">
                             <video src="${SITE_URL}/uploads/videos_publicos/${video.filename}" controls 
                                    style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
@@ -826,13 +842,13 @@ include __DIR__ . '/../includes/header.php';
                 })
                 .then(() => {
                     // Remover o vídeo da lista sem recarregar página
-                    const videoCard = document.querySelector(`[data-video-id="${videoId}"]`)?.closest('.col-md-4');
-                    if (videoCard) {
-                        videoCard.remove();
+                    const videoContainer = document.querySelector(`[data-video-container="${videoId}"]`);
+                    if (videoContainer) {
+                        videoContainer.remove();
                         
                         // Se não há mais vídeos, mostrar mensagem
                         const listaContainer = document.getElementById('listaVideosPublicos');
-                        if (!listaContainer.querySelector('.col-md-4')) {
+                        if (!listaContainer.querySelector('[data-video-container]')) {
                             listaContainer.innerHTML = '<div class="col-12 text-center text-muted">Nenhum vídeo enviado ainda.</div>';
                         }
                     }
@@ -1325,7 +1341,7 @@ include __DIR__ . '/../includes/header.php';
                 if ($videos_publicos): ?>
                 <div id="listaVideosPublicos" class="row mt-4 g-3">
                   <?php foreach ($videos_publicos as $v): ?>
-                    <div class="col-md-4 col-6">
+                    <div class="col-md-4 col-6" data-video-container="<?php echo $v['id']; ?>">
                       <div class="card h-100 shadow-sm">
                         <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($v['url']); ?>" controls style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
                         <div class="p-2">
