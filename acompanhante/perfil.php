@@ -1427,7 +1427,7 @@ include __DIR__ . '/../includes/header.php';
                     <?php else: ?>
                         <?php foreach ($fotos_galeria as $foto): ?>
                             <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="<?php echo $foto['id']; ?>">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" title="Excluir foto" onclick="excluirFotoGaleria(<?php echo $foto['id']; ?>, this)">×</button>
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" title="Excluir foto" data-foto-id="<?php echo $foto['id']; ?>">×</button>
                                 <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>"
                                      alt="Foto Galeria"
                                      style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
@@ -1973,6 +1973,33 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`- Readonly: ${elemento.readOnly}`);
         }
     });
+    
+    // Event delegation para botões de exclusão de galeria
+    // Isso permite que botões adicionados dinamicamente funcionem
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('galeria-excluir-btn')) {
+            const fotoId = e.target.getAttribute('data-foto-id');
+            if (fotoId) {
+                console.log('Clique no botão de exclusão de foto ID:', fotoId);
+                excluirFotoGaleria(fotoId, e.target);
+            }
+        }
+        
+        // Event delegation para botões de exclusão de documentos
+        if (e.target.classList.contains('doc-excluir-btn')) {
+            const docId = e.target.getAttribute('onclick');
+            if (docId) {
+                // Extrair o ID do atributo onclick
+                const match = docId.match(/excluirDocumento\((\d+)/);
+                if (match) {
+                    console.log('Clique no botão de exclusão de documento ID:', match[1]);
+                    excluirDocumento(match[1], e.target);
+                }
+            }
+        }
+    });
+    
+    console.log('Event delegation configurado para botões de exclusão');
 });
 </script>
 
@@ -2298,7 +2325,7 @@ function atualizarGaleriaFotos(photos) {
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="${photo.id}">
                     <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" 
                             style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" 
-                            title="Excluir foto" onclick="excluirFotoGaleria(${photo.id}, this)">×</button>
+                            title="Excluir foto" data-foto-id="${photo.id}">×</button>
                     <img src="${SITE_URL}/uploads/galeria/${photo.filename}"
                          alt="Foto Galeria"
                          style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
