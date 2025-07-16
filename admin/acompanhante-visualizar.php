@@ -140,19 +140,7 @@ $acompanhante = $db->fetch("
     WHERE a.id = ?
 ", [$id]);
 
-// Processar aprovação/reprovação de vídeo público
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['aprovar_video'], $_POST['video_id'])) {
-        $video_id = (int)$_POST['video_id'];
-        $db->update('videos_publicos', ['status' => 'aprovado'], 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
-        $success = 'Vídeo aprovado com sucesso!';
-    }
-    if (isset($_POST['reprovar_video'], $_POST['video_id'])) {
-        $video_id = (int)$_POST['video_id'];
-        $db->update('videos_publicos', ['status' => 'rejeitado'], 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
-        $success = 'Vídeo reprovado com sucesso!';
-    }
-}
+// Processamento removido - agora usa apenas o botão principal de aprovação
 
 if (!$acompanhante) {
     echo '<div class="alert alert-danger">Acompanhante não encontrada.</div>';
@@ -213,13 +201,16 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
             <label for="senha" class="form-label">Senha (deixe em branco para não alterar)</label>
             <input type="password" class="form-control" id="senha" name="senha" autocomplete="new-password">
         </div>
-        <div class="col-md-4">
-            <label for="telefone" class="form-label">Telefone *</label>
-            <input type="tel" class="form-control" id="telefone" name="telefone" value="<?php echo htmlspecialchars($acompanhante['telefone'] ?? ''); ?>" required>
-        </div>
-        <div class="col-md-4">
-            <label for="whatsapp" class="form-label">WhatsApp</label>
-            <input type="tel" class="form-control" id="whatsapp" name="whatsapp" pattern="^\d{10,11}$" placeholder="DDD + número (ex: 41999999999)" value="<?php echo isset($acompanhante['whatsapp']) ? preg_replace('/^\+55/', '', $acompanhante['whatsapp']) : ''; ?>">
+        <!-- Campo telefone oculto - valor será copiado do WhatsApp -->
+        <input type="hidden" id="telefone" name="telefone" value="<?php echo htmlspecialchars($acompanhante['telefone'] ?? ''); ?>">
+        
+        <div class="col-md-6">
+            <label for="whatsapp" class="form-label">WhatsApp *</label>
+            <input type="tel" class="form-control" id="whatsapp" name="whatsapp" 
+                   pattern="^\d{10,11}$" 
+                   placeholder="DDD + número (ex: 41999999999)" 
+                   value="<?php echo htmlspecialchars(preg_replace('/^\+55/', '', $acompanhante['telefone'] ?? '')); ?>" 
+                   required>
             <div class="form-text">Digite apenas DDD e número, sem espaços ou traços. Ex: 41999999999</div>
         </div>
         <div class="col-md-4">
@@ -409,23 +400,7 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                 </div>
                 <div class="form-text">Selecione uma ou mais especialidades.</div>
             </div>
-            <div class="col-md-4">
-                <div class="row">
-                    <div class="col-12 mb-2">
-                        <label class="form-label">Preço Padrão (R$)</label>
-                        <input type="number" class="form-control" id="valor_padrao" name="valor_padrao" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_padrao'] ?? ''); ?>">
-                    </div>
-                    <div class="col-12 mb-2">
-                        <label class="form-label">Preço Promocional (R$)</label>
-                        <input type="number" class="form-control" id="valor_promocional" name="valor_promocional" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_promocional'] ?? ''); ?>">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Idiomas</label>
-                        <input type="text" class="form-control" id="idiomas" name="idiomas" value="<?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?>" placeholder="Ex: Português, Inglês, Espanhol">
-                        <div class="form-text">Digite os idiomas separados por vírgula.</div>
-                    </div>
-                </div>
-            </div>
+
         </div>
         <!-- Redes Sociais -->
         <div class="col-12"><h5 class="mt-4">Redes Sociais</h5></div>
@@ -501,6 +476,26 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
         <!-- BLOCO VALORES POR TEMPO DE SERVIÇO -->
         <div class="col-12 mt-4">
             <h5 class="mb-3"><i class="fas fa-dollar-sign"></i> Valores</h5>
+            
+            <!-- Preços Gerais -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Preço Padrão (R$)</label>
+                    <input type="number" class="form-control" id="valor_padrao" name="valor_padrao" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_padrao'] ?? ''); ?>" placeholder="Ex: 150.00">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Preço Promocional (R$)</label>
+                    <input type="number" class="form-control" id="valor_promocional" name="valor_promocional" step="0.01" value="<?php echo htmlspecialchars($acompanhante['valor_promocional'] ?? ''); ?>" placeholder="Ex: 120.00">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Idiomas</label>
+                    <input type="text" class="form-control" id="idiomas" name="idiomas" value="<?php echo htmlspecialchars($acompanhante['idiomas'] ?? ''); ?>" placeholder="Ex: Português, Inglês, Espanhol">
+                    <div class="form-text">Digite os idiomas separados por vírgula.</div>
+                </div>
+            </div>
+            
+            <!-- Valores por Tempo de Atendimento -->
+            <h6 class="mb-3">Valores por Tempo de Atendimento</h6>
             <div class="row">
                 <?php
                 $tempos = [
@@ -583,13 +578,9 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                             <source src="<?php echo SITE_URL; ?>/uploads/verificacao/<?php echo htmlspecialchars($videos_verificacao[0]['url']); ?>" type="video/mp4">
                             Seu navegador não suporta vídeo.
                         </video>
-                        <div class="mt-1 text-center">
-                            <span class="badge bg-<?php echo $videos_verificacao[0]['verificado'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $videos_verificacao[0]['verificado'] ? 'Verificado' : 'Pendente'; ?></span>
-                            <?php if (!$videos_verificacao[0]['verificado']): ?>
-                                <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="video_verificacao" data-midia-id="<?php echo $videos_verificacao[0]['id']; ?>" title="Aprovar">✓</button>
-                            <?php endif; ?>
-                            <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="video_verificacao" data-midia-id="<?php echo $videos_verificacao[0]['id']; ?>" title="Reprovar">✗</button>
-                        </div>
+                                                    <div class="mt-1 text-center">
+                                <span class="badge bg-<?php echo $videos_verificacao[0]['verificado'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $videos_verificacao[0]['verificado'] ? 'Verificado' : 'Pendente'; ?></span>
+                            </div>
                     </div>
                 <?php else: ?>
                     <div class="text-muted">Nenhum vídeo enviado.</div>
@@ -611,10 +602,6 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                                  style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
                             <div class="mt-1 text-center">
                                 <span class="badge bg-<?php echo $foto['aprovada'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $foto['aprovada'] ? 'Aprovada' : 'Pendente'; ?></span>
-                                <?php if (!$foto['aprovada']): ?>
-                                    <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="foto" data-midia-id="<?php echo $foto['id']; ?>" title="Aprovar">✓</button>
-                                <?php endif; ?>
-                                <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="foto" data-midia-id="<?php echo $foto['id']; ?>" title="Reprovar">✗</button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -651,12 +638,6 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                         elseif ($v['status'] === 'rejeitado') echo 'danger';
                         else echo 'warning text-dark';
                       ?> mt-1"><?php echo ucfirst($v['status']); ?></span>
-                      <?php if ($v['status'] !== 'aprovado'): ?>
-                        <button type="button" name="aprovar_video" class="btn btn-success btn-sm ms-2" onclick="atualizarStatusVideo(<?php echo $v['id']; ?>, 'aprovar', this)">Aprovar</button>
-                      <?php endif; ?>
-                      <?php if ($v['status'] !== 'rejeitado'): ?>
-                        <button type="button" name="reprovar_video" class="btn btn-danger btn-sm ms-2" onclick="atualizarStatusVideo(<?php echo $v['id']; ?>, 'reprovar', this)">Reprovar</button>
-                      <?php endif; ?>
                     </div>
                   </div>
                 </div>
@@ -874,48 +855,23 @@ function atualizarStatusVideo(videoId, acao, btn) {
 }
 
 
-function atualizarStatusMidia(tipo, id, acao, btn) {
-    btn.disabled = true;
-    fetch(SITE_URL + '/api/moderar-midia.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'tipo=' + encodeURIComponent(tipo) + '&id=' + encodeURIComponent(id) + '&acao=' + encodeURIComponent(acao)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const card = btn.closest('.card, .d-inline-block, .galeria-item');
-            const badge = card.querySelector('.badge');
-            badge.className = 'badge mt-1 bg-' + (acao === 'aprovar' ? 'success' : 'danger');
-            badge.textContent = acao === 'aprovar' ? (tipo === 'documento' || tipo === 'video_verificacao' ? 'Verificado' : 'Aprovado') : 'Rejeitado';
-            
-            // Remove botões de ação
-            card.querySelectorAll('[data-midia-aprovar], [data-midia-reprovar]').forEach(b => b.remove());
-        } else {
-            alert(data.message || 'Erro ao atualizar status.');
-            btn.disabled = false;
-        }
-    })
-    .catch(() => {
-        alert('Erro ao atualizar status.');
-        btn.disabled = false;
-    });
-}
-document.querySelectorAll('[data-midia-aprovar]').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const tipo = this.getAttribute('data-midia-tipo');
-        const id = this.getAttribute('data-midia-id');
-        atualizarStatusMidia(tipo, id, 'aprovar', this);
-    });
-});
-document.querySelectorAll('[data-midia-reprovar]').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const tipo = this.getAttribute('data-midia-tipo');
-        const id = this.getAttribute('data-midia-id');
-        atualizarStatusMidia(tipo, id, 'reprovar', this);
-    });
+// JavaScript para aprovação individual de mídias removido - agora usa apenas aprovação completa
+
+// Sincronizar WhatsApp com campo telefone oculto (igual ao perfil da acompanhante)
+document.getElementById('whatsapp').addEventListener('input', function() {
+    const whatsapp = this.value;
+    // Remover caracteres não numéricos
+    const whatsappLimpo = whatsapp.replace(/\D+/g, '');
+    // Adicionar +55 se não começar com 55
+    let telefoneFormatado = whatsappLimpo;
+    if (telefoneFormatado.length >= 10 && !telefoneFormatado.startsWith('55')) {
+        telefoneFormatado = '55' + telefoneFormatado;
+    }
+    if (telefoneFormatado.length >= 12) {
+        telefoneFormatado = '+' + telefoneFormatado;
+    }
+    // Atualizar campo oculto
+    document.getElementById('telefone').value = telefoneFormatado;
 });
 </script>
 <?php require_once '../includes/admin-footer.php'; ?> 

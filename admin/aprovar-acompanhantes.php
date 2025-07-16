@@ -35,13 +35,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     try {
         switch ($action) {
             case 'aprovar':
+                // Aprovar a conta
                 $db->update('acompanhantes', [
                     'status' => 'aprovado',
                     'revisado_por' => $_SESSION['user_id'],
                     'data_revisao' => date('Y-m-d H:i:s'),
                     'motivo_rejeicao' => null
                 ], 'id = ?', [$acompanhante_id]);
-                $success = 'Acompanhante aprovada com sucesso!';
+                
+                // Aprovar automaticamente todas as mídias
+                $db->update('fotos', ['aprovada' => 1], 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->update('videos_publicos', ['status' => 'aprovado'], 'acompanhante_id = ?', [$acompanhante_id]);
+                $db->update('documentos_acompanhante', ['verificado' => 1], 'acompanhante_id = ?', [$acompanhante_id]);
+                
+                $success = 'Acompanhante e todas as mídias aprovadas com sucesso!';
                 break;
                 
             case 'rejeitar':
