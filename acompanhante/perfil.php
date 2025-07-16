@@ -937,8 +937,16 @@ include __DIR__ . '/../includes/header.php';
                         document.getElementById('video_publico').value = '';
                         document.getElementById('titulo_video').value = '';
                         document.getElementById('descricao_video').value = '';
-                        // Recarregar lista de vídeos
-                        setTimeout(() => location.reload(), 2000);
+                        
+                        // Adicionar vídeo à lista sem recarregar página
+                        if (data.video) {
+                            atualizarListaVideosPublicos(data.video);
+                        }
+                        
+                        // Mostrar confirmação
+                        setTimeout(() => {
+                            alert('✅ Vídeo enviado com sucesso!\n\nO vídeo aparecerá na lista acima.');
+                        }, 500);
                     } else {
                         msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
                     }
@@ -946,6 +954,39 @@ include __DIR__ . '/../includes/header.php';
                 .catch(() => {
                     document.getElementById('msgVideoPublico').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
                 });
+            }
+            
+            // Função para atualizar lista de vídeos públicos dinamicamente
+            function atualizarListaVideosPublicos(video) {
+                const SITE_URL = '<?php echo SITE_URL; ?>';
+                const listaContainer = document.getElementById('listaVideosPublicos');
+                
+                // Se não há vídeos, remover mensagem "Nenhum vídeo enviado"
+                const emptyMsg = listaContainer.querySelector('.text-muted');
+                if (emptyMsg && emptyMsg.textContent.includes('Nenhum vídeo')) {
+                    emptyMsg.remove();
+                }
+                
+                // Criar HTML do novo vídeo
+                const videoHTML = `
+                    <div class="col-md-4 col-6">
+                        <div class="card h-100 shadow-sm">
+                            <video src="${SITE_URL}/uploads/videos_publicos/${video.filename}" controls 
+                                   style="width:100%; max-width:140px; aspect-ratio:9/16; height:auto; max-height:250px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;"></video>
+                            <div class="p-2">
+                                <div class="fw-bold small mb-1">${video.titulo || ''}</div>
+                                <div class="text-muted small mb-1">${video.descricao || ''}</div>
+                                <span class="badge bg-secondary">Pendente</span>
+                                <button type="button" class="btn btn-sm btn-danger ms-2 video-excluir-btn" data-video-id="${video.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Adicionar o novo vídeo no início da lista
+                listaContainer.insertAdjacentHTML('afterbegin', videoHTML);
             }
             
             // Função para excluir vídeo
@@ -963,7 +1004,17 @@ include __DIR__ . '/../includes/header.php';
                     credentials: 'same-origin'
                 })
                 .then(() => {
-                    location.reload();
+                    // Remover o vídeo da lista sem recarregar página
+                    const videoCard = document.querySelector(`[data-video-id="${videoId}"]`)?.closest('.col-md-4');
+                    if (videoCard) {
+                        videoCard.remove();
+                        
+                        // Se não há mais vídeos, mostrar mensagem
+                        const listaContainer = document.getElementById('listaVideosPublicos');
+                        if (!listaContainer.querySelector('.col-md-4')) {
+                            listaContainer.innerHTML = '<div class="col-12 text-center text-muted">Nenhum vídeo enviado ainda.</div>';
+                        }
+                    }
                 })
                 .catch(() => {
                     alert('Erro ao excluir vídeo.');
@@ -1427,7 +1478,7 @@ include __DIR__ . '/../includes/header.php';
                     <?php else: ?>
                         <?php foreach ($fotos_galeria as $foto): ?>
                             <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="<?php echo $foto['id']; ?>">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" title="Excluir foto" data-foto-id="<?php echo $foto['id']; ?>">×</button>
+                                <button type="button" class="btn btn-sm btn-danger position-absolute galeria-excluir-btn" style="z-index:1000; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold; background-color: #dc3545 !important; color: white !important; border: none !important; top: 8px; right: 8px; display: block !important; opacity: 1 !important;" title="Excluir foto" data-foto-id="<?php echo $foto['id']; ?>">×</button>
                                 <img src="<?php echo SITE_URL; ?>/uploads/galeria/<?php echo htmlspecialchars($foto['url']); ?>"
                                      alt="Foto Galeria"
                                      style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
@@ -1490,7 +1541,7 @@ include __DIR__ . '/../includes/header.php';
                           <div class="fw-bold small mb-1"><?php echo htmlspecialchars($v['titulo'] ?? ''); ?></div>
                           <div class="text-muted small mb-1"><?php echo htmlspecialchars($v['descricao'] ?? ''); ?></div>
                           <span class="badge bg-secondary"><?php echo ucfirst($v['status']); ?></span>
-                          <button type="button" class="btn btn-sm btn-danger ms-2" onclick="excluirVideo(<?php echo $v['id']; ?>)"><i class="fas fa-trash"></i></button>
+                          <button type="button" class="btn btn-sm btn-danger ms-2 video-excluir-btn" data-video-id="<?php echo $v['id']; ?>"><i class="fas fa-trash"></i></button>
                         </div>
                       </div>
                     </div>
@@ -1974,9 +2025,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Event delegation para botões de exclusão de galeria
+    // Event delegation para botões de exclusão 
     // Isso permite que botões adicionados dinamicamente funcionem
     document.addEventListener('click', function(e) {
+        // Botões de exclusão da galeria
         if (e.target.classList.contains('galeria-excluir-btn')) {
             e.preventDefault();
             e.stopPropagation();
@@ -1984,6 +2036,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const fotoId = e.target.getAttribute('data-foto-id');
             if (fotoId) {
                 excluirFotoGaleria(fotoId, e.target);
+            }
+        }
+        
+        // Botões de exclusão de vídeos
+        if (e.target.classList.contains('video-excluir-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const videoId = e.target.getAttribute('data-video-id');
+            if (videoId) {
+                excluirVideo(videoId);
             }
         }
         
@@ -2327,8 +2390,8 @@ function atualizarGaleriaFotos(photos) {
         photos.forEach(photo => {
             const fotoHTML = `
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="${photo.id}">
-                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" 
-                            style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold; background-color: #dc3545 !important; color: white !important;" 
+                    <button type="button" class="btn btn-sm btn-danger position-absolute galeria-excluir-btn" 
+                            style="z-index:1000; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold; background-color: #dc3545 !important; color: white !important; border: none !important; top: 8px; right: 8px; display: block !important; opacity: 1 !important;" 
                             title="Excluir foto" data-foto-id="${photo.id}">×</button>
                     <img src="${SITE_URL}/uploads/galeria/${photo.filename}"
                          alt="Foto Galeria"

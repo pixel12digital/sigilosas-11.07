@@ -157,8 +157,13 @@ try {
     echo json_encode([
         'success' => true, 
         'message' => 'Vídeo enviado com sucesso! Aguarde aprovação do admin.',
-        'video_id' => $video_id,
-        'filename' => $filename
+        'video' => [
+            'id' => $video_id,
+            'filename' => $filename,
+            'titulo' => $titulo,
+            'descricao' => $descricao,
+            'status' => 'pendente'
+        ]
     ]);
     
 } catch (Exception $e) {
