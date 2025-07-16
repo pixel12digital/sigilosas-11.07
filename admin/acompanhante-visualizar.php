@@ -142,7 +142,7 @@ $acompanhante = $db->fetch("
 
 // Processamento removido - agora usa apenas o botão principal de aprovação
 
-// Processar exclusão de vídeo público
+// Processar exclusão de vídeo público (AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_video_publico_id'])) {
     $video_id = (int)$_POST['excluir_video_publico_id'];
     
@@ -159,13 +159,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_video_publico
         // Excluir o registro do banco
         $db->delete('videos_publicos', 'id = ? AND acompanhante_id = ?', [$video_id, $id]);
         
-        $success = 'Vídeo excluído com sucesso!';
-        
-        // Redirecionar para evitar reenvio do formulário
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $id . '&success=' . urlencode($success));
+        // Resposta para AJAX (não redirecionar)
+        http_response_code(200);
         exit;
     } else {
-        $error = 'Vídeo não encontrado.';
+        // Erro para AJAX
+        http_response_code(404);
+        exit;
     }
 }
 
@@ -916,19 +916,43 @@ function excluirVideoPublico(videoId, btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
-    // Criar formulário para enviar via POST
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.style.display = 'none';
+    // Usar AJAX para evitar interferir com o formulário principal
+    const formData = new FormData();
+    formData.append('excluir_video_publico_id', videoId);
     
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'excluir_video_publico_id';
-    input.value = videoId;
-    
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Remover o card do vídeo da interface
+            const videoCard = btn.closest('.col-md-4, .col-6');
+            if (videoCard) {
+                videoCard.remove();
+            }
+            
+            // Verificar se não há mais vídeos e mostrar mensagem
+            const listaVideos = document.getElementById('listaVideosPublicos');
+            const videosRestantes = listaVideos.querySelectorAll('.col-md-4, .col-6');
+            if (videosRestantes.length === 0) {
+                listaVideos.innerHTML = '<div class="text-muted">Nenhum vídeo público enviado.</div>';
+            }
+            
+            // Mostrar mensagem de sucesso
+            alert('Vídeo excluído com sucesso!');
+        } else {
+            alert('Erro ao excluir vídeo. Tente novamente.');
+            btn.disabled = false;
+            btn.innerHTML = '×';
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao excluir vídeo. Tente novamente.');
+        btn.disabled = false;
+        btn.innerHTML = '×';
+    });
 }
 </script>
 <?php require_once '../includes/admin-footer.php'; ?> 
