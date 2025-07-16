@@ -4,6 +4,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Configurações para upload
+ini_set('max_execution_time', 300); // 5 minutos
+ini_set('memory_limit', '256M');
+ini_set('upload_max_filesize', '50M');
+ini_set('post_max_size', '100M');
+
 require_once __DIR__ . '/../config/config.php';
 session_name('sigilosas_acompanhante_session');
 session_start();
@@ -304,6 +310,15 @@ if (
         error_log('=== SALVANDO DADOS ===');
         error_log('Dados para salvar: ' . json_encode($formData));
         
+        // Verificar se a sessão ainda é válida antes de salvar
+        if (!isset($_SESSION['acompanhante_id'])) {
+            error_log('❌ ERRO: Sessão perdida durante o processamento');
+            $error = 'Sessão expirada durante o upload. Faça login novamente.';
+            header('Location: ' . SITE_URL . '/pages/login-acompanhante.php');
+            exit;
+        }
+        error_log('✅ Sessão ainda válida: ' . $_SESSION['acompanhante_id']);
+        
         try {
             $formData['updated_at'] = date('Y-m-d H:i:s');
             
@@ -473,23 +488,53 @@ if (
             // --- FIM UPLOAD DOCUMENTOS ---
 
             // --- UPLOAD DE FOTOS DA GALERIA (múltiplos arquivos) ---
+            error_log('=== VERIFICANDO UPLOAD DE GALERIA ===');
+            error_log('$_FILES[fotos_galeria] definido: ' . (isset($_FILES['fotos_galeria']) ? 'SIM' : 'NÃO'));
+            if (isset($_FILES['fotos_galeria'])) {
+                error_log('Nomes dos arquivos: ' . json_encode($_FILES['fotos_galeria']['name']));
+                error_log('Primeiro arquivo vazio: ' . (empty($_FILES['fotos_galeria']['name'][0]) ? 'SIM' : 'NÃO'));
+            }
+            
             if (isset($_FILES['fotos_galeria']) && !empty($_FILES['fotos_galeria']['name'][0])) {
+                error_log('✅ INICIANDO UPLOAD DE GALERIA');
                 $files = $_FILES['fotos_galeria'];
+                error_log('Quantidade de arquivos: ' . count($files['name']));
+                
+                // Verificar se o diretório existe
+                $galeria_dir = __DIR__ . '/../uploads/galeria/';
+                if (!is_dir($galeria_dir)) {
+                    error_log('Criando diretório de galeria: ' . $galeria_dir);
+                    if (!mkdir($galeria_dir, 0755, true)) {
+                        error_log('❌ ERRO: Não foi possível criar diretório de galeria');
+                        $error .= '<br>Erro ao criar diretório de galeria.';
+                    }
+                }
+                
                 for ($i = 0; $i < count($files['name']); $i++) {
+                    error_log("Processando arquivo $i: " . $files['name'][$i]);
+                    error_log("Erro do arquivo $i: " . $files['error'][$i]);
                     if ($files['error'][$i] === UPLOAD_ERR_OK) {
                         $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
                         $filename = 'galeria_' . uniqid('', true) . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                         $dest = __DIR__ . '/../uploads/galeria/' . $filename;
+                        error_log("Tentando mover arquivo para: " . $dest);
                         if (move_uploaded_file($files['tmp_name'][$i], $dest)) {
-                            $db->insert('fotos', [
+                            error_log("✅ Arquivo movido com sucesso: " . $filename);
+                            $insert_result = $db->insert('fotos', [
                                 'acompanhante_id' => $_SESSION['acompanhante_id'],
                                 'tipo' => 'galeria',
                                 'url' => $filename,
                                 'ordem' => 0,
                                 'principal' => 0,
+                                'aprovada' => 0, // Adicionar campo aprovada
                                 'created_at' => date('Y-m-d H:i:s'),
                                 'updated_at' => date('Y-m-d H:i:s')
                             ]);
+                            if ($insert_result) {
+                                error_log("✅ Foto salva no banco com ID: " . $insert_result);
+                            } else {
+                                error_log("❌ ERRO: Falha ao salvar foto no banco");
+                            }
                         } else {
                             $error .= '<br>Falha ao salvar foto da galeria (' . htmlspecialchars($files['name'][$i]) . ').';
                             error_log('Erro ao mover arquivo galeria: ' . $files['name'][$i]);
@@ -503,9 +548,18 @@ if (
             // --- FIM UPLOAD GALERIA ---
             
             // Se chegou até aqui, tudo foi salvo com sucesso
+            error_log('✅ SALVAMENTO CONCLUÍDO COM SUCESSO');
             $success = 'Perfil atualizado com sucesso!';
             
+            // Verificar se a sessão ainda está válida antes de redirecionar
+            if (!isset($_SESSION['acompanhante_id'])) {
+                error_log('❌ ERRO: Sessão perdida antes do redirecionamento');
+                header('Location: ' . SITE_URL . '/pages/login-acompanhante.php?error=session_expired');
+                exit;
+            }
+            
             // Redirecionar para o início da página com mensagem de sucesso
+            error_log('✅ Redirecionando para perfil com sucesso');
             header('Location: ' . SITE_URL . '/acompanhante/perfil.php?success=1#top');
             exit;
             
@@ -2071,15 +2125,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 console.log('Response data:', data);
                 
-                if (data.success) {
-                    if (videoMsg) {
-                        videoMsg.innerHTML = '<div class="text-success">' + data.message + '</div>';
-                    }
-                    // Recarregar página para mostrar o vídeo
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                } else {
+                                 if (data.success) {
+                     if (videoMsg) {
+                         videoMsg.innerHTML = '<div class="text-success">' + data.message + '</div>';
+                     }
+                     // Limpar o input de arquivo
+                     inputVideoVerificacao.value = '';
+                     
+                     // Atualizar a seção de vídeo sem recarregar a página
+                     setTimeout(() => {
+                         if (videoMsg) {
+                             videoMsg.innerHTML = '<div class="text-info">Vídeo enviado! Atualize a página para visualizar.</div>';
+                         }
+                     }, 3000);
+                 } else {
                     if (videoMsg) {
                         videoMsg.innerHTML = '<div class="text-danger">' + data.message + '</div>';
                     }
