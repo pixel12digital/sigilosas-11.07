@@ -1436,9 +1436,11 @@ include __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
                 <div class="mt-3">
-                    <input type="file" id="inputGaleriaFotos" name="fotos_galeria[]" accept="image/*" multiple style="max-width:200px; display:inline-block;" onchange="previewGaleriaFotos(this)">
+                    <input type="file" id="inputGaleriaFotos" accept="image/*" multiple style="max-width:200px; display:inline-block;" onchange="previewGaleriaFotos(this)">
+                    <button type="button" class="btn btn-primary ms-2" id="btnUploadGaleria">Enviar Fotos</button>
                 </div>
                 <div id="previewGaleria" class="d-flex justify-content-center gap-3 flex-wrap mt-2 mb-2"></div>
+                <div id="galeriaMsg" class="mt-2"></div>
             </div>
 
             <!-- SEÇÃO DE VÍDEOS PÚBLICOS -->
@@ -2174,6 +2176,143 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('ERRO: Elementos não encontrados para upload de vídeo de verificação');
     }
 });
+
+// Upload de fotos da galeria
+document.addEventListener('DOMContentLoaded', function() {
+    const btnUploadGaleria = document.getElementById('btnUploadGaleria');
+    const inputGaleriaFotos = document.getElementById('inputGaleriaFotos');
+    const galeriaMsg = document.getElementById('galeriaMsg');
+    
+    if (btnUploadGaleria && inputGaleriaFotos) {
+        btnUploadGaleria.addEventListener('click', function() {
+            console.log('=== UPLOAD DE GALERIA INICIADO ===');
+            
+            if (!inputGaleriaFotos.files.length) {
+                alert('Por favor, selecione pelo menos uma foto.');
+                return;
+            }
+            
+            // Validar arquivos
+            const files = inputGaleriaFotos.files;
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Validação de tamanho (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`Arquivo muito grande: ${file.name} (máx. 5MB)`);
+                    return;
+                }
+                
+                // Validação de tipo
+                if (!allowedTypes.includes(file.type)) {
+                    alert(`Formato não permitido: ${file.name}. Use JPG, PNG, GIF ou WebP.`);
+                    return;
+                }
+            }
+            
+            // Desabilitar botão e mostrar loading
+            btnUploadGaleria.disabled = true;
+            btnUploadGaleria.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            
+            if (galeriaMsg) {
+                galeriaMsg.innerHTML = '<div class="text-info">Enviando fotos, aguarde...</div>';
+            }
+            
+            // Criar FormData
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('fotos_galeria[]', files[i]);
+            }
+            
+            console.log('Enviando', files.length, 'fotos para API...');
+            
+            // Enviar para API
+            fetch('<?php echo SITE_URL; ?>/api/upload-fotos-galeria.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    if (galeriaMsg) {
+                        galeriaMsg.innerHTML = '<div class="text-success">' + data.message + '</div>';
+                    }
+                    // Limpar input
+                    inputGaleriaFotos.value = '';
+                    // Limpar preview
+                    const previewGaleria = document.getElementById('previewGaleria');
+                    if (previewGaleria) {
+                        previewGaleria.innerHTML = '';
+                    }
+                    
+                    // Adicionar fotos à galeria
+                    if (data.photos && data.photos.length > 0) {
+                        atualizarGaleriaFotos(data.photos);
+                    }
+                } else {
+                    if (galeriaMsg) {
+                        galeriaMsg.innerHTML = '<div class="text-danger">' + data.message + '</div>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                if (galeriaMsg) {
+                    galeriaMsg.innerHTML = '<div class="text-danger">Erro ao enviar fotos. Tente novamente.</div>';
+                }
+            })
+            .finally(() => {
+                // Reabilitar botão
+                btnUploadGaleria.disabled = false;
+                btnUploadGaleria.innerHTML = 'Enviar Fotos';
+            });
+        });
+    }
+});
+
+// Função para atualizar a galeria de fotos dinamicamente
+function atualizarGaleriaFotos(photos) {
+    console.log('Atualizando galeria com', photos.length, 'fotos');
+    
+    const SITE_URL = '<?php echo SITE_URL; ?>';
+    const galeriaContainer = document.getElementById('galeriaMiniaturas');
+    
+    if (galeriaContainer) {
+        // Se não há fotos, remover mensagem "Nenhuma foto na galeria"
+        const emptyMsg = galeriaContainer.querySelector('.text-muted');
+        if (emptyMsg) {
+            emptyMsg.remove();
+        }
+        
+        // Adicionar cada nova foto
+        photos.forEach(photo => {
+            const fotoHTML = `
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 position-relative galeria-item" data-foto-id="${photo.id}">
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 galeria-excluir-btn" 
+                            style="z-index:2; border-radius:50%; width:28px; height:28px; padding:0; font-weight:bold;" 
+                            title="Excluir foto" onclick="excluirFotoGaleria(${photo.id}, this)">×</button>
+                    <img src="${SITE_URL}/uploads/galeria/${photo.filename}"
+                         alt="Foto Galeria"
+                         style="width:100%;max-width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #ccc;">
+                </div>
+            `;
+            
+            galeriaContainer.insertAdjacentHTML('beforeend', fotoHTML);
+        });
+        
+        console.log('Galeria atualizada com sucesso');
+    } else {
+        console.log('ERRO: Container da galeria não encontrado');
+    }
+}
 
 // Função para atualizar a exibição do vídeo de verificação
 function atualizarVideoVerificacao(filename, videoId) {
