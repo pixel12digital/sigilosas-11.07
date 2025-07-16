@@ -221,6 +221,9 @@ if (
 
     // Validações
     $errors = [];
+    
+    error_log('=== INICIANDO VALIDAÇÕES ===');
+    error_log('FormData para validar: ' . json_encode($formData));
 
     // Nome
     if (empty($formData['nome'])) {
@@ -242,13 +245,22 @@ if (
     if (empty($formData['telefone'])) {
         $errors[] = 'WhatsApp é obrigatório';
     } else {
-        // Validar formato do WhatsApp
+        // Validar formato do WhatsApp - remover todos os caracteres não numéricos
         $whats = preg_replace('/\D+/', '', $formData['telefone']);
+        
+        // Se começar com 55, remover para validar apenas DDD+número
+        if (strlen($whats) >= 12 && substr($whats, 0, 2) === '55') {
+            $whats = substr($whats, 2);
+        }
+        
+        // Validar se tem 10 ou 11 dígitos (DDD + número)
         if (!preg_match('/^\d{10,11}$/', $whats)) {
             $errors[] = 'WhatsApp deve conter apenas DDD e número, ex: 41999999999';
         } else {
             $formData['telefone'] = '+55' . $whats;
         }
+        
+        error_log('WhatsApp validado: ' . $formData['telefone']);
     }
 
     // Idade
@@ -282,7 +294,13 @@ if (
 
     
     // Se não há erros, salvar
+    // Log dos erros de validação
+    error_log('=== RESULTADO DA VALIDAÇÃO ===');
+    error_log('Errors encontrados: ' . json_encode($errors));
+    error_log('Quantidade de erros: ' . count($errors));
+    
     if (empty($errors)) {
+        error_log('✅ VALIDAÇÃO PASSOU - Iniciando atualização do banco');
         error_log('=== SALVANDO DADOS ===');
         error_log('Dados para salvar: ' . json_encode($formData));
         
@@ -495,9 +513,11 @@ if (
             $error = 'Erro ao atualizar perfil. Tente novamente.';
         }
     } else {
+        error_log('❌ VALIDAÇÃO FALHOU - Erros encontrados');
         // Só definir erro se o formulário foi realmente enviado
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = implode('<br>', $errors);
+            error_log('Mensagem de erro definida: ' . $error);
         }
     }
 }
