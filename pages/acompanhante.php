@@ -257,10 +257,7 @@ require_once __DIR__ . '/../includes/header.php';
           <ul class="list-unstyled mb-0">
             <li><b>Altura:</b> <?php echo htmlspecialchars($acompanhante['altura'] ?? ''); ?> cm</li>
             <li><b>Peso:</b> <?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?> kg</li>
-            <li><b>Manequim:</b> <?php echo htmlspecialchars($acompanhante['manequim'] ?? ''); ?></li>
-            <li><b>Busto:</b> <?php echo htmlspecialchars($acompanhante['busto'] ?? ''); ?></li>
-            <li><b>Cintura:</b> <?php echo htmlspecialchars($acompanhante['cintura'] ?? ''); ?></li>
-            <li><b>Quadril:</b> <?php echo htmlspecialchars($acompanhante['quadril'] ?? ''); ?></li>
+
             <li><b>Etnia:</b> <?php echo htmlspecialchars($acompanhante['etnia'] ?? ''); ?></li>
           </ul>
         </div>

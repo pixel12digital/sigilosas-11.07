@@ -295,22 +295,7 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                 <label for="peso" class="form-label">Peso (kg)</label>
                 <input type="number" class="form-control" id="peso" name="peso" value="<?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?>">
             </div>
-            <div class="col-md-2">
-                <label for="manequim" class="form-label">Manequim</label>
-                <input type="text" class="form-control" id="manequim" name="manequim" value="<?php echo htmlspecialchars($acompanhante['manequim'] ?? ''); ?>">
-            </div>
-            <div class="col-md-2">
-                <label for="busto" class="form-label">Busto</label>
-                <input type="number" class="form-control" id="busto" name="busto" value="<?php echo htmlspecialchars($acompanhante['busto'] ?? ''); ?>">
-            </div>
-            <div class="col-md-2">
-                <label for="cintura" class="form-label">Cintura</label>
-                <input type="number" class="form-control" id="cintura" name="cintura" value="<?php echo htmlspecialchars($acompanhante['cintura'] ?? ''); ?>">
-            </div>
-            <div class="col-md-2">
-                <label for="quadril" class="form-label">Quadril</label>
-                <input type="number" class="form-control" id="quadril" name="quadril" value="<?php echo htmlspecialchars($acompanhante['quadril'] ?? ''); ?>">
-            </div>
+
         </div>
         <div class="row mt-2">
             <div class="col-md-2">

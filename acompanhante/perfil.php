@@ -109,10 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'sobre_mim' => trim($_POST['sobre_mim'] ?? ''),
         'altura' => !empty($_POST['altura']) ? (float)$_POST['altura'] : null,
         'peso' => !empty($_POST['peso']) ? (float)$_POST['peso'] : null,
-        'manequim' => trim($_POST['manequim'] ?? ''),
-        'busto' => !empty($_POST['busto']) ? (int)$_POST['busto'] : null,
-        'cintura' => !empty($_POST['cintura']) ? (int)$_POST['cintura'] : null,
-        'quadril' => !empty($_POST['quadril']) ? (int)$_POST['quadril'] : null,
+
         'etnia' => trim($_POST['etnia'] ?? ''),
         'cor_olhos' => trim($_POST['cor_olhos'] ?? ''),
         'cor_cabelo' => trim($_POST['cor_cabelo'] ?? ''),
@@ -155,10 +152,7 @@ if (
         'preferencia_sexual' => trim($_POST['preferencia_sexual'] ?? ''),
         'bairro' => trim($_POST['bairro'] ?? ''),
         'cep' => trim($_POST['cep'] ?? ''),
-        'manequim' => trim($_POST['manequim'] ?? ''),
-        'busto' => trim($_POST['busto'] ?? ''),
-        'cintura' => trim($_POST['cintura'] ?? ''),
-        'quadril' => trim($_POST['quadril'] ?? ''),
+
         'etnia' => trim($_POST['etnia'] ?? ''),
         'cor_olhos' => trim($_POST['cor_olhos'] ?? ''),
         'cor_cabelo' => trim($_POST['cor_cabelo'] ?? ''),
@@ -963,7 +957,7 @@ include __DIR__ . '/../includes/header.php';
             <!-- Aparência -->
             <div class="section-title">Aparência</div>
             
-            <!-- Primeira linha: Altura, Peso, Manequim, Busto -->
+            <!-- Primeira linha: Altura, Peso, Etnia, Cor dos Olhos -->
             <div class="form-row">
                 <div class="form-field">
                     <label for="altura" class="form-label">Altura (cm)</label>
@@ -972,26 +966,6 @@ include __DIR__ . '/../includes/header.php';
                 <div class="form-field">
                     <label for="peso" class="form-label">Peso (kg)</label>
                     <input type="number" class="form-control medidas-fisicas" id="peso" name="peso" value="<?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?>">
-                </div>
-                <div class="form-field">
-                    <label for="manequim" class="form-label">Manequim</label>
-                    <input type="text" class="form-control medidas-fisicas" id="manequim" name="manequim" value="<?php echo htmlspecialchars($acompanhante['manequim'] ?? ''); ?>">
-                </div>
-                <div class="form-field">
-                    <label for="busto" class="form-label">Busto</label>
-                    <input type="number" class="form-control medidas-fisicas" id="busto" name="busto" value="<?php echo htmlspecialchars($acompanhante['busto'] ?? ''); ?>">
-                </div>
-            </div>
-            
-            <!-- Segunda linha: Cintura, Quadril, Etnia, Cor dos Olhos -->
-            <div class="form-row">
-                <div class="form-field">
-                    <label for="cintura" class="form-label">Cintura</label>
-                    <input type="number" class="form-control medidas-fisicas" id="cintura" name="cintura" value="<?php echo htmlspecialchars($acompanhante['cintura'] ?? ''); ?>">
-                </div>
-                <div class="form-field">
-                    <label for="quadril" class="form-label">Quadril</label>
-                    <input type="number" class="form-control medidas-fisicas" id="quadril" name="quadril" value="<?php echo htmlspecialchars($acompanhante['quadril'] ?? ''); ?>">
                 </div>
                 <div class="form-field">
                     <label for="etnia" class="form-label">Etnia</label>
