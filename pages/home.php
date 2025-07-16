@@ -43,34 +43,34 @@ $estados = $db->fetchAll("
 <!-- Banner Principal -->
 <section class="hero-section position-relative">
     <div class="hero-bg" style="background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('<?php echo SITE_URL; ?>/assets/img/Imagem-banner01.png') center/cover;">
-        <div class="container">
+        <div class="container position-relative">
             <div class="row min-vh-75 align-items-center">
-                <div class="col-lg-8 col-md-10 mx-auto text-center text-white">
-                    <p class="lead mb-5"></p>
-                    
-                    <!-- Formulário de Busca -->
-                    <div class="search-form-wrapper mx-auto">
-                        <div class="search-form bg-white bg-opacity-90 p-4 rounded-3">
-                            <form id="filtro-form" class="search-flex-form align-items-center">
-                                <select name="estado" class="form-select" id="estado" required aria-label="Selecione o Estado">
-                                    <option value="">Selecione o Estado</option>
-                                    <?php foreach ($estados as $estado): ?>
-                                        <option value="<?php echo $estado['id']; ?>">
-                                            <?php echo htmlspecialchars($estado['nome']); ?> (<?php echo $estado['uf']; ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <select name="cidade" class="form-select" id="cidade-select" required aria-label="Selecione a Cidade">
-                                    <option value="">Selecione a Cidade</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary w-100" aria-label="Buscar acompanhantes">
-                                    <span class="spinner-border spinner-busca" style="display:none;width:1.5em;height:1.5em;vertical-align:middle;"></span>
-                                    <i class="fas fa-search"></i> Buscar
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
+                <div class="col-lg-10 col-md-12 mx-auto text-center text-white">
+                    <!-- Headline e Subtítulo -->
+                    <h1 class="hero-title mb-2">Sua nova referência em acompanhantes no Brasil</h1>
+                    <h2 class="hero-subtitle mb-5">Sigiloso, seguro e exclusivo</h2>
+                </div>
+            </div>
+            <!-- Filtro flutuante alinhado ao container -->
+            <div class="search-form-wrapper-float mx-auto container px-3 px-md-4">
+                <div class="search-form bg-white bg-opacity-90 p-4 rounded-3 shadow-lg">
+                    <form id="filtro-form" class="search-flex-form align-items-center">
+                        <select name="estado" class="form-select" id="estado" required aria-label="Selecione o Estado">
+                            <option value="">Selecione o Estado</option>
+                            <?php foreach ($estados as $estado): ?>
+                                <option value="<?php echo $estado['id']; ?>">
+                                    <?php echo htmlspecialchars($estado['nome']); ?> (<?php echo $estado['uf']; ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select name="cidade" class="form-select" id="cidade-select" required aria-label="Selecione a Cidade">
+                            <option value="">Selecione a Cidade</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100" aria-label="Buscar acompanhantes">
+                            <span class="spinner-border spinner-busca" style="display:none;width:1.5em;height:1.5em;vertical-align:middle;"></span>
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -99,12 +99,12 @@ $posts_recentes = $db->fetchAll("
 ?>
 
 <!-- Seção Destaques -->
-<section class="destaques-section py-4 bg-white">
+<section class="destaques-section py-4 bg-white destaque-mobile-spacing">
   <div class="container">
     <div class="row mb-3">
       <div class="col-12 text-center">
         <h3 class="section-title" style="font-size:1.5rem;">Destaques</h3>
-        <div class="text-muted mb-2" style="font-size:1.1em;">Veja as acompanhantes em destaque selecionadas pela nossa curadoria. Perfis verificados, fotos reais e atendimento premium.</div>
+        <div class="text-muted mb-2" style="font-size:1.1em;">Veja as acompanhantes em destaque. Perfis verificados, fotos reais e atendimento premium.</div>
       </div>
     </div>
     <div class="row justify-content-center" id="destaques-lista">
@@ -682,7 +682,9 @@ document.head.appendChild(style);
     }
     
     .search-form {
-        margin: 0 1rem;
+        margin: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }
 
@@ -736,5 +738,57 @@ document.head.appendChild(style);
   background: #F3EAC2 !important;
   color: #3D263F !important;
   border-color: #3D263F !important;
+}
+
+.hero-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(61,38,63,0.18);
+}
+.hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(61,38,63,0.12);
+}
+
+.search-form-wrapper-float {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    bottom: 0;
+    width: 100%;
+    z-index: 10;
+    padding-left: 0;
+    padding-right: 0;
+}
+@media (min-width: 992px) {
+    .search-form-wrapper-float {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+@media (max-width: 991.98px) {
+    .search-form-wrapper-float {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 1.2rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 80px !important;
+    }
+    .search-form-wrapper-float {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .destaque-mobile-spacing {
+        margin-top: 80px;
+    }
 }
 </style> 
