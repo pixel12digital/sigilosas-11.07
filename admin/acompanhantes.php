@@ -17,13 +17,36 @@ $db = getDB();
 
 $acompanhantes = []; // inicializa para evitar warning
 
-// Processar alteração de destaque
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acompanhante_id'], $_POST['destaque'], $_POST['action']) && $_POST['action'] === 'destaque') {
-    $id = (int)$_POST['acompanhante_id'];
-    $destaque = (int)$_POST['destaque'];
-    $db->update('acompanhantes', ['destaque' => $destaque], 'id = ?', [$id]);
-    header('Location: acompanhantes.php?success=1');
-    exit;
+// Processar ações administrativas
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    $acompanhante_id = (int)($_POST['acompanhante_id'] ?? 0);
+    
+    if ($action === 'destaque' && isset($_POST['destaque'])) {
+        $destaque = (int)$_POST['destaque'];
+        $db->update('acompanhantes', ['destaque' => $destaque], 'id = ?', [$acompanhante_id]);
+        header('Location: acompanhantes.php?success=1');
+        exit;
+    } elseif ($action === 'aprovar' && $acompanhante_id) {
+        // Aprovar acompanhante e todas as mídias associadas (lógica unificada)
+        $db->update('acompanhantes', ['status' => 'aprovado'], 'id = ?', [$acompanhante_id]);
+        
+        // Aprovar todas as fotos
+        $db->query('UPDATE fotos SET aprovada = 1 WHERE acompanhante_id = ?', [$acompanhante_id]);
+        
+        // Aprovar todos os vídeos públicos
+        $db->query('UPDATE videos_publicos SET status = "aprovado" WHERE acompanhante_id = ?', [$acompanhante_id]);
+        
+        // Verificar todos os documentos
+        $db->query('UPDATE documentos_acompanhante SET verificado = 1 WHERE acompanhante_id = ?', [$acompanhante_id]);
+        
+        header('Location: acompanhantes.php?success=Acompanhante e todas as mídias aprovadas com sucesso');
+        exit;
+    } elseif ($action === 'bloquear' && $acompanhante_id) {
+        $db->update('acompanhantes', ['status' => 'bloqueado'], 'id = ?', [$acompanhante_id]);
+        header('Location: acompanhantes.php?success=Acompanhante bloqueada com sucesso');
+        exit;
+    }
 }
 
 // Filtros
@@ -186,7 +209,13 @@ $error = $_GET['error'] ?? '';
                                     <td><?php echo date('d/m/Y', strtotime($a['created_at'])); ?></td>
                                     <td>
                                         <a href="acompanhante-visualizar.php?id=<?php echo $a['id']; ?>" class="btn btn-sm btn-outline-primary" title="Visualizar"><i class="fas fa-edit"></i></a>
-                                        <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=aprovar" class="btn btn-sm btn-success" title="Aprovar" onclick="return confirmDelete('Aprovar este perfil?');"><i class="fas fa-check"></i></a>
+                                        <form method="post" style="display:inline;">
+                                            <input type="hidden" name="action" value="aprovar">
+                                            <input type="hidden" name="acompanhante_id" value="<?php echo $a['id']; ?>">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Aprovar perfil e todas as mídias" onclick="return confirm('Aprovar este perfil e todas as mídias associadas?');">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
                                         <form method="post" style="display:inline;">
                                             <input type="hidden" name="action" value="bloquear">
                                             <input type="hidden" name="acompanhante_id" value="<?php echo $a['id']; ?>">
@@ -194,7 +223,7 @@ $error = $_GET['error'] ?? '';
                                                 <i class="fas fa-ban"></i>
                                             </button>
                                         </form>
-                                        <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=excluir" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirmDelete('Excluir este perfil? Esta ação não pode ser desfeita.');"><i class="fas fa-trash"></i></a>
+                                        <a href="acompanhante-editar.php?id=<?php echo $a['id']; ?>&action=excluir" class="btn btn-sm btn-danger" title="Excluir" onclick="return confirm('Excluir este perfil? Esta ação não pode ser desfeita.');"><i class="fas fa-trash"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

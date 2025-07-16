@@ -151,9 +151,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: acompanhante-editar.php?id=' . $newId . '&success=Acompanhante cadastrada com sucesso');
         exit;
     } elseif ($id && $action === 'aprovar') {
-        // Aprovar acompanhante sem sobrescrever outros campos
+        // Aprovar acompanhante e todas as mídias associadas (lógica unificada)
         $db->update('acompanhantes', ['status' => 'aprovado'], 'id = ?', [$id]);
-        header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante aprovada com sucesso');
+        
+        // Aprovar todas as fotos
+        $db->query('UPDATE fotos SET aprovada = 1 WHERE acompanhante_id = ?', [$id]);
+        
+        // Aprovar todos os vídeos públicos
+        $db->query('UPDATE videos_publicos SET status = "aprovado" WHERE acompanhante_id = ?', [$id]);
+        
+        // Verificar todos os documentos
+        $db->query('UPDATE documentos_acompanhante SET verificado = 1 WHERE acompanhante_id = ?', [$id]);
+        
+        header('Location: acompanhante-editar.php?id=' . $id . '&success=Acompanhante e todas as mídias aprovadas com sucesso');
         exit;
     } elseif ($id && $action === 'bloquear') {
         // Bloquear acompanhante sem sobrescrever outros campos
