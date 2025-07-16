@@ -2132,10 +2132,10 @@ document.addEventListener('DOMContentLoaded', function() {
                      // Limpar o input de arquivo
                      inputVideoVerificacao.value = '';
                      
-                     // Atualizar a seção de vídeo sem recarregar a página
+                     // Mostrar mensagem final
                      setTimeout(() => {
                          if (videoMsg) {
-                             videoMsg.innerHTML = '<div class="text-info">Vídeo enviado! Atualize a página para visualizar.</div>';
+                             videoMsg.innerHTML = '<div class="text-success"><i class="fas fa-check-circle"></i> Vídeo enviado com sucesso!</div>';
                          }
                      }, 3000);
                  } else {
