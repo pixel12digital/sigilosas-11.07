@@ -573,14 +573,14 @@ document.head.appendChild(style);
 }
 
 .hero-bg {
-    min-height: 75vh;
+    min-height: 45vh;
     display: flex;
     align-items: center;
     /* background-color removido para não sobrescrever a imagem */
 }
 
 .min-vh-75 {
-    min-height: 75vh;
+    min-height: 45vh;
 }
 
 .acompanhante-card {
@@ -678,7 +678,7 @@ document.head.appendChild(style);
 
 @media (max-width: 768px) {
     .hero-bg {
-        min-height: 60vh;
+        min-height: 30vh;
     }
     
     .search-form {
