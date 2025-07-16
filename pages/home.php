@@ -104,7 +104,7 @@ $posts_recentes = $db->fetchAll("
     <div class="row mb-3">
       <div class="col-12 text-center">
         <h3 class="section-title" style="font-size:1.5rem;">Destaques</h3>
-        <div class="text-muted mb-2" style="font-size:1.1em;">Veja as acompanhantes em destaque. Perfis verificados, fotos reais e atendimento premium.</div>
+        <div class="text-muted mb-2" style="font-size:1.1em;">As acompanhantes mais bem avaliadas e visualizadas da plataforma. Perfis verificados, imagens reais e uma performance que se destacou com elegância e confiança.</div>
       </div>
     </div>
     <div class="row justify-content-center" id="destaques-lista">
@@ -112,6 +112,56 @@ $posts_recentes = $db->fetchAll("
         <?php
           $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$a['id']]);
           $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
+          
+          // Buscar valores de atendimento
+          $valores_atendimento = $db->fetchAll("SELECT tempo, valor FROM valores_atendimento WHERE acompanhante_id = ? ORDER BY valor ASC", [$a['id']]);
+          
+          // Calcular menor valor
+          $menorValor = null;
+          $tempoMenor = '';
+          if (!empty($valores_atendimento)) {
+              foreach ($valores_atendimento as $v) {
+                  if ($v['valor'] && ($menorValor === null || floatval($v['valor']) < $menorValor)) {
+                      $menorValor = floatval($v['valor']);
+                      $tempoMenor = str_replace(['min', 'h', 'diaria', 'pernoite', 'diaria_viagem'], [' min', ' h', 'Diária', 'Pernoite', 'Diária Viagem'], $v['tempo']);
+                  }
+              }
+          }
+          
+          // Preço HTML
+          $precoHtml = '';
+          if ($menorValor !== null) {
+              $precoHtml = '<span class="fw-bold">R$ ' . number_format($menorValor, 2, ',', '.') . '</span> <span class="text-muted">- ' . $tempoMenor . '</span>';
+          } else if (!empty($a['valor_promocional']) && $a['valor_promocional'] > 0) {
+              $precoHtml = '<span class="text-danger fw-bold">R$ ' . number_format(floatval($a['valor_promocional']), 2, ',', '.') . '</span>';
+          } else if (!empty($a['valor_padrao']) && $a['valor_padrao'] > 0) {
+              $precoHtml = '<span class="fw-bold">R$ ' . number_format(floatval($a['valor_padrao']), 2, ',', '.') . '</span>';
+          } else {
+              $precoHtml = '<span class="text-muted">Não informado</span>';
+          }
+          
+          // Tabela de valores
+          $tabelaValores = '';
+          if (!empty($valores_atendimento)) {
+              $tabelaValores = '<table class="table table-sm mb-0"><tbody>';
+              foreach ($valores_atendimento as $v) {
+                  $tempo_formatado = str_replace(['min', 'h', 'diaria', 'pernoite', 'diaria_viagem'], [' min', ' h', 'Diária', 'Pernoite', 'Diária Viagem'], $v['tempo']);
+                  $tabelaValores .= '<tr><td>' . $tempo_formatado . '</td><td>R$ ' . number_format(floatval($v['valor']), 2, ',', '.') . '</td></tr>';
+              }
+              $tabelaValores .= '</tbody></table>';
+          }
+          
+          // Local atendimento
+          $localHtml = '';
+          if (!empty($a['local_atendimento'])) {
+              $locais = json_decode($a['local_atendimento'], true);
+              if (is_array($locais) && !empty($locais)) {
+                  $locais_formatados = array_map(function($l) {
+                      return ucfirst(str_replace('_', ' ', $l));
+                  }, $locais);
+                  $localHtml = '<div class="mb-1 text-center"><i class="fas fa-home"></i> ' . implode(', ', $locais_formatados) . '</div>';
+              }
+          }
         ?>
         <div class="col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center destaque-card" style="<?php echo $i >= 6 ? 'display:none;' : ''; ?>">
           <div class='card shadow-sm h-100 acompanhante-card w-100'>
@@ -124,14 +174,37 @@ $posts_recentes = $db->fetchAll("
             </div>
             <div class="flex-grow-1 w-100 px-2 pt-2 pb-0 d-flex flex-column" style="min-height:140px;">
               <h5 class="card-title mb-1 text-center"><?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?></h5>
-              <div class="mb-1 text-center"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($a['cidade_nome']); ?>, <?php echo htmlspecialchars($a['estado_uf']); ?></div>
+              <div class="text-muted small mb-1 text-center">a partir de</div>
+              <div class="d-flex align-items-center mb-2 justify-content-center">
+                <span><?php echo $precoHtml; ?></span>
+                <?php if (!empty($tabelaValores)): ?>
+                  <button class='btn btn-link btn-sm ms-2 p-0' type='button' onclick='const tbl=this.parentNode.parentNode.querySelector(".tabela-valores");tbl.classList.toggle("d-none");'><i class='fas fa-chevron-down'></i></button>
+                <?php endif; ?>
+              </div>
+              <?php if (!empty($tabelaValores)): ?>
+                <div class='tabela-valores d-none w-100 mb-2'><?php echo $tabelaValores; ?></div>
+              <?php endif; ?>
+              <?php if (!empty($a['idade'])): ?>
+                <div class='mb-1 text-center'><i class='fas fa-birthday-cake'></i> <?php echo $a['idade']; ?> anos</div>
+              <?php endif; ?>
+              <?php echo $localHtml; ?>
+              <?php 
+                $localizacao_parts = array_filter([
+                    !empty($a['bairro']) ? $a['bairro'] : null,
+                    !empty($a['cidade_nome']) ? $a['cidade_nome'] : null,
+                    !empty($a['estado_uf']) ? $a['estado_uf'] : null
+                ]);
+                if (!empty($localizacao_parts)):
+              ?>
+                <div class='mb-1 text-center'><i class='fas fa-map-marker-alt'></i> <?php echo implode(', ', $localizacao_parts); ?></div>
+              <?php endif; ?>
               <?php if (!empty($a['sobre_mim'])): ?>
                 <div class='fw-bold mb-1 mt-2'>Sobre Mim</div>
                 <div class='text-muted small mb-2 px-2'><?php echo mb_strimwidth(strip_tags($a['sobre_mim']),0,180,'...'); ?></div>
               <?php endif; ?>
             </div>
             <div class="px-3 pb-3 pt-2 w-100">
-              <a href="acompanhante.php?id=<?php echo $a['id']; ?>" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
+              <a href="<?php echo SITE_URL; ?>/pages/acompanhante.php?id=<?php echo $a['id']; ?>" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
             </div>
           </div>
         </div>
@@ -336,7 +409,7 @@ $posts_recentes = $db->fetchAll("
       <div class="col-lg-8 text-center">
         <h2 class="fw-bold mb-3" style="color:#3D263F;"><i class="fas fa-gem me-2"></i>Sobre a Sigilosas VIP</h2>
         <p class="lead" style="color:#3D263F;">A Sigilosas VIP nasceu a partir de uma vivência real no mercado. Estamos há mais de 5 anos no ramo, conhecendo de perto os desafios, necessidades e sonhos de quem trabalha como acompanhante.</p>
-        <p style="color:#3D263F;">Com toda essa experiência, decidimos criar algo diferente: uma plataforma exclusiva, segura e acolhedora, feita para quem busca mais do que apenas uma vitrine — feita para quem quer ser valorizado, respeitado e crescer com liberdade.</p>
+        <p style="color:#3D263F;">Com toda essa experiência, decidimos criar algo diferente: uma plataforma exclusiva, segura e acolhedora, feita para quem busca mais do que apenas uma vitrine. <strong>Feita para quem quer ser valorizado, respeitado e crescer com liberdade.</strong></p>
       </div>
     </div>
     <div class="row g-4 justify-content-center mb-4">
@@ -688,6 +761,10 @@ document.head.appendChild(style);
     }
 }
 
+#acompanhantes-result {
+    margin-top: 120px;
+}
+
 /* Estilos para a seção de blog */
 .blog-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -789,6 +866,9 @@ document.head.appendChild(style);
     }
     .destaque-mobile-spacing {
         margin-top: 80px;
+    }
+    #acompanhantes-result {
+        margin-top: 120px;
     }
 }
 </style> 

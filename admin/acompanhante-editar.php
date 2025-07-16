@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'status' => $_POST['status'],
             'verificado' => isset($_POST['verificado']) ? 1 : 0,
             'destaque' => isset($_POST['destaque']) ? 1 : 0,
-            'estado_id' => !empty($_POST['estado_id']) ? (int)$_POST['estado_id'] : ($acompanhante['estado_id'] ?? null),
+            'estado_id' => !empty($_POST['estado_id']) ? (int)$_POST['estado_id'] : (!empty($_POST['estado_id_hidden']) ? (int)$_POST['estado_id_hidden'] : ($acompanhante['estado_id'] ?? null)),
             'cidade_id' => $cidade_id
         ];
         $db->update('acompanhantes', $data, 'id = ?', [$id]);
