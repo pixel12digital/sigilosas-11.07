@@ -185,7 +185,7 @@ $posts_recentes = $db->fetchAll("
                 <div class='tabela-valores d-none w-100 mb-2'><?php echo $tabelaValores; ?></div>
               <?php endif; ?>
               <?php if (!empty($a['idade'])): ?>
-                <div class='mb-1 text-center'><i class='fas fa-birthday-cake'></i> <?php echo $a['idade']; ?> anos</div>
+                                            <div class='mb-1 text-center'><i class='fas fa-user'></i> <?php echo $a['idade']; ?> anos</div>
               <?php endif; ?>
               <?php echo $localHtml; ?>
               <?php 
@@ -571,7 +571,7 @@ form.addEventListener('submit', function(e) {
                                 ${tabelaValores ? `<button class='btn btn-link btn-sm ms-2 p-0' type='button' onclick='const tbl=this.parentNode.parentNode.querySelector(".tabela-valores");tbl.classList.toggle("d-none");'><i class='fas fa-chevron-down'></i></button>` : ''}
                             </div>
                             ${tabelaValores ? `<div class='tabela-valores d-none w-100 mb-2'>${tabelaValores}</div>` : ''}
-                            ${a.idade ? `<div class='mb-1 text-center'><i class='fas fa-birthday-cake'></i> ${a.idade} anos</div>` : ''}
+                            ${a.idade ? `<div class='mb-1 text-center'><i class='fas fa-user'></i> ${a.idade} anos</div>` : ''}
                             ${localHtml ? `<div class='mb-1 text-center'>${localHtml}</div>` : ''}
                             ${(a.bairro||a.cidade_nome) ? `<div class='mb-1 text-center'><i class='fas fa-map-marker-alt'></i> ${[a.bairro,a.cidade_nome,a.estado_uf].filter(Boolean).join(', ')}</div>` : ''}
                             ${sobreMim}
