@@ -80,11 +80,6 @@ $estados = $db->fetchAll("
 <!-- Resultados da busca de acompanhantes -->
 <section id="resultados-busca-section" class="py-4 bg-white">
     <div class="container">
-        <div id="resultados-info" class="row mb-3" style="display: none;">
-            <div class="col-12 text-center">
-                <h4 class="text-muted" id="resultados-contador"></h4>
-            </div>
-        </div>
         <div id="acompanhantes-result" class="row g-4"></div>
     </div>
 </section>
@@ -478,31 +473,15 @@ const resultDiv = document.getElementById('acompanhantes-result');
 const buscarBtn = form.querySelector('button[type="submit"]');
 const spinnerBusca = buscarBtn.querySelector('.spinner-busca');
 console.log('[DEBUG] spinnerBusca:', spinnerBusca);
-
-// Variáveis para paginação
-let currentOffset = 0;
-let currentEstadoId = null;
-let currentCidadeId = null;
-let allAcompanhantes = [];
-let paginationInfo = null;
-
 form.addEventListener('submit', function(e) {
     e.preventDefault();
     const estadoId = estadoSelect.value;
     const cidadeId = cidadeSelect.value;
     if (!estadoId || !cidadeId) return;
-    
-    // Reset paginação para nova busca
-    currentOffset = 0;
-    currentEstadoId = estadoId;
-    currentCidadeId = cidadeId;
-    allAcompanhantes = [];
-    
     buscarBtn.disabled = true;
     if (spinnerBusca) spinnerBusca.style.display = 'inline-block';
     resultDiv.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border"></div></div>';
-    
-    fetch(`<?php echo SITE_URL; ?>/api/busca-acompanhantes.php?estado_id=${estadoId}&cidade_id=${cidadeId}&limit=6&offset=0`)
+            fetch(`<?php echo SITE_URL; ?>/api/busca-acompanhantes.php?estado_id=${estadoId}&cidade_id=${cidadeId}`)
         .then(res => res.json())
         .then(data => {
             buscarBtn.disabled = false;
@@ -526,70 +505,12 @@ form.addEventListener('submit', function(e) {
             document.body.style.overflow = '';
             console.log('[DEBUG] HTML do botão Buscar:', buscarBtn.outerHTML);
             console.log('[DEBUG] Botão Buscar disabled:', buscarBtn.disabled);
-            
-            // Verificar se é o novo formato com paginação
-            if (data.acompanhantes && data.pagination) {
-                allAcompanhantes = data.acompanhantes;
-                paginationInfo = data.pagination;
-                
-                if (allAcompanhantes.length === 0) {
-                    resultDiv.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhuma acompanhante encontrada.</p></div>';
-                    return;
-                }
-                
-                renderAcompanhantes(allAcompanhantes);
-                renderPagination();
-            } else {
-                // Fallback para formato antigo (compatibilidade)
-                if (!Array.isArray(data) || data.length === 0) {
-                    resultDiv.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhuma acompanhante encontrada.</p></div>';
-                    return;
-                }
-                allAcompanhantes = data;
-                renderAcompanhantes(allAcompanhantes);
+            if (!Array.isArray(data) || data.length === 0) {
+                resultDiv.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhuma acompanhante encontrada.</p></div>';
+                return;
             }
-        })
-        .catch(() => {
-            buscarBtn.disabled = false;
-            // Debug: quantidade de spinners
-            const spinners = document.querySelectorAll('.spinner-busca');
-            console.log('[DEBUG] Spinners encontrados:', spinners.length);
-            spinners.forEach(function(sp, idx) {
-                console.log(`[DEBUG] Spinner #${idx} display antes:`, sp.style.display);
-                sp.style.display = 'none';
-                console.log(`[DEBUG] Spinner #${idx} display depois:`, sp.style.display);
-            });
-            // Remover spinners residuais fora do botão e dos cards
-            document.querySelectorAll('.spinner-border').forEach(function(sp) {
-                if (!sp.closest('button') && !sp.closest('.img-loader')) {
-                    sp.remove();
-                    console.log('[DEBUG] Spinner residual removido do DOM:', sp);
-                }
-            });
-            // Remover overlays/backdrops e restaurar rolagem
-            document.querySelectorAll('#loading, .modal-backdrop, .backdrop, .overlay').forEach(e => e.remove());
-            document.body.style.overflow = '';
-            console.log('[DEBUG] HTML do botão Buscar:', buscarBtn.outerHTML);
-            console.log('[DEBUG] Botão Buscar disabled:', buscarBtn.disabled);
-            resultDiv.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Erro ao buscar acompanhantes.</p></div>';
-        });
-});
-
-// Função para renderizar acompanhantes
-function renderAcompanhantes(acompanhantes) {
-    // Mostrar contador de resultados
-    const resultadosInfo = document.getElementById('resultados-info');
-    const resultadosContador = document.getElementById('resultados-contador');
-    
-    if (paginationInfo) {
-        resultadosInfo.style.display = 'block';
-        resultadosContador.innerHTML = `Encontradas ${paginationInfo.total} acompanhantes em ${document.getElementById('cidade-select').selectedOptions[0].text}`;
-    } else {
-        resultadosInfo.style.display = 'none';
-    }
-    
-    let html = '';
-    acompanhantes.forEach(a => {
+            let html = '';
+            data.forEach(a => {
                 const imgId = `img-perfil-${a.id}`;
                 // Menor valor e tempo
                 let menorValor = null, tempoMenor = '';
@@ -660,86 +581,50 @@ function renderAcompanhantes(acompanhantes) {
                         </div>
                     </div>
                 </div>`;
-    });
-    resultDiv.innerHTML = html;
-    
-    // Garantir que o loader do card suma mesmo se a imagem já estiver em cache
-    document.querySelectorAll('.card-img-top img').forEach(function(img) {
-        if (img.complete) {
-            img.style.display = 'block';
-            if (img.previousElementSibling && img.previousElementSibling.classList.contains('img-loader')) {
-                img.previousElementSibling.style.display = 'none';
-            }
-        }
-        // Timeout para garantir sumiço do loader após 2s
-        setTimeout(function() {
-            if (img.previousElementSibling && img.previousElementSibling.classList.contains('img-loader')) {
-                img.previousElementSibling.style.display = 'none';
-                img.style.display = 'block';
-                console.log('[DEBUG] Timeout forçou sumiço do loader para', img.id);
-            }
-        }, 2000);
-    });
-}
-
-// Função para renderizar paginação
-function renderPagination() {
-    if (!paginationInfo || !paginationInfo.hasMore) return;
-    
-    const paginationDiv = document.createElement('div');
-    paginationDiv.className = 'col-12 text-center mt-4';
-    paginationDiv.innerHTML = `
-        <button id="btn-ver-mais-filtros" class="btn btn-primary" style="background:#3D263F; border-color:#3D263F; color:#F3EAC2;">
-            <i class="fas fa-plus"></i> Ver mais acompanhantes (${paginationInfo.total - allAcompanhantes.length} restantes)
-        </button>
-    `;
-    
-    resultDiv.appendChild(paginationDiv);
-    
-    // Adicionar evento ao botão
-    document.getElementById('btn-ver-mais-filtros').addEventListener('click', loadMoreAcompanhantes);
-}
-
-// Função para carregar mais acompanhantes
-function loadMoreAcompanhantes() {
-    if (!currentEstadoId || !currentCidadeId) return;
-    
-    const btn = document.getElementById('btn-ver-mais-filtros');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
-    
-    currentOffset += 6;
-    
-    fetch(`<?php echo SITE_URL; ?>/api/busca-acompanhantes.php?estado_id=${currentEstadoId}&cidade_id=${currentCidadeId}&limit=6&offset=${currentOffset}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.acompanhantes && data.pagination) {
-                // Adicionar novos cards aos existentes
-                allAcompanhantes = allAcompanhantes.concat(data.acompanhantes);
-                paginationInfo = data.pagination;
-                
-                // Renderizar todos os cards novamente
-                renderAcompanhantes(allAcompanhantes);
-                
-                // Atualizar ou remover botão de paginação
-                const existingBtn = document.getElementById('btn-ver-mais-filtros');
-                if (existingBtn) {
-                    if (paginationInfo.hasMore) {
-                        existingBtn.innerHTML = `<i class="fas fa-plus"></i> Ver mais acompanhantes (${paginationInfo.total - allAcompanhantes.length} restantes)`;
-                        existingBtn.disabled = false;
-                    } else {
-                        existingBtn.remove();
+            });
+            resultDiv.innerHTML = html;
+            // Garantir que o loader do card suma mesmo se a imagem já estiver em cache
+            document.querySelectorAll('.card-img-top img').forEach(function(img) {
+                if (img.complete) {
+                    img.style.display = 'block';
+                    if (img.previousElementSibling && img.previousElementSibling.classList.contains('img-loader')) {
+                        img.previousElementSibling.style.display = 'none';
                     }
                 }
-            }
+                // Timeout para garantir sumiço do loader após 2s
+                setTimeout(function() {
+                    if (img.previousElementSibling && img.previousElementSibling.classList.contains('img-loader')) {
+                        img.previousElementSibling.style.display = 'none';
+                        img.style.display = 'block';
+                        console.log('[DEBUG] Timeout forçou sumiço do loader para', img.id);
+                    }
+                }, 2000);
+            });
         })
         .catch(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            alert('Erro ao carregar mais acompanhantes. Tente novamente.');
+            buscarBtn.disabled = false;
+            // Debug: quantidade de spinners
+            const spinners = document.querySelectorAll('.spinner-busca');
+            console.log('[DEBUG] Spinners encontrados:', spinners.length);
+            spinners.forEach(function(sp, idx) {
+                console.log(`[DEBUG] Spinner #${idx} display antes:`, sp.style.display);
+                sp.style.display = 'none';
+                console.log(`[DEBUG] Spinner #${idx} display depois:`, sp.style.display);
+            });
+            // Remover spinners residuais fora do botão e dos cards
+            document.querySelectorAll('.spinner-border').forEach(function(sp) {
+                if (!sp.closest('button') && !sp.closest('.img-loader')) {
+                    sp.remove();
+                    console.log('[DEBUG] Spinner residual removido do DOM:', sp);
+                }
+            });
+            // Remover overlays/backdrops e restaurar rolagem
+            document.querySelectorAll('#loading, .modal-backdrop, .backdrop, .overlay').forEach(e => e.remove());
+            document.body.style.overflow = '';
+            console.log('[DEBUG] HTML do botão Buscar:', buscarBtn.outerHTML);
+            console.log('[DEBUG] Botão Buscar disabled:', buscarBtn.disabled);
+            resultDiv.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Erro ao buscar acompanhantes.</p></div>';
         });
-}
 });
 
 /* CSS extra para garantir 2 cards por linha e layout fiel ao modelo */
@@ -751,31 +636,6 @@ style.innerHTML = `
 .card-img-top img, .card-img-top .bg-secondary { border-radius: 12px; }
 .card .btn-danger { font-weight: 500; font-size: 1.1em; }
 .card { margin: 0 8px 24px 8px; }
-
-/* Estilos para paginação */
-#btn-ver-mais-filtros {
-    transition: all 0.3s ease;
-    font-weight: 600;
-    padding: 12px 30px;
-    border-radius: 25px;
-    box-shadow: 0 4px 15px rgba(61, 38, 63, 0.2);
-}
-
-#btn-ver-mais-filtros:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(61, 38, 63, 0.3);
-}
-
-#btn-ver-mais-filtros:disabled {
-    opacity: 0.7;
-    transform: none;
-}
-
-#resultados-contador {
-    color: #3D263F;
-    font-weight: 600;
-    font-size: 1.2rem;
-}
 `;
 document.head.appendChild(style);
 </script>
