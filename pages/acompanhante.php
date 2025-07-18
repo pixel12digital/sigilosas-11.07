@@ -7,6 +7,64 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 
+// Funções auxiliares para formatação
+function formatarAltura($altura) {
+    if (empty($altura)) return '';
+    // Converte de cm para metros se necessário
+    if ($altura > 10) { // Se for maior que 10, provavelmente está em cm
+        return number_format($altura / 100, 2, ',', '.') . ' m';
+    }
+    return number_format($altura, 2, ',', '.') . ' m';
+}
+
+function formatarTexto($texto) {
+    if (empty($texto)) return '';
+    // Capitaliza primeira letra e corrige acentuação
+    $texto = mb_strtolower($texto, 'UTF-8');
+    $texto = mb_convert_case($texto, MB_CASE_TITLE, 'UTF-8');
+    
+    // Correções específicas
+    $correcoes = [
+        'branca' => 'Branca',
+        'medio' => 'Médio',
+        'curto' => 'Curto',
+        'longo' => 'Longo',
+        'liso' => 'Liso',
+        'ondulado' => 'Ondulado',
+        'crespo' => 'Crespo',
+        'azuis' => 'Azuis',
+        'verdes' => 'Verdes',
+        'castanhos' => 'Castanhos',
+        'pretos' => 'Pretos',
+        'loiro' => 'Loiro',
+        'moreno' => 'Moreno',
+        'ruivo' => 'Ruivo',
+        'preto' => 'Preto'
+    ];
+    
+    return $correcoes[$texto] ?? $texto;
+}
+
+function formatarSimNao($valor) {
+    if (empty($valor) || $valor == '0') return 'Não';
+    return 'Sim';
+}
+
+function formatarLocalAtendimento($local) {
+    if (empty($local)) return '';
+    
+    // Remove colchetes e aspas duplas
+    $local = str_replace(['[', ']', '"'], '', $local);
+    
+    // Se contém vírgulas, formata como lista
+    if (strpos($local, ',') !== false) {
+        $locais = array_map('trim', explode(',', $local));
+        return implode(', ', $locais);
+    }
+    
+    return $local;
+}
+
 $acompanhante_id = (int)$_GET['id'];
 if (!$acompanhante_id) {
     header('Location: acompanhantes.php');
@@ -193,11 +251,38 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
       <div class="text-center mb-3">
         <button type="button" class="btn btn-sm btn-outline-primary" id="btnTestarGaleria">
-          <i class="fas fa-camera"></i> Testar Galeria (Foto 1)
+          <i class="fas fa-camera"></i> Ver Fotos
         </button>
       </div>
     <?php endif; ?>
   </div>
+
+  <!-- Seção de Vídeos Públicos -->
+  <?php if (!empty($videos_publicos)): ?>
+    <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
+      <div class="card-body">
+        <div class="fw-bold mb-3" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos Públicos</div>
+        <div class="row g-3">
+          <?php foreach ($videos_publicos as $video): ?>
+            <div class="col-md-4 col-6">
+              <div class="text-center">
+                <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($video['url']); ?>" 
+                       controls 
+                       style="width:100%; max-width:200px; aspect-ratio:9/16; height:auto; max-height:300px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;">
+                </video>
+                <?php if (!empty($video['titulo'])): ?>
+                  <div class="mt-2 fw-bold small"><?php echo htmlspecialchars($video['titulo']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($video['descricao'])): ?>
+                  <div class="text-muted small"><?php echo htmlspecialchars($video['descricao']); ?></div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 
   <div class="row g-4">
     <!-- Card Valores -->
@@ -231,7 +316,7 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-map-marker-alt"></i> Localização</div>
           <div><?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?></div>
           <?php if (!empty($acompanhante['local_atendimento'])): ?>
-            <div class="text-muted small mt-1"><i class="fas fa-home"></i> <?php echo htmlspecialchars($acompanhante['local_atendimento']); ?></div>
+            <div class="text-muted small mt-1"><i class="fas fa-home"></i> <?php echo formatarLocalAtendimento($acompanhante['local_atendimento']); ?></div>
           <?php endif; ?>
         </div>
       </div>
@@ -255,21 +340,20 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="row">
         <div class="col-md-6">
           <ul class="list-unstyled mb-0">
-            <li><b>Altura:</b> <?php echo htmlspecialchars($acompanhante['altura'] ?? ''); ?> cm</li>
+            <li><b>Altura:</b> <?php echo formatarAltura($acompanhante['altura'] ?? ''); ?></li>
             <li><b>Peso:</b> <?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?> kg</li>
-
-            <li><b>Etnia:</b> <?php echo htmlspecialchars($acompanhante['etnia'] ?? ''); ?></li>
+            <li><b>Etnia:</b> <?php echo formatarTexto($acompanhante['etnia'] ?? ''); ?></li>
           </ul>
         </div>
         <div class="col-md-6">
           <ul class="list-unstyled mb-0">
-            <li><b>Cor dos Olhos:</b> <?php echo htmlspecialchars($acompanhante['cor_olhos'] ?? ''); ?></li>
-            <li><b>Cor do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['cor_cabelo'] ?? ''); ?></li>
-            <li><b>Estilo do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['estilo_cabelo'] ?? ''); ?></li>
-            <li><b>Tamanho do Cabelo:</b> <?php echo htmlspecialchars($acompanhante['tamanho_cabelo'] ?? ''); ?></li>
-            <li><b>Silicone:</b> <?php echo htmlspecialchars($acompanhante['silicone'] ?? ''); ?></li>
-            <li><b>Tatuagens:</b> <?php echo htmlspecialchars($acompanhante['tatuagens'] ?? ''); ?></li>
-            <li><b>Piercings:</b> <?php echo htmlspecialchars($acompanhante['piercings'] ?? ''); ?></li>
+            <li><b>Cor dos Olhos:</b> <?php echo formatarTexto($acompanhante['cor_olhos'] ?? ''); ?></li>
+            <li><b>Cor do Cabelo:</b> <?php echo formatarTexto($acompanhante['cor_cabelo'] ?? ''); ?></li>
+            <li><b>Estilo do Cabelo:</b> <?php echo formatarTexto($acompanhante['estilo_cabelo'] ?? ''); ?></li>
+            <li><b>Tamanho do Cabelo:</b> <?php echo formatarTexto($acompanhante['tamanho_cabelo'] ?? ''); ?></li>
+            <li><b>Silicone:</b> <?php echo formatarSimNao($acompanhante['silicone'] ?? ''); ?></li>
+            <li><b>Tatuagens:</b> <?php echo formatarSimNao($acompanhante['tatuagens'] ?? ''); ?></li>
+            <li><b>Piercings:</b> <?php echo formatarSimNao($acompanhante['piercings'] ?? ''); ?></li>
           </ul>
         </div>
       </div>
@@ -451,32 +535,7 @@ estrelas.forEach((estrela, idx) => {
 })();
 </script>
 
-  <!-- Seção de Vídeos Públicos -->
-  <?php if (!empty($videos_publicos)): ?>
-    <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
-      <div class="card-body">
-        <div class="fw-bold mb-3" style="color:#3D263F;"><i class="fas fa-video"></i> Vídeos</div>
-        <div class="row g-3">
-          <?php foreach ($videos_publicos as $video): ?>
-            <div class="col-md-4 col-6">
-              <div class="text-center">
-                <video src="<?php echo SITE_URL . '/uploads/videos_publicos/' . htmlspecialchars($video['url']); ?>" 
-                       controls 
-                       style="width:100%; max-width:200px; aspect-ratio:9/16; height:auto; max-height:300px; margin:auto; display:block; background:#000; object-fit:cover; border-radius:12px;">
-                </video>
-                <?php if (!empty($video['titulo'])): ?>
-                  <div class="mt-2 fw-bold small"><?php echo htmlspecialchars($video['titulo']); ?></div>
-                <?php endif; ?>
-                <?php if (!empty($video['descricao'])): ?>
-                  <div class="text-muted small"><?php echo htmlspecialchars($video['descricao']); ?></div>
-                <?php endif; ?>
-              </div>
-            </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    </div>
-  <?php endif; ?>
+
 
   <!-- Segurança -->
   <div class="alert mt-4 mb-5" style="background:#3D263F;color:#F3EAC2;">
@@ -728,6 +787,18 @@ document.addEventListener('keydown', function(e) {
 
 window.abrirGaleria = abrirGaleria;
 window.navegarGaleria = navegarGaleria;
+
+// Limpar backdrops quando o modal for fechado
+document.addEventListener('DOMContentLoaded', function() {
+  const galeriaModal = document.getElementById('galeriaModal');
+  if (galeriaModal) {
+    galeriaModal.addEventListener('hidden.bs.modal', function() {
+      // Remove backdrops residuais
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+      document.body.classList.remove('modal-open');
+    });
+  }
+});
 </script>
 
 <!-- Exibir imagem em tamanho original dentro do modal, com X grande para fechar -->
@@ -788,6 +859,9 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay.focus();
       document.getElementById('fecharOriginalGaleria').onclick = function() {
         overlay.remove();
+        // Remove backdrops residuais
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
         setTimeout(function() {
           if (galeriaModal && typeof bootstrap !== 'undefined') {
             const bsModal = new bootstrap.Modal(galeriaModal);
@@ -798,6 +872,9 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay.addEventListener('keydown', function(ev) {
         if (ev.key === 'Escape') {
           overlay.remove();
+          // Remove backdrops residuais
+          document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+          document.body.classList.remove('modal-open');
           setTimeout(function() {
             if (galeriaModal && typeof bootstrap !== 'undefined') {
               const bsModal = new bootstrap.Modal(galeriaModal);
@@ -809,6 +886,9 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay.addEventListener('click', function(ev) {
         if (ev.target === overlay) {
           overlay.remove();
+          // Remove backdrops residuais
+          document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+          document.body.classList.remove('modal-open');
           setTimeout(function() {
             if (galeriaModal && typeof bootstrap !== 'undefined') {
               const bsModal = new bootstrap.Modal(galeriaModal);
