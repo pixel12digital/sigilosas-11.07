@@ -796,6 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Remove backdrops residuais
       document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
       document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
     });
   }
 });
@@ -862,6 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove backdrops residuais
         document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
         document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
         setTimeout(function() {
           if (galeriaModal && typeof bootstrap !== 'undefined') {
             const bsModal = new bootstrap.Modal(galeriaModal);
@@ -875,6 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Remove backdrops residuais
           document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
           document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
           setTimeout(function() {
             if (galeriaModal && typeof bootstrap !== 'undefined') {
               const bsModal = new bootstrap.Modal(galeriaModal);
@@ -889,6 +892,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Remove backdrops residuais
           document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
           document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
           setTimeout(function() {
             if (galeriaModal && typeof bootstrap !== 'undefined') {
               const bsModal = new bootstrap.Modal(galeriaModal);
