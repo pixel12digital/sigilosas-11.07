@@ -42,7 +42,7 @@ $estados = $db->fetchAll("
 
 <!-- Banner Principal -->
 <section class="hero-section position-relative">
-    <div class="hero-bg" style="background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('<?php echo SITE_URL; ?>/assets/img/Imagem-banner01.png') center/cover;">
+    <div class="hero-bg">
         <div class="container position-relative">
             <div class="row min-vh-75 align-items-center">
                 <div class="col-lg-10 col-md-12 mx-auto text-center text-white">
@@ -650,6 +650,13 @@ document.head.appendChild(style);
     display: flex;
     align-items: center;
     /* background-color removido para não sobrescrever a imagem */
+    background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('<?php echo SITE_URL; ?>/assets/img/Imagem-banner01.png') center/cover;
+}
+
+@media (min-width: 992px) {
+  .hero-bg {
+    background: linear-gradient(rgba(61,38,63,0.18), rgba(61,38,63,0.18)), url('<?php echo SITE_URL; ?>/pages/banner herro.png') center/cover !important;
+  }
 }
 
 .min-vh-75 {
