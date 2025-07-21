@@ -177,7 +177,7 @@ try {
     if (isset($filepath) && file_exists($filepath)) {
         unlink($filepath);
     }
-    
     echo json_encode(['success' => false, 'message' => 'Erro interno: ' . $e->getMessage()]);
+    exit;
 }
 ?> 
