@@ -13,17 +13,36 @@ require_once __DIR__ . '/../config/database.php';
 header('Content-Type: application/json');
 
 // Verificar se está logada
-if (!isset($_SESSION['acompanhante_id'])) {
+$isAdmin = isset($_SESSION['admin_id']);
+$isAcompanhante = isset($_SESSION['acompanhante_id']);
+
+if (!$isAdmin && !$isAcompanhante) {
     echo json_encode(['success' => false, 'message' => 'Sessão expirada. Faça login novamente.']);
     exit;
 }
 
 $db = getDB();
-$acompanhante_id = $_SESSION['acompanhante_id'];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Método não permitido']);
     exit;
+}
+
+// Determinar o acompanhante_id
+if ($isAdmin) {
+    if (empty($_POST['acompanhante_id'])) {
+        echo json_encode(['success' => false, 'message' => 'ID do acompanhante não informado.']);
+        exit;
+    }
+    $acompanhante_id = (int)$_POST['acompanhante_id'];
+    // Validar se o acompanhante existe
+    $acompanhante = $db->fetch("SELECT id FROM acompanhantes WHERE id = ?", [$acompanhante_id]);
+    if (!$acompanhante) {
+        echo json_encode(['success' => false, 'message' => 'Acompanhante não encontrado.']);
+        exit;
+    }
+} else {
+    $acompanhante_id = $_SESSION['acompanhante_id'];
 }
 
 $successUploads = [];

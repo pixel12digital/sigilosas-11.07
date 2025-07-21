@@ -626,6 +626,14 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                 <?php endif; ?>
             </div>
         </div>
+        <?php if (isset($_SESSION['admin_id'])): ?>
+<!-- Formulário de upload de documento para admin -->
+<form method="post" enctype="multipart/form-data" action="/api/upload-documento.php" class="mt-3">
+    <input type="hidden" name="acompanhante_id" value="<?php echo htmlspecialchars($acompanhante['id']); ?>">
+    <input type="file" name="documento_frente" accept="image/*,application/pdf" required>
+    <button type="submit" class="btn btn-primary btn-sm mt-2">Enviar Documento</button>
+</form>
+<?php endif; ?>
         <!-- SEÇÃO DE VÍDEO DE VERIFICAÇÃO -->
         <div class="col-12 mt-4 text-center" id="secao-video-verificacao">
             <h5 class="mb-3"><i class="fas fa-video"></i> Vídeo de Verificação</h5>
