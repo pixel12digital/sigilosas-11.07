@@ -21,8 +21,9 @@ try {
             ORDER BY a.verificado DESC, a.created_at DESC";
     $acompanhantes = $db->fetchAll($sql, [$cidade_id, $estado_id]);
     // Buscar valores de atendimento para cada acompanhante
-    foreach ($acompanhantes as &$ac) {
-        $ac['valores_atendimento'] = $db->fetchAll("SELECT tempo, valor, disponivel FROM valores_atendimento WHERE acompanhante_id = ? AND disponivel = 1 ORDER BY FIELD(tempo, '15min','30min','1h','2h','4h','diaria','pernoite','diaria_viagem')", [$ac['id']]);
+    foreach ($acompanhantes as &$a) {
+        $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$a['id']]);
+        $a['foto'] = $foto_perfil['url'] ?? null;
     }
     echo json_encode($acompanhantes);
 } catch (Exception $e) {
