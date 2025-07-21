@@ -110,7 +110,8 @@ $posts_recentes = $db->fetchAll("
     <div class="row justify-content-center" id="destaques-lista">
       <?php foreach ($acompanhantes_destaque as $i => $a): ?>
         <?php
-          $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' ORDER BY id ASC LIMIT 1", [$a['id']]);
+          // Buscar a foto de perfil mais recente aprovada
+          $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$a['id']]);
           $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : null;
           
           // Buscar valores de atendimento
