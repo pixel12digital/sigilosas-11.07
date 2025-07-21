@@ -172,12 +172,8 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="container position-relative" style="margin-top:-90px; z-index:2;">
   <div class="d-flex flex-column align-items-center">
     <?php
-    // Buscar foto de perfil principal e aprovada
-    $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND principal = 1 AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$acompanhante_id]);
-    // Se não houver principal/aprovada, buscar a mais recente aprovada
-    if (!$foto_perfil) {
-        $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$acompanhante_id]);
-    }
+    // Buscar a foto de perfil mais recente aprovada
+    $foto_perfil = $db->fetch("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$acompanhante_id]);
     $foto_perfil_url = !empty($foto_perfil['url']) ? SITE_URL . '/uploads/perfil/' . htmlspecialchars($foto_perfil['url']) : 'https://ui-avatars.com/api/?name=' . urlencode($acompanhante['apelido'] ?? $acompanhante['nome']) . '&size=256&background=6f42c1&color=fff';
     ?>
     <img src="<?php echo $foto_perfil_url; ?>" class="rounded-circle shadow" style="width:160px;height:160px;object-fit:cover;border:6px solid #F3EAC2; margin-top:-80px; background:#eee;">
