@@ -19,9 +19,11 @@ require_once '../includes/admin-header.php';
 
 $db = getDB();
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$footer_incluido = false;
 if (!$id) {
     echo '<div class="alert alert-danger">ID de acompanhante inválido.</div>';
     require_once '../includes/admin-footer.php';
+    $footer_incluido = true;
     exit;
 }
 
@@ -215,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_video_publico
 if (!$acompanhante) {
     echo '<div class="alert alert-danger">Acompanhante não encontrada.</div>';
     require_once '../includes/admin-footer.php';
+    $footer_incluido = true;
     exit;
 }
 // Buscar mídias

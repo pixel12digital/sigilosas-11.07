@@ -210,6 +210,4 @@ function togglePassword(fieldId) {
 }
 </script>
 
-<?php include __DIR__ . '/../includes/footer.php'; ?> 
-<?php include __DIR__ . '/../includes/footer.php'; ?> 
-</script> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 
