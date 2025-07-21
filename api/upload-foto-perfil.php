@@ -156,10 +156,10 @@ try {
         $db->insert('fotos', [
             'acompanhante_id' => $user_id,
             'url' => $filename,
-            'storage_path' => $storage_path,
+            'storage_path' => $filename,
             'tipo' => 'perfil',
             'principal' => 1,
-            'aprovada' => 0,
+            'aprovada' => 1, // garantir que está aprovada
             'formato' => $formato,
             'tamanho' => $tamanho,
             'created_at' => date('Y-m-d H:i:s'),
