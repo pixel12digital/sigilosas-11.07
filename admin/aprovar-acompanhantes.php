@@ -50,6 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 $db->update('fotos', ['aprovada' => 1], 'acompanhante_id = ?', [$acompanhante_id]);
                 $db->update('videos_publicos', ['status' => 'aprovado'], 'acompanhante_id = ?', [$acompanhante_id]);
                 $db->update('documentos_acompanhante', ['verificado' => 1], 'acompanhante_id = ?', [$acompanhante_id]);
+                // Garantir unicidade: marcar a foto de perfil mais recente como principal=1, as demais como principal=0
+                $fotoPerfil = $db->fetch("SELECT id FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil' AND aprovada = 1 ORDER BY id DESC LIMIT 1", [$acompanhante_id]);
+                if ($fotoPerfil && isset($fotoPerfil['id'])) {
+                    $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ? AND id != ?', [$acompanhante_id, 'perfil', $fotoPerfil['id']]);
+                    $db->update('fotos', ['principal' => 1], 'id = ?', [$fotoPerfil['id']]);
+                }
                 
                 $success = 'Acompanhante e todas as mídias aprovadas com sucesso!';
                 break;
