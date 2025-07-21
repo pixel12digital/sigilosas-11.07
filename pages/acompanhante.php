@@ -345,6 +345,9 @@ require_once __DIR__ . '/../includes/header.php';
             <li><b>Altura:</b> <?php echo formatarAltura($acompanhante['altura'] ?? ''); ?></li>
             <li><b>Peso:</b> <?php echo htmlspecialchars($acompanhante['peso'] ?? ''); ?> kg</li>
             <li><b>Etnia:</b> <?php echo formatarTexto($acompanhante['etnia'] ?? ''); ?></li>
+            <?php if (!empty($acompanhante['genitalia'])): ?>
+            <li><b>Genitália:</b> <?php echo $acompanhante['genitalia'] === 'feminina' ? 'Feminina' : 'Masculina'; ?></li>
+            <?php endif; ?>
           </ul>
         </div>
         <div class="col-md-6">
