@@ -181,7 +181,6 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="mb-2 text-muted text-center" style="color:#3D263F;opacity:0.8;">
       <?php if (!empty($acompanhante['idade'])): ?><?php echo $acompanhante['idade']; ?> anos · <?php endif; ?>
       <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?>
-      <?php if (!empty($acompanhante['genitalia'])): ?> · Genitália: <?php echo $acompanhante['genitalia'] === 'feminina' ? 'Feminina' : 'Masculina'; ?><?php endif; ?>
     </div>
     <?php if (!empty($acompanhante['verificado'])): ?><span class="badge mb-2" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
     <div class="d-flex gap-2 mb-3">
@@ -348,6 +347,12 @@ require_once __DIR__ . '/../includes/header.php';
             <?php if (!empty($acompanhante['genitalia'])): ?>
             <li><b>Genitália:</b> <?php echo $acompanhante['genitalia'] === 'feminina' ? 'Feminina' : 'Masculina'; ?></li>
             <?php endif; ?>
+            <?php if (!empty($acompanhante['genero'])): ?>
+            <li><b>Gênero:</b> <?php echo formatarTexto($acompanhante['genero']); ?></li>
+            <?php endif; ?>
+            <?php if (!empty($acompanhante['preferencia_sexual'])): ?>
+            <li><b>Preferência Sexual:</b> <?php echo formatarTexto($acompanhante['preferencia_sexual']); ?></li>
+            <?php endif; ?>
           </ul>
         </div>
         <div class="col-md-6">
@@ -368,7 +373,7 @@ require_once __DIR__ . '/../includes/header.php';
   <!-- Preferências e Serviços -->
   <div class="card shadow-sm mb-4" style="background:#fff;color:#3D263F;box-shadow:0 2px 12px rgba(61,38,63,0.08);">
     <div class="card-body">
-      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-cogs"></i> Preferências e Serviços</div>
+      <div class="fw-bold mb-2" style="color:#3D263F;"><i class="fas fa-cogs"></i> Preferências e Serviços Oferecidos</div>
       <ul class="list-unstyled mb-0">
         <li><b>Especialidades:</b> 
 <?php
