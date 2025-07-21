@@ -181,6 +181,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="mb-2 text-muted text-center" style="color:#3D263F;opacity:0.8;">
       <?php if (!empty($acompanhante['idade'])): ?><?php echo $acompanhante['idade']; ?> anos · <?php endif; ?>
       <?php echo htmlspecialchars($acompanhante['cidade_nome']); ?><?php if (!empty($acompanhante['bairro'])) echo ', ' . htmlspecialchars($acompanhante['bairro']); ?><?php if (!empty($acompanhante['estado_uf'])) echo ', ' . htmlspecialchars($acompanhante['estado_uf']); ?>
+      <?php if (!empty($acompanhante['genitalia'])): ?> · Genitália: <?php echo $acompanhante['genitalia'] === 'feminina' ? 'Feminina' : 'Masculina'; ?><?php endif; ?>
     </div>
     <?php if (!empty($acompanhante['verificado'])): ?><span class="badge mb-2" style="background:#3D263F;color:#F3EAC2;"><i class="fas fa-check-circle"></i> Verificada</span><?php endif; ?>
     <div class="d-flex gap-2 mb-3">

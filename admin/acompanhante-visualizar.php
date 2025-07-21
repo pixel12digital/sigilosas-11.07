@@ -309,6 +309,14 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                 <option value="todos" <?php if(($acompanhante['preferencia_sexual'] ?? '')==='todos') echo 'selected'; ?>>Todos</option>
             </select>
         </div>
+        <div class="col-md-4">
+            <label for="genitalia" class="form-label">Genitália</label>
+            <select class="form-select" id="genitalia" name="genitalia" required>
+                <option value="">Selecione</option>
+                <option value="feminina" <?php if(($acompanhante['genitalia'] ?? '')==='feminina') echo 'selected'; ?>>Feminina</option>
+                <option value="masculina" <?php if(($acompanhante['genitalia'] ?? '')==='masculina') echo 'selected'; ?>>Masculina</option>
+            </select>
+        </div>
         <div class="col-md-6">
             <label class="form-label">Estado *</label>
             <div class="form-control-plaintext" style="font-weight:bold;">

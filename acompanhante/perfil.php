@@ -114,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'tatuagens' => trim($_POST['tatuagens'] ?? ''),
         'piercings' => trim($_POST['piercings'] ?? ''),
         'local_atendimento' => json_encode($_POST['local_atendimento'] ?? []),
-        'especialidades' => json_encode($_POST['especialidades'] ?? [])
+        'especialidades' => json_encode($_POST['especialidades'] ?? []),
+        'genitalia' => trim($_POST['genitalia'] ?? '')
     ];
     
 
@@ -134,7 +135,7 @@ if (
         'peso' => !empty($_POST['peso']) ? (float)$_POST['peso'] : null,
         'medidas' => trim($_POST['medidas'] ?? ''),
         'endereco' => trim($_POST['endereco'] ?? ''),
-        'descricao' => trim($_POST['descricao'] ?? ''),
+        'descricao' => trim($_POST['sobre_mim'] ?? ''),
         'sobre_mim' => trim($_POST['sobre_mim'] ?? ''),
         'instagram' => trim($_POST['instagram'] ?? ''),
         'twitter' => trim($_POST['twitter'] ?? ''),
@@ -161,7 +162,8 @@ if (
         'valor_promocional' => !empty($_POST['valor_promocional']) ? (float)$_POST['valor_promocional'] : null,
         'idiomas' => trim($_POST['idiomas'] ?? ''),
         'especialidades' => isset($_POST['especialidades']) ? json_encode($_POST['especialidades']) : json_encode([]),
-        'site' => trim($_POST['site'] ?? '')
+        'site' => trim($_POST['site'] ?? ''),
+        'genitalia' => trim($_POST['genitalia'] ?? '')
     ];
 
     // Validações
