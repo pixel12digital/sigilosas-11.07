@@ -45,61 +45,61 @@ if ($isAdmin) {
     $acompanhante_id = $_SESSION['acompanhante_id'];
 }
 
+// Processar múltiplos arquivos enviados como documentos[]
 $successUploads = [];
 $errors = [];
 
-$tipos = [
-    'documento_frente' => 'rg',
-    'documento_verso' => 'rg'
-];
-
-foreach ($tipos as $inputName => $tipoDoc) {
-    if (!isset($_FILES[$inputName]) || $_FILES[$inputName]['error'] !== UPLOAD_ERR_OK) {
-        continue; // Não enviado, pula
+if (isset($_FILES['documentos'])) {
+    foreach ($_FILES['documentos']['tmp_name'] as $i => $tmpName) {
+        if ($_FILES['documentos']['error'][$i] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Erro no upload do arquivo ' . ($_FILES['documentos']['name'][$i] ?? '');
+            continue;
+        }
+        $file = [
+            'name' => $_FILES['documentos']['name'][$i],
+            'type' => $_FILES['documentos']['type'][$i],
+            'tmp_name' => $tmpName,
+            'error' => $_FILES['documentos']['error'][$i],
+            'size' => $_FILES['documentos']['size'][$i],
+        ];
+        // Copiar a lógica de validação e salvamento do arquivo único aqui:
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf'];
+        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($file['type'], $allowed_types) || !in_array($file_extension, $allowed_extensions)) {
+            $errors[] = 'Tipo de arquivo não permitido para ' . $file['name'] . '. Use apenas JPG, PNG ou PDF.';
+            continue;
+        }
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $errors[] = 'Arquivo muito grande para ' . $file['name'] . '. Máximo 10MB.';
+            continue;
+        }
+        $upload_dir = __DIR__ . '/../uploads/documentos/';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        $timestamp = time();
+        $random = bin2hex(random_bytes(8));
+        $filename = 'rg_' . $timestamp . '_' . $random . '.' . $file_extension;
+        $filepath = $upload_dir . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            $errors[] = 'Erro ao salvar o arquivo ' . $file['name'];
+            continue;
+        }
+        // Salvar no banco de dados
+        $db->insert('documentos_acompanhante', [
+            'acompanhante_id' => $acompanhante_id,
+            'url' => $filename,
+            'storage_path' => $filename,
+            'tipo' => 'rg',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+        $successUploads[] = $filename;
     }
-    $file = $_FILES[$inputName];
-    // Validações
-    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png'];
-    $allowed_extensions = ['jpg', 'jpeg', 'png'];
-    $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if (!in_array($file['type'], $allowed_types) || !in_array($file_extension, $allowed_extensions)) {
-        $errors[] = 'Tipo de arquivo não permitido para ' . $tipoDoc . '. Use apenas JPG ou PNG.';
-        continue;
-    }
-    if ($file['size'] > 10 * 1024 * 1024) {
-        $errors[] = 'Arquivo muito grande para ' . $tipoDoc . '. Máximo 10MB.';
-        continue;
-    }
-    // Criar diretório se não existir
-    $upload_dir = __DIR__ . '/../uploads/documentos/';
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0755, true);
-    }
-    // Gerar nome único para o arquivo
-    $timestamp = time();
-    $random = bin2hex(random_bytes(8));
-    $filename = $inputName === 'documento_frente'
-        ? 'rg_frente_' . $timestamp . '_' . $random . '.' . $file_extension
-        : 'rg_verso_' . $timestamp . '_' . $random . '.' . $file_extension;
-    $filepath = $upload_dir . $filename;
-    // Mover arquivo
-    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
-        $errors[] = 'Erro ao salvar arquivo para ' . $tipoDoc;
-        continue;
-    }
-    // Salvar no banco
-    $db->insert('documentos_acompanhante', [
-        'acompanhante_id' => $acompanhante_id,
-        'tipo' => $tipoDoc, // sempre 'rg'
-        'url' => $filename,
-        'storage_path' => $filename,
-        'tamanho' => $file['size'],
-        'formato' => $file_extension,
-        'status' => 'pendente',
-        'created_at' => date('Y-m-d H:i:s'),
-        'updated_at' => date('Y-m-d H:i:s')
-    ]);
-    $successUploads[] = $tipoDoc;
+    // Redirecionar de volta para a página do admin após upload
+    header('Location: /admin/acompanhante-visualizar.php?id=' . $acompanhante_id);
+    exit;
 }
 
 if ($successUploads) {

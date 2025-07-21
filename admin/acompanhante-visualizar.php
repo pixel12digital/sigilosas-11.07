@@ -155,6 +155,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'destaque' => isset($_POST['destaque']) ? 1 : 0,
             'cidade_id' => $cidade_id
         ];
+        // Atualizar senha se o campo não estiver vazio
+        if (!empty($_POST['senha'])) {
+            $novaSenha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+            $data['senha'] = $novaSenha;
+        }
         try {
             $db->update('acompanhantes', $data, 'id = ?', [$id]);
             $success = 'Dados atualizados com sucesso!';
@@ -616,23 +621,80 @@ $fotos_galeria = $db->fetchAll("SELECT * FROM fotos WHERE acompanhante_id = ? AN
                             <?php endif; ?>
                             <div class="mt-1 text-center">
                                 <span class="badge bg-<?php echo $doc['verificado'] ? 'success' : 'warning text-dark'; ?> small"><?php echo $doc['verificado'] ? 'Verificado' : 'Pendente'; ?></span>
-                                <?php if (!$doc['verificado']): ?>
-                                    <button type="button" class="btn btn-success btn-sm ms-1" data-midia-aprovar data-midia-tipo="documento" data-midia-id="<?php echo $doc['id']; ?>" title="Aprovar">✓</button>
-                                <?php endif; ?>
-                                <button type="button" class="btn btn-danger btn-sm ms-1" data-midia-reprovar data-midia-tipo="documento" data-midia-id="<?php echo $doc['id']; ?>" title="Reprovar">✗</button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>
-        <?php if (isset($_SESSION['admin_id'])): ?>
-<!-- Formulário de upload de documento para admin -->
-<form method="post" enctype="multipart/form-data" action="/api/upload-documento.php" class="mt-3">
-    <input type="hidden" name="acompanhante_id" value="<?php echo htmlspecialchars($acompanhante['id']); ?>">
-    <input type="file" name="documento_frente" accept="image/*,application/pdf" required>
-    <button type="submit" class="btn btn-primary btn-sm mt-2">Enviar Documento</button>
-</form>
+        <?php if (isset($_SESSION['user_nivel']) && $_SESSION['user_nivel'] === 'admin'): ?>
+    <input type="file" name="documentos[]" accept="image/*,application/pdf" multiple onchange="previewAdminDocumentos(this)">
+    <div id="previewDocumentos" class="d-flex gap-2 flex-wrap mt-2"></div>
+    <script>
+    // Lista de arquivos selecionados para upload
+    let adminDocumentosSelecionados = [];
+    function previewAdminDocumentos(input) {
+        var preview = document.getElementById('previewDocumentos');
+        preview.innerHTML = '';
+        adminDocumentosSelecionados = Array.from(input.files);
+        adminDocumentosSelecionados.forEach(function(file, idx) {
+            if (file.type.startsWith('image/')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    wrapper.style.display = 'inline-block';
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '80px';
+                    img.style.height = '60px';
+                    img.style.objectFit = 'cover';
+                    img.style.border = '1px solid #ccc';
+                    img.style.borderRadius = '6px';
+                    img.className = 'me-2 mb-2';
+                    // Botão X
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.innerHTML = '×';
+                    btn.title = 'Remover';
+                    btn.style.position = 'absolute';
+                    btn.style.top = '2px';
+                    btn.style.right = '2px';
+                    btn.style.background = '#fff';
+                    btn.style.border = '1px solid #ccc';
+                    btn.style.borderRadius = '50%';
+                    btn.style.width = '22px';
+                    btn.style.height = '22px';
+                    btn.style.fontWeight = 'bold';
+                    btn.style.cursor = 'pointer';
+                    btn.onclick = function() {
+                        adminDocumentosSelecionados.splice(idx, 1);
+                        atualizarInputDocumentos();
+                        previewAdminDocumentos({ files: adminDocumentosSelecionados });
+                    };
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(btn);
+                    preview.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        atualizarInputDocumentos();
+    }
+    // Atualiza o input de arquivos com a lista filtrada
+    function atualizarInputDocumentos() {
+        var input = document.querySelector('input[name="documentos[]"]');
+        if (window.DataTransfer) {
+            var dt = new DataTransfer();
+            adminDocumentosSelecionados.forEach(function(file) {
+                dt.items.add(file);
+            });
+            input.files = dt.files;
+        } else {
+            // fallback: não atualiza input (navegadores antigos)
+        }
+    }
+    </script>
 <?php endif; ?>
         <!-- SEÇÃO DE VÍDEO DE VERIFICAÇÃO -->
         <div class="col-12 mt-4 text-center" id="secao-video-verificacao">
@@ -759,7 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         cidadeSelect.innerHTML = '<option>Carregando...</option>';
-                    fetch(SITE_URL + '/api/cidades.php?estado_id=' + estadoId)
+        fetch(SITE_URL + '/api/cidades.php?estado_id=' + estadoId)
             .then(response => response.json())
             .then(data => {
                 cidadeSelect.innerHTML = '<option value="">Selecione a cidade</option>';
@@ -770,78 +832,86 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    if (estadoSelect.value) {
+    if (estadoSelect && estadoSelect.value) {
         carregarCidades(estadoSelect.value, cidadeId);
     }
 
-    estadoSelect.addEventListener('change', function() {
-        carregarCidades(this.value, '');
-    });
-});
-
-document.getElementById('btnUploadVideo').addEventListener('click', function() {
-    var input = document.getElementById('inputVideoVerificacao');
-    if (!input.files.length) {
-        alert('Selecione um vídeo primeiro.');
-        return;
+    if (estadoSelect) {
+        estadoSelect.addEventListener('change', function() {
+            carregarCidades(this.value, '');
+        });
     }
+
+    var btnUploadVideo = document.getElementById('btnUploadVideo');
+    if (btnUploadVideo) {
+        btnUploadVideo.addEventListener('click', function() {
+            var input = document.getElementById('inputVideoVerificacao');
+            if (!input || !input.files.length) {
+                alert('Selecione um vídeo primeiro.');
+                return;
+            }
+            var formData = new FormData();
+            formData.append('video_verificacao', input.files[0]);
+            fetch(SITE_URL + '/api/upload-video-verificacao.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                var msg = document.getElementById('videoVerificacaoMsg');
+                if (data.success) {
+                    msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                    if (data.filename && data.video_id) {
+                        var previewDiv = document.querySelector('#secao-video-verificacao .mt-3');
+                        previewDiv.innerHTML = `
+                            <h6>Vídeo enviado:</h6>
+                            <div class="d-inline-block position-relative" style="display:inline-block;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(${data.video_id}, this)">×</button>
+                                <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
+                                    <source src="<?php echo SITE_URL; ?>/uploads/verificacao/${data.filename}" type="video/mp4">
+                                    Seu navegador não suporta vídeo.
+                                </video>
+                            </div>
+                        `;
+                    }
+                } else {
+                    msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
+                }
+            })
+            .catch(() => {
+                document.getElementById('videoVerificacaoMsg').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
+            });
+        });
+    }
+});
+function excluirVideoVerificacao(videoId, btn) {
+    if (!confirm('Tem certeza que deseja excluir este vídeo? Esta ação não pode ser desfeita!')) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     var formData = new FormData();
-    formData.append('video_verificacao', input.files[0]);
-                fetch(SITE_URL + '/api/upload-video-verificacao.php', {
+    formData.append('video_id', videoId);
+    fetch('/api/delete-video-verificacao.php', {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
-        var msg = document.getElementById('videoVerificacaoMsg');
         if (data.success) {
-            msg.innerHTML = '<span class="text-success">' + data.message + '</span>';
-            if (data.filename && data.video_id) {
-                var previewDiv = document.querySelector('#secao-video-verificacao .mt-3');
-                previewDiv.innerHTML = `
-                    <h6>Vídeo enviado:</h6>
-                    <div class="d-inline-block position-relative" style="display:inline-block;">
-                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 video-excluir-btn" style="z-index:2; border-radius:50%; width:24px; height:24px; padding:0; font-weight:bold; line-height:18px;" title="Excluir vídeo" onclick="excluirVideoVerificacao(${data.video_id}, this)">×</button>
-                        <video width="180" height="320" controls style="border-radius:12px; border:1px solid #ccc; background:#000; display:block; margin:auto; object-fit:cover;">
-                            <source src="<?php echo SITE_URL; ?>/uploads/verificacao/${data.filename}" type="video/mp4">
-                            Seu navegador não suporta vídeo.
-                        </video>
-                    </div>
-                `;
-            }
-        } else {
-            msg.innerHTML = '<span class="text-danger">' + data.message + '</span>';
-        }
-    })
-    .catch(() => {
-        document.getElementById('videoVerificacaoMsg').innerHTML = '<span class="text-danger">Erro ao enviar vídeo.</span>';
-    });
-});
-function excluirVideoVerificacao(videoId, btn) {
-    if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
-    btn.disabled = true;
-                fetch(SITE_URL + '/api/delete-video-verificacao.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'video_id=' + encodeURIComponent(videoId)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Resposta exclusão vídeo:', data);
-        if (data.success) {
-            var item = btn.closest('.d-inline-block');
-            if (item) item.remove();
-            document.getElementById('videoVerificacaoMsg').innerHTML = '<span class="text-success">Vídeo excluído com sucesso.</span>';
+            // Remover o vídeo da interface
+            var card = btn.closest('.d-inline-block');
+            if (card) card.remove();
         } else {
             alert(data.message || 'Erro ao excluir vídeo.');
             btn.disabled = false;
+            btn.innerHTML = '×';
         }
     })
-    .catch((err) => {
+    .catch(() => {
         alert('Erro ao excluir vídeo.');
-        console.log('Erro fetch exclusão vídeo:', err);
         btn.disabled = false;
+        btn.innerHTML = '×';
     });
 }
 
@@ -866,7 +936,7 @@ function previewGaleriaFotos(input) {
 function excluirFotoGaleria(fotoId, btn) {
     if (!confirm('Tem certeza que deseja excluir esta foto?')) return;
     btn.disabled = true;
-                fetch(SITE_URL + '/api/delete-foto-galeria.php', {
+    fetch(SITE_URL + '/api/delete-foto-galeria.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'foto_id=' + encodeURIComponent(fotoId)
@@ -996,6 +1066,36 @@ function excluirVideoPublico(videoId, btn) {
     .catch(error => {
         console.error('Erro:', error);
         alert('Erro ao excluir vídeo. Tente novamente.');
+        btn.disabled = false;
+        btn.innerHTML = '×';
+    });
+}
+
+function excluirDocumento(documentoId, btn) {
+    if (!confirm('Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita!')) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    var formData = new FormData();
+    formData.append('documento_id', documentoId);
+    fetch('../api/delete-documento.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remover o documento da interface
+            var card = btn.closest('.d-inline-block');
+            if (card) card.remove();
+        } else {
+            alert(data.message || 'Erro ao excluir documento.');
+            btn.disabled = false;
+            btn.innerHTML = '×';
+        }
+    })
+    .catch(() => {
+        alert('Erro ao excluir documento.');
         btn.disabled = false;
         btn.innerHTML = '×';
     });
