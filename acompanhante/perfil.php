@@ -907,6 +907,14 @@ include __DIR__ . '/../includes/header.php';
                         <option value="outro" <?php if(($acompanhante['genero'] ?? '')==='outro') echo 'selected'; ?>>Outro</option>
                     </select>
                 </div>
+                <div class="form-field">
+                    <label for="genitalia" class="form-label">Genitália</label>
+                    <select class="form-select" id="genitalia" name="genitalia" required>
+                        <option value="">Selecione</option>
+                        <option value="feminina" <?php if(($acompanhante['genitalia'] ?? '')==='feminina') echo 'selected'; ?>>Feminina</option>
+                        <option value="masculina" <?php if(($acompanhante['genitalia'] ?? '')==='masculina') echo 'selected'; ?>>Masculina</option>
+                    </select>
+                </div>
             </div>
             
             <!-- Terceira linha: Preferência Sexual, Estado, Cidade, Idiomas -->
