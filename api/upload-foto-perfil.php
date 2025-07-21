@@ -152,7 +152,7 @@ try {
         // Marcar todas as fotos de perfil anteriores como principal = 0
         $db = getDB();
         $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ?', [$user_id, 'perfil']);
-        // Inserir nova foto de perfil aguardando aprovação
+        // Inserir nova foto de perfil como principal e aprovada
         $db->insert('fotos', [
             'acompanhante_id' => $user_id,
             'url' => $filename,
@@ -165,6 +165,9 @@ try {
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ]);
+        // Garantir unicidade: desmarcar todas as outras como principal=0, exceto a última inserida
+        $lastId = $db->lastInsertId();
+        $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ? AND id != ?', [$user_id, 'perfil', $lastId]);
     }
 
     echo json_encode(['success' => true, 'message' => 'Foto atualizada com sucesso!', 'filename' => $filename]);
