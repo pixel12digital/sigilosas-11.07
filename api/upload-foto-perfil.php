@@ -153,7 +153,7 @@ try {
         $db = getDB();
         $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ?', [$user_id, 'perfil']);
         // Inserir nova foto de perfil como principal e aprovada
-        $db->insert('fotos', [
+        $lastId = $db->insert('fotos', [
             'acompanhante_id' => $user_id,
             'url' => $filename,
             'storage_path' => $filename,
@@ -166,7 +166,6 @@ try {
             'updated_at' => date('Y-m-d H:i:s')
         ]);
         // Garantir unicidade: desmarcar todas as outras como principal=0, exceto a última inserida
-        $lastId = $db->lastInsertId();
         $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ? AND id != ?', [$user_id, 'perfil', $lastId]);
     }
 
