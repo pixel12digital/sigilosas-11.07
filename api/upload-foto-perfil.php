@@ -140,6 +140,17 @@ try {
     imagedestroy($source_image);
     imagedestroy($new_image);
 
+    // Apagar todas as fotos de perfil anteriores do acompanhante
+    $db = getDB();
+    $oldFotos = $db->fetchAll("SELECT url FROM fotos WHERE acompanhante_id = ? AND tipo = 'perfil'", [$user_id]);
+    foreach ($oldFotos as $oldFoto) {
+        $oldPath = __DIR__ . '/../uploads/perfil/' . $oldFoto['url'];
+        if (file_exists($oldPath)) {
+            @unlink($oldPath);
+        }
+    }
+    $db->delete('fotos', 'acompanhante_id = ? AND tipo = ?', [$user_id, 'perfil']);
+
     // Salvar no banco de dados
     $formato = $file_extension;
     $tamanho = filesize($filepath);
@@ -149,9 +160,6 @@ try {
         $stmt = $pdo->prepare("UPDATE admins SET foto = ? WHERE id = ?");
         $stmt->execute([$filename, $user_id]);
     } else {
-        // Marcar todas as fotos de perfil anteriores como principal = 0
-        $db = getDB();
-        $db->update('fotos', ['principal' => 0], 'acompanhante_id = ? AND tipo = ?', [$user_id, 'perfil']);
         // Inserir nova foto de perfil como principal e aprovada
         $lastId = $db->insert('fotos', [
             'acompanhante_id' => $user_id,
