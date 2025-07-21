@@ -205,7 +205,7 @@ $posts_recentes = $db->fetchAll("
               <?php endif; ?>
             </div>
             <div class="px-3 pb-3 pt-2 w-100">
-              <a href="<?php echo SITE_URL; ?>/pages/acompanhante.php?id=<?php echo $a['id']; ?>" class='btn btn-danger btn-sm w-100' style='margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;'><i class='fas fa-phone'></i> Ver telefone</a>
+              <a href="<?php echo SITE_URL; ?>/pages/acompanhante.php?id=<?php echo $a['id']; ?>" class="btn btn-danger btn-sm w-100" style="margin-bottom:4px; background:#3D263F; border-color:#3D263F; color:#F3EAC2;">VER PERFIL</a>
             </div>
           </div>
         </div>
