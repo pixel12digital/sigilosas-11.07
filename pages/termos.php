@@ -369,7 +369,7 @@ $page_description = "Leia nossos termos de uso e condições para utilização d
                                 <i class="fas fa-envelope text-primary me-3"></i>
                                 <div>
                                     <h6 class="mb-1">Email</h6>
-                                    <p class="mb-0 text-muted">legal@sigilosasvip.com</p>
+                                    <p class="mb-0 text-muted">contato@sigilosasvip.com.br</p>
                                 </div>
                             </div>
                         </div>
@@ -379,27 +379,7 @@ $page_description = "Leia nossos termos de uso e condições para utilização d
                                 <i class="fas fa-phone text-success me-3"></i>
                                 <div>
                                     <h6 class="mb-1">Telefone</h6>
-                                    <p class="mb-0 text-muted">(11) 99999-9999</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-map-marker-alt text-info me-3"></i>
-                                <div>
-                                    <h6 class="mb-1">Endereço</h6>
-                                    <p class="mb-0 text-muted">São Paulo, SP - Brasil</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock text-warning me-3"></i>
-                                <div>
-                                    <h6 class="mb-1">Horário</h6>
-                                    <p class="mb-0 text-muted">Seg-Sex: 9h às 18h</p>
+                                    <p class="mb-0 text-muted">(47) 99682-9294</p>
                                 </div>
                             </div>
                         </div>

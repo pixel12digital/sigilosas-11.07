@@ -193,7 +193,7 @@ require_once __DIR__ . '/../includes/header.php';
           } elseif (strlen($whats_number) === 13 && substr($whats_number, 0, 2) !== '55') {
             $whats_number = '55' . substr($whats_number, -11);
           }
-          $whats_msg = urlencode('Olá, vi seu perfil no SigilosasVIP e gostaria de conversar!');
+          $whats_msg = urlencode('Olá, vi seu perfil na Sigilosas Vip. Gostaria de conversar!');
           $whats_link = 'https://wa.me/' . $whats_number . '?text=' . $whats_msg;
         ?>
         <a href="<?php echo $whats_link; ?>" class="btn" style="background:#3D263F;color:#F3EAC2;" target="_blank">
