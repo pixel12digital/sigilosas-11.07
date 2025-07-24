@@ -807,3 +807,12 @@ footer a:hover {
     /* width: 100vw !important; */
     /* max-width: 100vw !important; */
 } 
+
+/* Formato retrato 4:5 para imagens dos cards de acompanhantes */
+.card-img-top img, .card-img-top .rounded-3 {
+  width: 100%;
+  aspect-ratio: 4/5;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 18px;
+} 

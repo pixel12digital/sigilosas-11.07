@@ -168,7 +168,7 @@ $posts_recentes = $db->fetchAll("
           <div class='card shadow-sm h-100 acompanhante-card w-100'>
             <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
               <?php if ($foto_perfil_url): ?>
-                <img src="<?php echo $foto_perfil_url; ?>" class="card-img-top rounded-3" alt="<?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?>" style="height: 210px; object-fit: cover; width:100%;">
+                <img src="<?php echo $foto_perfil_url; ?>" class="card-img-top rounded-3" alt="<?php echo htmlspecialchars($a['apelido'] ?? $a['nome']); ?>" style="width:100%;height:250px;aspect-ratio:4/5;object-fit:cover;border-radius:18px;">
               <?php else: ?>
                 <div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>
               <?php endif; ?>
@@ -562,7 +562,7 @@ form.addEventListener('submit', function(e) {
                 html += `<div class='col-lg-4 col-md-6 mb-4 d-flex align-items-stretch justify-content-center'>
                     <div class='card shadow-sm h-100 acompanhante-card w-100'>
                         <div class="card-img-top position-relative w-100" style="padding:12px 12px 0 12px;">
-                            ${a.foto ? `<img id="${imgId}" src="<?php echo SITE_URL; ?>/uploads/perfil/${a.foto}" class="card-img-top rounded-3" alt="${a.apelido||a.nome}" style="height: 210px; object-fit: cover; width:100%;">` : `<div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>`}
+                            ${a.foto ? `<img id="${imgId}" src="<?php echo SITE_URL; ?>/uploads/perfil/${a.foto}" class="card-img-top rounded-3" alt="${a.apelido||a.nome}" style="width:100%;height:250px;aspect-ratio:4/5;object-fit:cover;border-radius:18px;">` : `<div class="bg-secondary d-flex align-items-center justify-content-center rounded-3" style="height: 210px;"><i class="fas fa-user fa-3x text-white"></i></div>`}
                         </div>
                         <div class="flex-grow-1 w-100 px-2 pt-2 pb-0 d-flex flex-column" style="min-height:140px;">
                             <h5 class="card-title mb-1 text-center">${a.apelido||a.nome}</h5>
